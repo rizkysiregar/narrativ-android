@@ -7,11 +7,17 @@ plugins {
 }
 
 android {
-    namespace = "com.rizkysiregar.feedzmore_android_native"
+    namespace = "com.rizkysiregar.feedzmore"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.rizkysiregar.feedzmore_android_native"
+        applicationId = "com.rizkysiregar.feedzmore"
+        manifestPlaceholders.putAll(
+            mapOf(
+                "appAuthRedirectScheme" to "com.rizkysiregar.feedzmore"
+            )
+        )
+
         minSdk = 26
         targetSdk = 35
         versionCode = 1
@@ -84,6 +90,16 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    // OAuth2
+    implementation(libs.play.services.auth)
+    implementation(libs.appauth)
+
+    // lottie
+    implementation(libs.lottie.compose)
+
+
+
 //
 //    implementation(libs.androidx.core.ktx)
 //    implementation(libs.androidx.lifecycle.runtime.ktx)
