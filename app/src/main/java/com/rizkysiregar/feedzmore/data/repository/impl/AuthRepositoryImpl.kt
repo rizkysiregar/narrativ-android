@@ -5,6 +5,7 @@ import com.rizkysiregar.feedzmore.data.remote.model.LoginRequest
 import com.rizkysiregar.feedzmore.data.remote.model.LoginResponse
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.repository.AuthRepository
+import com.rizkysiregar.feedzmore.util.safeApiCall
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
@@ -18,16 +19,24 @@ class AuthRepositoryImpl @Inject constructor(
 	private val authApi: AuthApi
 ) : AuthRepository {
 	override fun login(request: LoginRequest): Flow<ResultState<LoginResponse>> = flow {
-		try {
-			val response = authApi.login(request)
-			if (response.data != null) {
-				emit(ResultState.Success(response.data))
-			} else {
-				emit(ResultState.Failure(response.message))
+		emit(ResultState.Loading)
+		val result = safeApiCall {
+			authApi.login(request)
+		}
+
+		when (result) {
+			is ResultState.Success -> {
+				val data = result.data
+
+				if (data.data != null) {
+					emit(ResultState.Success(data.data))
+				} else {
+					emit(ResultState.Failure(data.message))
+				}
 			}
-		} catch (e: Exception) {
-			emit(ResultState.Failure("Something went wrong!"))
+
+			is ResultState.Failure -> emit(result)
+			else -> {}
 		}
 	}
-
 }

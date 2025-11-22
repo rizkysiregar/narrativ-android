@@ -1,4 +1,4 @@
-package com.rizkysiregar.feedzmore.ui.presentation.auth
+package com.rizkysiregar.feedzmore.ui.feature.auth
 
 import android.content.Intent
 import android.util.Log
@@ -19,11 +19,14 @@ import net.openid.appauth.AuthorizationService
 import net.openid.appauth.AuthorizationServiceConfiguration
 import net.openid.appauth.ResponseTypeValues
 import androidx.core.net.toUri
+import com.rizkysiregar.feedzmore.constants.PrefKeys
+import com.rizkysiregar.feedzmore.data.datastore.DataStoreManager
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
 	private val loginUseCase: LoginUseCase,
-	private val authService: AuthorizationService
+	private val authService: AuthorizationService,
+	private val dataStore: DataStoreManager
 ) : ViewModel() {
 
 
@@ -36,15 +39,26 @@ class AuthViewModel @Inject constructor(
 		viewModelScope.launch {
 			loginUseCase(LoginRequest(username, password))
 				.collect { result ->
+
+					if (result is ResultState.Success) {
+						// save token and necessary user info into datastore
+						dataStore.put(PrefKeys.token, result.data.token)
+						dataStore.put(PrefKeys.username, result.data.username)
+						dataStore.put(PrefKeys.userId, result.data.userId)
+						dataStore.put(PrefKeys.isLoggedIn, true)
+					}
+
 					_loginState.value = result
 				}
 		}
 	}
 
-	fun clearError() {
+	fun resetState() {
 		println("## clearError() called")
 		_loginState.value = ResultState.Idle
 	}
+
+
 
 
 	// OAuth login

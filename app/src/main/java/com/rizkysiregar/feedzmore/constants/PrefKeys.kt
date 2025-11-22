@@ -12,4 +12,5 @@ object PrefKeys {
 	val isLoggedIn = booleanPreferencesKey("is_logged_in")
 	val token = stringPreferencesKey("token")
 	val username = stringPreferencesKey("username")
+	val userId = stringPreferencesKey("user_id")
 }

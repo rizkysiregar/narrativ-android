@@ -1,4 +1,4 @@
-package com.rizkysiregar.feedzmore.ui.presentation.common
+package com.rizkysiregar.feedzmore.ui.feature.common
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer

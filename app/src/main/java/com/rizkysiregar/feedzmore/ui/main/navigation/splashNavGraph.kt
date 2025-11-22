@@ -1,9 +1,10 @@
-package com.rizkysiregar.feedzmore.nav
+package com.rizkysiregar.feedzmore.ui.main.navigation
 
-import android.window.SplashScreen
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
+import com.rizkysiregar.feedzmore.ui.main.navigation.routes.MainPathRoute
+import com.rizkysiregar.feedzmore.ui.feature.splash.SplashRoute
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -13,7 +14,7 @@ import androidx.navigation.compose.composable
 
 
 fun NavGraphBuilder.splashGraph(navController: NavHostController) {
-	composable(Route.Splash.route) {
-
+	composable(MainPathRoute.Splash.route) {
+		SplashRoute(navController)
 	}
 }

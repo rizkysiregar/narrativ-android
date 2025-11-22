@@ -1,8 +1,5 @@
-package com.rizkysiregar.feedzmore.ui.presentation.auth
+package com.rizkysiregar.feedzmore.ui.feature.auth
 
-import android.content.Intent
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,9 +28,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.rizkysiregar.feedzmore.R
-import com.rizkysiregar.feedzmore.data.remote.model.LoginResponse
-import com.rizkysiregar.feedzmore.data.remote.model.ResultState
-import com.rizkysiregar.feedzmore.ui.presentation.common.BaseScreen
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreandroidnativeTheme
 
 
@@ -41,76 +35,42 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreandroidnativeTheme
 fun AuthScreen(
 	username: String,
 	password: String,
-	loginState: ResultState<LoginResponse>?,
 	onUsernameChange: (String) -> Unit,
 	onPasswordChange: (String) -> Unit,
 	onLoginClick: () -> Unit,
-	onDismiss: () -> Unit,
-	onGoogleClick: () -> Intent
-) {
-	BaseScreen(
-		isLoading = loginState is ResultState.Loading,
-		errorMessage = if (loginState is ResultState.Failure) loginState.message else null,
-		onErrorDismiss = onDismiss
+
 	) {
+	Column(
+		modifier = Modifier
+			.fillMaxSize()
+			.padding(16.dp),
+		verticalArrangement = Arrangement.Center
+	) {
+		OutlinedTextField(
+			value = username,
+			onValueChange = onUsernameChange,
+			label = { Text("Username") },
+			modifier = Modifier.fillMaxWidth()
+		)
+		Spacer(modifier = Modifier.height(8.dp))
 
-		val launcher = rememberLauncherForActivityResult(
-			ActivityResultContracts.StartActivityForResult()
-		) { result ->
-			print("## launcher result: " + result.data)
-		}
+		OutlinedTextField(
+			value = password,
+			onValueChange = onPasswordChange,
+			label = { Text("Password") },
+			modifier = Modifier.fillMaxWidth()
+		)
+		Spacer(modifier = Modifier.height(16.dp))
 
-		Column(
-			modifier = Modifier
-				.fillMaxSize()
-				.padding(16.dp),
-			verticalArrangement = Arrangement.Center
+		Button(
+			onClick = onLoginClick,
+			modifier = Modifier.fillMaxWidth()
 		) {
-			OutlinedTextField(
-				value = username,
-				onValueChange = onUsernameChange,
-				label = { Text("Username") },
-				modifier = Modifier.fillMaxWidth()
-			)
-			Spacer(modifier = Modifier.height(8.dp))
-
-			OutlinedTextField(
-				value = password,
-				onValueChange = onPasswordChange,
-				label = { Text("Password") },
-				modifier = Modifier.fillMaxWidth()
-			)
-			Spacer(modifier = Modifier.height(16.dp))
-
-			Button(
-				onClick = onLoginClick,
-				modifier = Modifier.fillMaxWidth()
-			) {
-				Text("Login")
-			}
-			Spacer(modifier = Modifier.height(16.dp))
-
-			OAuthIconRow(onGoogleClick = {
-				val intent = onGoogleClick()
-				launcher.launch(intent)
-			})
+			Text("Login")
 		}
+		Spacer(modifier = Modifier.height(16.dp))
+
 	}
-
-
-//	when (loginState) {
-//		is ResultState.Loading -> CircularProgressIndicator()
-//
-//		is ResultState.Success -> {
-//			Text("Welcome ${loginState.data.username}")
-//		}
-//
-//		is ResultState.Failure -> {
-//			Text("Login failed: ${loginState.message}")
-//		}
-//
-//		else -> {}
-//	}
 }
 
 
@@ -162,13 +122,9 @@ fun AuthScreenPreview() {
 		AuthScreen(
 			username = "John Doe",
 			password = "",
-			loginState = ResultState.Success(LoginResponse("123", "John Doe", "token")),
-//			loginState = ResultState.Loading,
 			onUsernameChange = {},
 			onPasswordChange = {},
 			onLoginClick = {},
-			onDismiss = {},
-			onGoogleClick = { Intent() }
 		)
 	}
 }

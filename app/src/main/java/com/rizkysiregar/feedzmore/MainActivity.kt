@@ -1,12 +1,11 @@
 package com.rizkysiregar.feedzmore
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.rizkysiregar.feedzmore.ui.main.MainRoot
 
-import com.rizkysiregar.feedzmore.ui.presentation.auth.AuthRoute
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreandroidnativeTheme
 
 import dagger.hilt.android.AndroidEntryPoint
@@ -18,7 +17,7 @@ class MainActivity : ComponentActivity() {
 		enableEdgeToEdge()
 		setContent {
 			FeedzmoreandroidnativeTheme {
-				AuthRoute()
+				MainRoot()
 			}
 		}
 	}
