@@ -8,6 +8,7 @@ import com.rizkysiregar.feedzmore.data.repository.AuthRepository
 import com.rizkysiregar.feedzmore.util.safeApiCall
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import retrofit2.Retrofit
 import javax.inject.Inject
 
 /**
@@ -16,8 +17,13 @@ import javax.inject.Inject
  * Description: Software Engineer
  */
 class AuthRepositoryImpl @Inject constructor(
-	private val authApi: AuthApi
+	private val retrofit: Retrofit
 ) : AuthRepository {
+
+	private val authApi: AuthApi by lazy {
+		retrofit.create(AuthApi::class.java)
+	}
+
 	override fun login(request: LoginRequest): Flow<ResultState<LoginResponse>> = flow {
 		emit(ResultState.Loading)
 		val result = safeApiCall {

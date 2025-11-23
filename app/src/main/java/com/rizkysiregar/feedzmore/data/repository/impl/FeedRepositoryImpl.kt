@@ -8,6 +8,7 @@ import com.rizkysiregar.feedzmore.data.repository.FeedRepository
 import com.rizkysiregar.feedzmore.util.safeApiCall
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import retrofit2.Retrofit
 import javax.inject.Inject
 
 /**
@@ -16,8 +17,12 @@ import javax.inject.Inject
  * Description: Software Engineer
  */
 class FeedRepositoryImpl @Inject constructor(
-	private val feedApi: FeedApi
+	private val retrofit: Retrofit
 ) : FeedRepository {
+	private val feedApi: FeedApi by lazy {
+		retrofit.create(FeedApi::class.java)
+	}
+
 	override fun getFeed(feedRequest: GetFeedPostRequest): Flow<ResultState<FeedsPostResponse>> =
 		flow {
 			emit(ResultState.Loading)

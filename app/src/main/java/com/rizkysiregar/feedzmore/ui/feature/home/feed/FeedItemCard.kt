@@ -11,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.rizkysiregar.feedzmore.data.remote.model.response.FeedContentItem
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreandroidnativeTheme
 
@@ -43,10 +42,7 @@ fun FeedItemCard(
 			verticalAlignment = Alignment.CenterVertically
 		) {
 			// Profile picture
-			AsyncImage(
-				model = item.imageUrl,
-				contentDescription = "User Profile Pictures"
-			)
+
 
 		}
 	}
