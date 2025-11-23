@@ -1,8 +1,8 @@
 package com.rizkysiregar.feedzmore.data.repository.impl
 
 import com.rizkysiregar.feedzmore.data.remote.api.AuthApi
-import com.rizkysiregar.feedzmore.data.remote.model.LoginRequest
-import com.rizkysiregar.feedzmore.data.remote.model.LoginResponse
+import com.rizkysiregar.feedzmore.data.remote.model.request.LoginRequest
+import com.rizkysiregar.feedzmore.data.remote.model.response.LoginResponse
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.repository.AuthRepository
 import com.rizkysiregar.feedzmore.util.safeApiCall

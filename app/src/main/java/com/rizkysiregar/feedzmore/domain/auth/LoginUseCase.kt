@@ -1,8 +1,8 @@
-package com.rizkysiregar.feedzmore.domain
+package com.rizkysiregar.feedzmore.domain.auth
 
-import com.rizkysiregar.feedzmore.data.remote.model.LoginRequest
-import com.rizkysiregar.feedzmore.data.remote.model.LoginResponse
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
+import com.rizkysiregar.feedzmore.data.remote.model.request.LoginRequest
+import com.rizkysiregar.feedzmore.data.remote.model.response.LoginResponse
 import com.rizkysiregar.feedzmore.data.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject

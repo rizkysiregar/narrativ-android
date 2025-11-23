@@ -1,8 +1,8 @@
 package com.rizkysiregar.feedzmore.data.remote.api
 
-import com.rizkysiregar.feedzmore.data.remote.model.BaseResponse
-import com.rizkysiregar.feedzmore.data.remote.model.LoginRequest
-import com.rizkysiregar.feedzmore.data.remote.model.LoginResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.BaseResponse
+import com.rizkysiregar.feedzmore.data.remote.model.request.LoginRequest
+import com.rizkysiregar.feedzmore.data.remote.model.response.LoginResponse
 import retrofit2.http.Body
 import retrofit2.http.POST
 

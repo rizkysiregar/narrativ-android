@@ -2,25 +2,25 @@ package com.rizkysiregar.feedzmore.ui.feature.auth
 
 import android.content.Intent
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.rizkysiregar.feedzmore.data.remote.model.LoginRequest
-import com.rizkysiregar.feedzmore.data.remote.model.LoginResponse
+import com.rizkysiregar.feedzmore.constants.OAuthConfig
+import com.rizkysiregar.feedzmore.constants.PrefKeys
+import com.rizkysiregar.feedzmore.data.datastore.DataStoreManager
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
-import com.rizkysiregar.feedzmore.domain.LoginUseCase
+import com.rizkysiregar.feedzmore.data.remote.model.request.LoginRequest
+import com.rizkysiregar.feedzmore.data.remote.model.response.LoginResponse
+import com.rizkysiregar.feedzmore.domain.auth.LoginUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import com.rizkysiregar.feedzmore.constants.OAuthConfig
 import net.openid.appauth.AuthorizationRequest
 import net.openid.appauth.AuthorizationService
 import net.openid.appauth.AuthorizationServiceConfiguration
 import net.openid.appauth.ResponseTypeValues
-import androidx.core.net.toUri
-import com.rizkysiregar.feedzmore.constants.PrefKeys
-import com.rizkysiregar.feedzmore.data.datastore.DataStoreManager
+import javax.inject.Inject
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
@@ -57,8 +57,6 @@ class AuthViewModel @Inject constructor(
 		println("## clearError() called")
 		_loginState.value = ResultState.Idle
 	}
-
-
 
 
 	// OAuth login

@@ -1,4 +1,4 @@
-package com.rizkysiregar.feedzmore.data.remote.model
+package com.rizkysiregar.feedzmore.data.remote.model.response
 
 /**
  * Author: Habib Rizky Almajid Siregar

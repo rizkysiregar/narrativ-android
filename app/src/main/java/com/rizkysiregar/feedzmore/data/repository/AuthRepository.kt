@@ -1,7 +1,7 @@
 package com.rizkysiregar.feedzmore.data.repository
 
-import com.rizkysiregar.feedzmore.data.remote.model.LoginRequest
-import com.rizkysiregar.feedzmore.data.remote.model.LoginResponse
+import com.rizkysiregar.feedzmore.data.remote.model.request.LoginRequest
+import com.rizkysiregar.feedzmore.data.remote.model.response.LoginResponse
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import kotlinx.coroutines.flow.Flow
 
