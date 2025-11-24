@@ -115,4 +115,8 @@ dependencies {
 	// material2
 	implementation(libs.androidx.compose.material)
 
+	// image
+	implementation(libs.coil.compose)
+
+
 }

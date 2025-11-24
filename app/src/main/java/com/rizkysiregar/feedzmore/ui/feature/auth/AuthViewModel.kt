@@ -7,7 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rizkysiregar.feedzmore.constants.OAuthConfig
 import com.rizkysiregar.feedzmore.constants.PrefKeys
-import com.rizkysiregar.feedzmore.data.datastore.DataStoreManager
+import com.rizkysiregar.feedzmore.data.cache.DataStoreManager
+import com.rizkysiregar.feedzmore.data.cache.JwtTokenHolder
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.request.LoginRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.LoginResponse
@@ -26,7 +27,8 @@ import javax.inject.Inject
 class AuthViewModel @Inject constructor(
 	private val loginUseCase: LoginUseCase,
 	private val authService: AuthorizationService,
-	private val dataStore: DataStoreManager
+	private val dataStore: DataStoreManager,
+	private val tokenHolder: JwtTokenHolder
 ) : ViewModel() {
 
 
@@ -46,6 +48,7 @@ class AuthViewModel @Inject constructor(
 						dataStore.put(PrefKeys.username, result.data.username)
 						dataStore.put(PrefKeys.userId, result.data.userId)
 						dataStore.put(PrefKeys.isLoggedIn, true)
+						tokenHolder.setToken(result.data.token)
 					}
 
 					_loginState.value = result

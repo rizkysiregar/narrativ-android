@@ -1,9 +1,8 @@
 package com.rizkysiregar.feedzmore.di
 
 import com.rizkysiregar.feedzmore.BuildConfig
-import com.rizkysiregar.feedzmore.data.remote.AuthInterceptor
-import com.rizkysiregar.feedzmore.data.remote.api.AuthApi
 import com.rizkysiregar.feedzmore.constants.Constants
+import com.rizkysiregar.feedzmore.data.remote.AuthInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -28,7 +27,9 @@ object NetworkModule {
 
 	@Provides
 	@Singleton
-	fun provideOkHttpClient(): OkHttpClient {
+	fun provideOkHttpClient(
+		authInterceptor: AuthInterceptor
+	): OkHttpClient {
 		val loggingInterceptor = HttpLoggingInterceptor().apply {
 			level = if (BuildConfig.DEBUG)
 				HttpLoggingInterceptor.Level.BODY
@@ -38,7 +39,7 @@ object NetworkModule {
 
 		return OkHttpClient.Builder()
 			.addInterceptor(loggingInterceptor)
-			.addInterceptor(AuthInterceptor { null }) // later add token provider here
+			.addInterceptor(authInterceptor)
 			.connectTimeout(30, TimeUnit.SECONDS)
 			.readTimeout(30, TimeUnit.SECONDS)
 			.build()
@@ -53,12 +54,4 @@ object NetworkModule {
 			.client(okHttpClient)
 			.build()
 	}
-
-//	@Provides
-//	@Singleton
-//	fun provideAuthApi(retrofit: Retrofit): AuthApi {
-//		return retrofit.create(AuthApi::class.java)
-//	}
-
-
 }

@@ -6,7 +6,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import kotlinx.coroutines.flow.collectLatest
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -20,25 +21,23 @@ fun FeedRoute(
 ) {
 	val uiState by viewModel.uiState.collectAsState()
 	val listState = rememberLazyListState()
+	val userId by viewModel.userId.collectAsState()
 
-
-	// Pagination trigger
-	LaunchedEffect(listState) {
+	// Detect near-bottom and trigger loadNextPage
+	LaunchedEffect(listState, uiState.hasMore, uiState.isLoadingMore, uiState.isRefreshing) {
 		snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-			.collect { lastVisible ->
+			.collectLatest { last ->
 				val total = listState.layoutInfo.totalItemsCount
-
-				val shouldLoadMore = lastVisible != null &&
-						lastVisible >= total - 3 &&
-						!uiState.isLoading &&
-						uiState.hasMore
-
-				if (shouldLoadMore) {
-					viewModel.loadNextPage()
+				if (last != null && last >= total - 3 && !uiState.isLoadingMore && uiState.hasMore && !uiState.isRefreshing) {
+					viewModel.loadNextPage(userId)
 				}
-
 			}
 	}
 
-
+	FeedScreen(
+		uiState = uiState,
+		onRefresh = { viewModel.refresh(userId) },
+		onRetry = { viewModel.loadNextPage(userId) },
+		listState = listState
+	)
 }

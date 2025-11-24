@@ -3,10 +3,9 @@ package com.rizkysiregar.feedzmore.ui.feature.splash
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.rizkysiregar.feedzmore.constants.Constants
-import com.rizkysiregar.feedzmore.ui.main.navigation.routes.HomePathRoute
 import com.rizkysiregar.feedzmore.ui.main.navigation.routes.MainPathRoute
 
 /**

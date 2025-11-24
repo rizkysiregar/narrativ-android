@@ -1,18 +1,27 @@
 package com.rizkysiregar.feedzmore.ui.feature.home.feed
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.rizkysiregar.feedzmore.data.remote.model.response.FeedContentItem
+import androidx.compose.ui.unit.dp
 
 
 /**
@@ -25,41 +34,62 @@ import com.rizkysiregar.feedzmore.data.remote.model.response.FeedContentItem
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun FeedScreen(
-	items: List<FeedContentItem>,
-	isRefreshing: Boolean,
+	uiState: FeedUiState,
 	onRefresh: () -> Unit,
-	listState: LazyListState,
-	isLoadingMore: Boolean,
+	onRetry: () -> Unit,
+	listState: LazyListState = rememberLazyListState()
 ) {
-
-	val pullRefreshState = rememberPullRefreshState(
-		refreshing = isRefreshing,
-		onRefresh = onRefresh
-	)
+	val pullState =
+		rememberPullRefreshState(refreshing = uiState.isRefreshing, onRefresh = onRefresh)
 
 	Box(
 		modifier = Modifier
 			.fillMaxSize()
-			.pullRefresh(pullRefreshState)
+			.pullRefresh(pullState)
 	) {
-		LazyColumn(state = listState) {
-			items(items) { item ->
-				// card item
+		LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+			items(uiState.items, key = { it.id }) { item ->
+				FeedItemCard(
+					item = item,
+					onLikeClick = {},
+					onCommentClick = { }
+				)
 			}
 
-			if (isLoadingMore) {
+			if (uiState.isLoadingMore) {
 				item {
-					// load more loading indicator
+					Box(
+						modifier = Modifier
+							.fillMaxWidth()
+							.padding(16.dp),
+						contentAlignment = Alignment.Center
+					) {
+						CircularProgressIndicator()
+					}
+				}
+			}
+
+			if (uiState.errorMessage != null && uiState.items.isEmpty()) {
+				// full screen error with retry if initial load failed
+				item {
+					Column(
+						modifier = Modifier
+							.fillMaxSize()
+							.padding(24.dp),
+						horizontalAlignment = Alignment.CenterHorizontally
+					) {
+						Text(text = uiState.errorMessage)
+						Spacer(modifier = Modifier.height(8.dp))
+						Button(onClick = onRetry) { Text("Retry") }
+					}
 				}
 			}
 		}
 
 		PullRefreshIndicator(
-			refreshing = isRefreshing,
-			state = pullRefreshState,
-			modifier = Modifier
-				.align(Alignment.TopCenter)
+			refreshing = uiState.isRefreshing,
+			state = pullState,
+			modifier = Modifier.align(Alignment.TopCenter)
 		)
-
 	}
 }
