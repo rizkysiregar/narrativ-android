@@ -1,6 +1,7 @@
 package com.rizkysiregar.feedzmore.ui.feature.splash
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -21,17 +22,29 @@ fun SplashRoute(
 	vm: SplashViewModel = hiltViewModel()
 ) {
 	val isLoggedIn by vm.isLoggedIn.collectAsState()
-	SplashScreen(
-		isLoggedIn,
-		onNavigateToHome = {
-			navController.navigate(Constants.HOME_GRAPH) {
-				popUpTo(MainPathRoute.Splash.route) { inclusive = true }
+
+	// launched effect only react when isLoggedIn is not null
+	LaunchedEffect(isLoggedIn) {
+		when (isLoggedIn) {
+			true -> {
+				// navigate to home
+				navController.navigate(Constants.HOME_GRAPH) {
+					popUpTo(MainPathRoute.Splash.route) { inclusive = true }
+				}
 			}
-		},
-		onNavigateToLogin = {
-			navController.navigate(MainPathRoute.Auth.route) {
-				popUpTo(MainPathRoute.Splash.route) { inclusive = true }
+
+			false -> {
+				navController.navigate(MainPathRoute.Auth.route) {
+					popUpTo(MainPathRoute.Splash.route) { inclusive = true }
+				}
+			}
+
+			null -> {
+				// Do nothing, just wait for real value from datastore coming.
 			}
 		}
-	)
+	}
+
+	// splash UI
+	SplashScreen()
 }

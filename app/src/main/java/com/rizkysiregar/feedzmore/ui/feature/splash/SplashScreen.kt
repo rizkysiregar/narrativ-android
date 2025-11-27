@@ -18,16 +18,7 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreandroidnativeTheme
 
 
 @Composable
-fun SplashScreen(
-	isLoggedIn: Boolean,
-	onNavigateToHome: () -> Unit,
-	onNavigateToLogin: () -> Unit
-) {
-	LaunchedEffect(isLoggedIn) {
-		if (isLoggedIn) onNavigateToHome()
-		else onNavigateToLogin()
-	}
-
+fun SplashScreen() {
 	// UI
 	Box(
 		modifier = Modifier.fillMaxSize(),
@@ -42,11 +33,7 @@ fun SplashScreen(
 @Composable
 fun SplashScreenPreview() {
 	FeedzmoreandroidnativeTheme {
-		SplashScreen(
-			isLoggedIn = false,
-			onNavigateToHome = {},
-			onNavigateToLogin = {}
-		)
+		SplashScreen()
 	}
 }
 
