@@ -21,7 +21,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.rizkysiregar.feedzmore.data.remote.model.response.FeedContentItem
+import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreandroidnativeTheme
 
 
 /**
@@ -90,6 +93,32 @@ fun FeedScreen(
 			refreshing = uiState.isRefreshing,
 			state = pullState,
 			modifier = Modifier.align(Alignment.TopCenter)
+		)
+	}
+}
+
+@Composable
+@Preview(showBackground = true)
+fun FeedScreenPreview(modifier: Modifier = Modifier) {
+	FeedzmoreandroidnativeTheme {
+		FeedScreen(
+			uiState = FeedUiState(
+				items = List(10) { index ->
+					FeedContentItem(
+						id = index.toString(),
+						caption = "This is caption $index",
+						commentCount = 1,
+						likeCount = 1,
+						liked = true,
+						createdAt = "2023-11-25",
+						imageUrl = "https://dummy-url",
+						username = "John Doe"
+					)
+				}
+			),
+			onRefresh = {},
+			onRetry = {},
+			listState = rememberLazyListState()
 		)
 	}
 }

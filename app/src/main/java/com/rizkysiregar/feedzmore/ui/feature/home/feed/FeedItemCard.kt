@@ -1,7 +1,6 @@
 package com.rizkysiregar.feedzmore.ui.feature.home.feed
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -32,7 +32,9 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import com.rizkysiregar.feedzmore.constants.Constants
+import coil3.request.ImageRequest
+import coil3.request.placeholder
+import com.rizkysiregar.feedzmore.R
 import com.rizkysiregar.feedzmore.data.remote.model.response.FeedContentItem
 
 /**
@@ -64,7 +66,7 @@ fun FeedItemCard(
 		) {
 			// Profile picture
 			AsyncImage(
-				model = Constants.BASE_IMAGE_URL + item.imageUrl,
+				model = item.imageUrl,
 				contentDescription = "Profile Picture",
 				modifier = Modifier
 					.size(42.dp)
@@ -87,7 +89,11 @@ fun FeedItemCard(
 
 		// --- Main Post Image ---
 		AsyncImage(
-			model = item.imageUrl,
+			model = ImageRequest
+				.Builder(LocalContext.current)
+				.data(item.imageUrl)
+				.placeholder(R.drawable.outline_downloading_24)
+				.build(),
 			contentDescription = "Feed Image",
 			modifier = Modifier
 				.fillMaxWidth()

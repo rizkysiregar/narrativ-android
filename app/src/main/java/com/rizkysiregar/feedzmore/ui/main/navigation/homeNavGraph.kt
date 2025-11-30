@@ -5,8 +5,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.rizkysiregar.feedzmore.constants.Constants
-import com.rizkysiregar.feedzmore.ui.main.navigation.routes.HomePathRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.HomeRoot
+import com.rizkysiregar.feedzmore.ui.main.navigation.routes.HomePathRoute
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -21,7 +21,7 @@ fun NavGraphBuilder.homeGraph(navHostController: NavHostController) {
 		startDestination = HomePathRoute.Feed.route
 	) {
 		composable(HomePathRoute.Feed.route) {
-			HomeRoot()
+			HomeRoot(navHostController)
 		}
 	}
 }
