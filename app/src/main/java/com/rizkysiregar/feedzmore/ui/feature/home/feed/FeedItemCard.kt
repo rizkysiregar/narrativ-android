@@ -32,10 +32,14 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import coil3.network.NetworkHeaders
+import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import coil3.request.placeholder
 import com.rizkysiregar.feedzmore.R
+import com.rizkysiregar.feedzmore.constants.Constants
 import com.rizkysiregar.feedzmore.data.remote.model.response.FeedContentItem
+import com.rizkysiregar.feedzmore.util.buildGetUrl
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -50,6 +54,7 @@ fun FeedItemCard(
 	onLikeClick: (FeedContentItem) -> Unit = {},
 	onCommentClick: (FeedContentItem) -> Unit = {},
 	onUserClick: (FeedContentItem) -> Unit = {},
+	token: String
 ) {
 
 	Column(
@@ -66,12 +71,28 @@ fun FeedItemCard(
 		) {
 			// Profile picture
 			AsyncImage(
-				model = item.imageUrl,
+				model = ImageRequest
+					.Builder(LocalContext.current)
+					.data(
+						buildGetUrl(
+							Constants.BASE_IMAGE_URL,
+							mapOf(
+								"objectName" to item.imageUrl,
+								"bucketName" to Constants.BUCKET_FEED
+							)
+						),
+					)
+					.httpHeaders(
+						NetworkHeaders.Builder()
+							.add("Authorization", "Bearer $token")
+							.build()
+					)
+					.placeholder(R.drawable.outline_downloading_24)
+					.build(),
 				contentDescription = "Profile Picture",
 				modifier = Modifier
 					.size(42.dp)
 					.clip(CircleShape),
-//					.clickable { onUserClick(item) },
 				contentScale = ContentScale.Crop
 			)
 
@@ -91,7 +112,20 @@ fun FeedItemCard(
 		AsyncImage(
 			model = ImageRequest
 				.Builder(LocalContext.current)
-				.data(item.imageUrl)
+				.data(
+					buildGetUrl(
+						Constants.BASE_IMAGE_URL,
+						mapOf(
+							"objectName" to item.imageUrl,
+							"bucketName" to Constants.BUCKET_FEED
+						)
+					),
+				)
+				.httpHeaders(
+					NetworkHeaders.Builder()
+						.add("Authorization", "Bearer $token")
+						.build()
+				)
 				.placeholder(R.drawable.outline_downloading_24)
 				.build(),
 			contentDescription = "Feed Image",
@@ -177,6 +211,7 @@ fun FeedItemCardPreview() {
 			createdAt = "2023-11-25",
 			imageUrl = "https://dummy-url",
 			username = "John Doe"
-		)
+		),
+		token = "jwt-token"
 	)
 }

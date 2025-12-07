@@ -45,6 +45,13 @@ class FeedViewModel @Inject constructor(
 			""
 		)
 
+	val token = dataStore.get(PrefKeys.token, "")
+		.stateIn(
+			scope = viewModelScope,
+			started = SharingStarted.WhileSubscribed(5000),
+			initialValue = ""
+		)
+
 	init {
 		// initial load
 		viewModelScope.launch {

@@ -40,7 +40,8 @@ fun FeedScreen(
 	uiState: FeedUiState,
 	onRefresh: () -> Unit,
 	onRetry: () -> Unit,
-	listState: LazyListState = rememberLazyListState()
+	listState: LazyListState = rememberLazyListState(),
+	token: String
 ) {
 	val pullState =
 		rememberPullRefreshState(refreshing = uiState.isRefreshing, onRefresh = onRefresh)
@@ -55,7 +56,8 @@ fun FeedScreen(
 				FeedItemCard(
 					item = item,
 					onLikeClick = {},
-					onCommentClick = { }
+					onCommentClick = { },
+					token = token
 				)
 			}
 
@@ -118,7 +120,8 @@ fun FeedScreenPreview(modifier: Modifier = Modifier) {
 			),
 			onRefresh = {},
 			onRetry = {},
-			listState = rememberLazyListState()
+			listState = rememberLazyListState(),
+			token = "jwt-token"
 		)
 	}
 }
