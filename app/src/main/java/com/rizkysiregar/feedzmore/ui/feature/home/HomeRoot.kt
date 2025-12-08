@@ -11,6 +11,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.rizkysiregar.feedzmore.constants.Constants
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedRoute
+import com.rizkysiregar.feedzmore.ui.feature.home.post.PostFeedRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.profile.ProfileRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.search.SearchRoute
 import com.rizkysiregar.feedzmore.ui.main.navigation.BottomNavScreen
@@ -66,6 +67,11 @@ fun HomeRoot(
 		) {
 			composable(BottomNavScreen.Feed.route) { FeedRoute() }
 			composable(BottomNavScreen.Search.route) { SearchRoute() }
+			composable(BottomNavScreen.PostFeed.route) {
+				PostFeedRoute(
+					navController = homeNavController
+				)
+			}
 			composable(BottomNavScreen.Profile.route) {
 				ProfileRoute(
 					onLogoutClick = {

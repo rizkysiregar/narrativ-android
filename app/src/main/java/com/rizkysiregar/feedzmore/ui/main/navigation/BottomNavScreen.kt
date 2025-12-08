@@ -1,6 +1,7 @@
 package com.rizkysiregar.feedzmore.ui.main.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -19,5 +20,6 @@ sealed class BottomNavScreen(
 ) {
 	object Feed : BottomNavScreen("feed", "Feed", Icons.Default.Home)
 	object Search : BottomNavScreen("search", "Search", Icons.Default.Search)
+	object PostFeed : BottomNavScreen("post_feed", "Post Feed", Icons.Default.Add)
 	object Profile : BottomNavScreen("profile", "Profile", Icons.Default.Person)
 }
