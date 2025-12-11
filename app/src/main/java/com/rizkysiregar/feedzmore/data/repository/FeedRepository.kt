@@ -2,7 +2,9 @@ package com.rizkysiregar.feedzmore.data.repository
 
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.request.GetFeedPostRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.PostingFeedRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.FeedsPostResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.PostingFeedResponse
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -12,4 +14,5 @@ import kotlinx.coroutines.flow.Flow
  */
 interface FeedRepository {
 	fun getFeed(feedRequest: GetFeedPostRequest): Flow<ResultState<FeedsPostResponse>>
+	fun postingFeed(postingFeedRequest: PostingFeedRequest): Flow<ResultState<PostingFeedResponse>>
 }

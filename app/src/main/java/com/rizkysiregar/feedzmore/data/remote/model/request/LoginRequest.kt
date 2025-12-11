@@ -5,7 +5,7 @@ package com.rizkysiregar.feedzmore.data.remote.model.request
  * Date: 18/08/25
  * Description: Software Engineer
  */
- data class LoginRequest(
-  val username: String,
-  val password: String,
-  )
+data class LoginRequest(
+	val username: String,
+	val password: String,
+)

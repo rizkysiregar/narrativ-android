@@ -4,10 +4,21 @@ import android.app.Application
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.rizkysiregar.feedzmore.data.remote.model.ResultState
+import com.rizkysiregar.feedzmore.data.remote.model.request.PostingFeedRequest
+import com.rizkysiregar.feedzmore.data.remote.model.response.PostingFeedResponse
+import com.rizkysiregar.feedzmore.data.repository.UserDataRepository
+import com.rizkysiregar.feedzmore.domain.feed.PostingFeedUseCase
+import com.rizkysiregar.feedzmore.util.uriToRequestBody
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import okhttp3.MultipartBody
 import javax.inject.Inject
 
 /**
@@ -18,17 +29,24 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PostFeedViewModel @Inject constructor(
-	private val app: Application
+	private val app: Application,
+	private val postingFeedUseCase: PostingFeedUseCase,
+	private val userDataRepository: UserDataRepository
 ) : ViewModel() {
 
 
 //	private val _selectedImageUri = MutableStateFlow<Uri?>(null)
 //	val selectedImageUri = _selectedImageUri.asStateFlow()
 
+
+	// UI State for watching property changes
 	private val _uiState = MutableStateFlow(PostFeedUiState())
 	val uiState = _uiState.asStateFlow()
 
 
+	// State of posting, whether is loading, success or failure
+	private val _postingState = MutableStateFlow<ResultState<PostingFeedResponse>?>(null)
+	val postingState: StateFlow<ResultState<PostingFeedResponse>?> = _postingState
 	fun onImageSelected(uri: Uri) {
 		Log.i("PostFeedViewModel", "## onImageSelected() called")
 		_uiState.update {
@@ -41,6 +59,40 @@ class PostFeedViewModel @Inject constructor(
 		_uiState.update {
 			it.copy(caption = caption)
 		}
+	}
+
+	fun postingFeed(postingFeedRequest: PostingFeedRequest) {
+		viewModelScope.launch {
+			val currentUsername = userDataRepository.username.first() { it.isNotEmpty() }
+
+			// -- Convert Image URI to MultipartBody.Part -- //
+			val imageRequestBody =
+				uriToRequestBody(app.applicationContext, postingFeedRequest.imageUri)
+
+			val imagePart = MultipartBody.Part.createFormData(
+				name = "image",
+				filename = "upload_image.jpg",
+				body = imageRequestBody
+			)
+
+			postingFeedRequest.imagePart = imagePart
+			postingFeedRequest.username = currentUsername
+
+			// -- Invoke UseCase -- //
+			postingFeedUseCase(postingFeedRequest).collect { result ->
+				println("## postingState: $result")
+				if (result is ResultState.Success) {
+					// if there is something ToDo with response payload, do it here
+				}
+
+				// set the current state
+				_postingState.value = result
+			}
+		}
+	}
+
+	fun resetPostingState() {
+		_postingState.value = ResultState.Idle
 	}
 
 

@@ -14,9 +14,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
@@ -32,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import coil3.compose.AsyncImage
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreandroidnativeTheme
 
@@ -60,7 +65,14 @@ fun PostFeedScreen(
 		}
 	}
 
-	Column(Modifier.fillMaxSize()) {
+
+	Column(
+		modifier = Modifier
+			.fillMaxSize()
+			.navigationBarsPadding()
+			.imePadding()
+			.verticalScroll(rememberScrollState())
+	) {
 
 		// -- Preview -- //
 		Box(
@@ -72,7 +84,6 @@ fun PostFeedScreen(
 			uiState.selectedImage?.let { imageUri ->
 				AsyncImage(
 					model = imageUri,
-
 					contentDescription = null,
 					modifier = Modifier.fillMaxSize(),
 					contentScale = ContentScale.Crop
@@ -134,7 +145,7 @@ fun PostFeedScreen(
 
 			// Character counter (optional)
 			Text(
-				text = "${uiState.caption?.length}/2200",
+				text = "${uiState.caption.length}/2200",
 				style = MaterialTheme.typography.labelSmall,
 				color = Color.Gray,
 				modifier = Modifier.align(Alignment.End)
@@ -154,6 +165,7 @@ fun PostFeedScreen(
 		}
 
 	}
+
 }
 
 
@@ -162,7 +174,7 @@ fun PostFeedScreen(
 private fun PostImagePickerScreenPreview() {
 	FeedzmoreandroidnativeTheme {
 		PostFeedScreen(
-			uiState = PostFeedUiState(),
+			uiState = PostFeedUiState(selectedImage = "https://example.com/image.jpg".toUri()),
 			onCaptionChange = {},
 			onPickImage = {},
 			onNext = {}

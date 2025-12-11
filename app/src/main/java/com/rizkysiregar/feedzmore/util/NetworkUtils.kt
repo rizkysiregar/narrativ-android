@@ -1,5 +1,6 @@
 package com.rizkysiregar.feedzmore.util
 
+import android.util.Log
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import org.json.JSONObject
 import retrofit2.HttpException
@@ -27,6 +28,7 @@ suspend fun <T> safeApiCall(
 
 		ResultState.Failure(msg)
 	} catch (e: Exception) {
-		ResultState.Failure("Network error: please check your internet connection")
+		Log.e("safeApiCall", "Exception: $e")
+		ResultState.Failure("Something went wrong, please try again later")
 	}
 }

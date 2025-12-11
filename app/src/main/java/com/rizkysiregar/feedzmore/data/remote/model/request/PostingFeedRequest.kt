@@ -1,0 +1,16 @@
+package com.rizkysiregar.feedzmore.data.remote.model.request
+
+import android.net.Uri
+import okhttp3.MultipartBody
+
+/**
+ * Author: Habib Rizky Almajid Siregar
+ * Date: 09/12/25
+ * Description: Software Engineer
+ */
+data class PostingFeedRequest(
+	var username: String,
+	val caption: String,
+	val imageUri: Uri,
+	var imagePart: MultipartBody.Part?
+)
