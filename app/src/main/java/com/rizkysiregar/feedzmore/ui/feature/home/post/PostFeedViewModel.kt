@@ -81,11 +81,6 @@ class PostFeedViewModel @Inject constructor(
 			// -- Invoke UseCase -- //
 			postingFeedUseCase(postingFeedRequest).collect { result ->
 				println("## postingState: $result")
-				if (result is ResultState.Success) {
-					// if there is something ToDo with response payload, do it here
-				}
-
-				// set the current state
 				_postingState.value = result
 			}
 		}

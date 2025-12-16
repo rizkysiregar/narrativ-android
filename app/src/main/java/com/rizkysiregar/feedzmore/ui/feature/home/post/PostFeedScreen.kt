@@ -109,7 +109,6 @@ fun PostFeedScreen(
 					tint = Color.Black
 				)
 			}
-
 		}
 
 		Spacer(Modifier.height(16.dp))
