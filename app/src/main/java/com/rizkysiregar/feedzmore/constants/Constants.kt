@@ -10,8 +10,8 @@ package com.rizkysiregar.feedzmore.constants
 object Constants {
 
 	// env url
-	//const val domain = "http://10.0.2.2:9091/" // local
-	//const val domain = "http://192.168.1.3:9091/" // local
+	//const val domain = "http://10.0.2.2:9091/" // local via emu
+	//const val domain = "http://192.168.1.10:9091/" // local via mac intellij | dynamic base on laptop ip address
 	//const val domain = "http://100.126.105.106:9091/" // tailscale ubuntu server
 	const val domain = "http://192.168.1.50:9091/" // dev
 

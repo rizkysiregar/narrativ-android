@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -32,7 +33,10 @@ fun BaseScreen(
 		Box(
 			modifier = Modifier
 				.fillMaxSize()
-				.padding(padding)
+				.padding(
+					top = if (topBar != null) padding.calculateTopPadding() else 0.dp,
+					bottom = padding.calculateBottomPadding()
+				)
 		) {
 
 			// always visible screen UI
