@@ -36,6 +36,7 @@ import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import coil3.request.placeholder
+import com.rizkysiregar.feedzmore.BuildConfig
 import com.rizkysiregar.feedzmore.R
 import com.rizkysiregar.feedzmore.constants.Constants
 import com.rizkysiregar.feedzmore.data.remote.model.response.FeedContentItem
@@ -75,7 +76,7 @@ fun FeedItemCard(
 					.Builder(LocalContext.current)
 					.data(
 						buildGetUrl(
-							Constants.BASE_IMAGE_URL,
+							BuildConfig.BASE_IMAGE_URL,
 							mapOf(
 								"objectName" to item.imageUrl,
 								"bucketName" to Constants.BUCKET_FEED
@@ -114,7 +115,7 @@ fun FeedItemCard(
 				.Builder(LocalContext.current)
 				.data(
 					buildGetUrl(
-						Constants.BASE_IMAGE_URL,
+						BuildConfig.BASE_IMAGE_URL,
 						mapOf(
 							"objectName" to item.imageUrl,
 							"bucketName" to Constants.BUCKET_FEED

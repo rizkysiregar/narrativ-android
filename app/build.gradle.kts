@@ -1,5 +1,12 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
+/*
+*  Build Types > debug, release
+*  Product Flavours > dev, staging, prod
+*
+* */
+
+
 plugins {
 	alias(libs.plugins.android.application)
 	alias(libs.plugins.kotlin.android)
@@ -11,6 +18,41 @@ plugins {
 android {
 	namespace = "com.rizkysiregar.feedzmore"
 	compileSdk = 35
+	flavorDimensions += "env"
+
+	productFlavors {
+
+		create("local") {
+			dimension = "env"
+			buildConfigField(
+				"String",
+				"BASE_URL",
+				"\"http://localhost:9091/api/v1/\""
+			)
+			buildConfigField(
+				"String",
+				"BASE_IMAGE_URL",
+				"\"http://localhost:9091/api/v1/res/file\""
+			)
+		}
+
+		create("dev") {
+			dimension = "env"
+			buildConfigField(
+				"String",
+				"BASE_URL",
+				"\"https://feedzmore-dev.rizkysiregar.my.id/api/v1/\""
+			)
+			buildConfigField(
+				"String",
+				"BASE_IMAGE_URL",
+				"\"https://feedzmore-dev.rizkysiregar.my.id/api/v1/res/file\""
+			)
+		}
+
+
+	}
+
 
 	defaultConfig {
 		applicationId = "com.rizkysiregar.feedzmore"

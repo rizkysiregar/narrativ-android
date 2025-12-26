@@ -8,18 +8,8 @@ package com.rizkysiregar.feedzmore.constants
  */
 
 object Constants {
-
-	// env url
-	//const val domain = "http://10.0.2.2:9091/" // local via emu
-	//const val domain = "http://192.168.1.10:9091/" // local via mac intellij | dynamic base on laptop ip address
-	//const val domain = "http://100.126.105.106:9091/" // tailscale ubuntu server
-	const val domain = "http://192.168.1.50:9091/" // dev
-
-	const val BASE_URL = "${domain}api/v1/";
-	const val BASE_IMAGE_URL = "${domain}api/v1/res/file";
 	const val MAIN_GRAPH = "main_graph"
 	const val HOME_GRAPH = "home_graph"
-
 
 	// bucket image name list
 	val BUCKET_FEED = "test-bucket";
