@@ -5,14 +5,16 @@
         <domain includeSubdomains="false">192.168.1.50</domain>
     </domain-config>
 
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">192.168.1.10</domain>
-    </domain-config>
+    <!--    <domain-config cleartextTrafficPermitted="true">-->
+    <!--        <domain includeSubdomains="false">192.168.1.10</domain>-->
+    <!--    </domain-config>-->
 
+    <!--  Tailscale Dev  -->
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="false">100.126.105.106</domain>
     </domain-config>
 
+    <!--  Local IDE Via Emulator  -->
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="false">10.0.2.2</domain>
     </domain-config>

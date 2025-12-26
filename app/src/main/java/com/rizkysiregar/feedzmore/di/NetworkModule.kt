@@ -1,7 +1,6 @@
 package com.rizkysiregar.feedzmore.di
 
 import com.rizkysiregar.feedzmore.BuildConfig
-import com.rizkysiregar.feedzmore.constants.Constants
 import com.rizkysiregar.feedzmore.data.remote.AuthInterceptor
 import dagger.Module
 import dagger.Provides
@@ -49,7 +48,8 @@ object NetworkModule {
 	@Singleton
 	fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
 		return Retrofit.Builder()
-			.baseUrl(Constants.BASE_URL)
+//			.baseUrl(Constants.BASE_URL)
+			.baseUrl(BuildConfig.BASE_URL)
 			.addConverterFactory(GsonConverterFactory.create())
 			.client(okHttpClient)
 			.build()
