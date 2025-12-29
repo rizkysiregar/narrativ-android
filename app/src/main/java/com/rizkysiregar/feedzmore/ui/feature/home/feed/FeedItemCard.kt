@@ -13,12 +13,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.MailOutline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,10 +34,15 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import coil3.compose.SubcomposeAsyncImage
 import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import coil3.request.placeholder
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.rizkysiregar.feedzmore.BuildConfig
 import com.rizkysiregar.feedzmore.R
 import com.rizkysiregar.feedzmore.constants.Constants
@@ -58,6 +65,8 @@ fun FeedItemCard(
 	token: String
 ) {
 
+	val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.image_loader_blue))
+
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -72,24 +81,15 @@ fun FeedItemCard(
 		) {
 			// Profile picture
 			AsyncImage(
-				model = ImageRequest
-					.Builder(LocalContext.current)
-					.data(
+				model = ImageRequest.Builder(LocalContext.current).data(
 						buildGetUrl(
-							BuildConfig.BASE_IMAGE_URL,
-							mapOf(
-								"objectName" to item.imageUrl,
-								"bucketName" to Constants.BUCKET_FEED
+							BuildConfig.BASE_IMAGE_URL, mapOf(
+								"objectName" to item.imageUrl, "bucketName" to Constants.BUCKET_FEED
 							)
 						),
-					)
-					.httpHeaders(
-						NetworkHeaders.Builder()
-							.add("Authorization", "Bearer $token")
-							.build()
-					)
-					.placeholder(R.drawable.outline_downloading_24)
-					.build(),
+					).httpHeaders(
+						NetworkHeaders.Builder().add("Authorization", "Bearer $token").build()
+					).placeholder(R.drawable.outline_person_gray_24).build(),
 				contentDescription = "Profile Picture",
 				modifier = Modifier
 					.size(42.dp)
@@ -109,33 +109,35 @@ fun FeedItemCard(
 			)
 		}
 
-		// --- Main Post Image ---
-		AsyncImage(
-			model = ImageRequest
-				.Builder(LocalContext.current)
-				.data(
+		// -- Main POst Image with lottie as placeholder animation
+		SubcomposeAsyncImage(
+			model = ImageRequest.Builder(LocalContext.current).data(
 					buildGetUrl(
-						BuildConfig.BASE_IMAGE_URL,
-						mapOf(
-							"objectName" to item.imageUrl,
-							"bucketName" to Constants.BUCKET_FEED
+						BuildConfig.BASE_IMAGE_URL, mapOf(
+							"objectName" to item.imageUrl, "bucketName" to Constants.BUCKET_FEED
 						)
 					),
-				)
-				.httpHeaders(
-					NetworkHeaders.Builder()
-						.add("Authorization", "Bearer $token")
-						.build()
-				)
-				.placeholder(R.drawable.outline_downloading_24)
-				.build(),
+				).httpHeaders(
+					NetworkHeaders.Builder().add("Authorization", "Bearer $token").build()
+				).placeholder(R.drawable.outline_downloading_24).build(),
 			contentDescription = "Feed Image",
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(350.dp)
 				.background(Color.LightGray),
-			contentScale = ContentScale.Crop
-		)
+			contentScale = ContentScale.Crop,
+			loading = {
+				// show lottie while loading
+				LottieAnimation(
+					composition = composition, iterations = LottieConstants.IterateForever
+				)
+			},
+			error = {
+				Icon(Icons.Outlined.Info, contentDescription = "Error")
+			})
+
+
+
 
 		Spacer(Modifier.height(8.dp))
 
@@ -163,8 +165,7 @@ fun FeedItemCard(
 
 			IconButton(onClick = { onCommentClick(item) }) {
 				Icon(
-					imageVector = Icons.Outlined.MailOutline,
-					contentDescription = "Comment"
+					imageVector = Icons.Outlined.MailOutline, contentDescription = "Comment"
 				)
 			}
 
@@ -190,8 +191,7 @@ fun FeedItemCard(
 					}
 					append("  ")
 					append(item.caption)
-				},
-				style = MaterialTheme.typography.bodyMedium
+				}, style = MaterialTheme.typography.bodyMedium
 			)
 			Spacer(Modifier.height(6.dp))
 		}
@@ -212,7 +212,6 @@ fun FeedItemCardPreview() {
 			createdAt = "2023-11-25",
 			imageUrl = "https://dummy-url",
 			username = "John Doe"
-		),
-		token = "jwt-token"
+		), token = "jwt-token"
 	)
 }

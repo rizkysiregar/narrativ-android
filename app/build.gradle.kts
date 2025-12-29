@@ -49,8 +49,6 @@ android {
 				"\"https://feedzmore-dev.rizkysiregar.my.id/api/v1/res/file\""
 			)
 		}
-
-
 	}
 
 
