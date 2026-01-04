@@ -66,6 +66,7 @@ class FeedViewModel @Inject constructor(
 	// Public: pull-to-refresh
 	fun refresh(userId: String) {
 		println("## viewModel.refresh() called")
+		_uiState.update { it.copy(isError = false) }
 		if (_uiState.value.isRefreshing) return
 
 		viewModelScope.launch {
@@ -86,6 +87,7 @@ class FeedViewModel @Inject constructor(
 	// Public: load next page (scroll)
 	fun loadNextPage(userId: String) {
 		println("## viewModel.loadNextPage() called")
+		_uiState.update { it.copy(isError = false) }
 		val state = _uiState.value
 		if (!state.hasMore || state.isLoadingMore || state.isRefreshing) return
 
@@ -182,11 +184,13 @@ class FeedViewModel @Inject constructor(
 					}
 
 					is ResultState.Failure -> {
+						println("## viewModel.loadPage() Failure: ${result.message}")
 						_uiState.update {
 							it.copy(
 								isLoadingMore = false,
 								isRefreshing = false,
-								errorMessage = result.message
+								errorMessage = result.message,
+								isError = true
 							)
 						}
 					}
