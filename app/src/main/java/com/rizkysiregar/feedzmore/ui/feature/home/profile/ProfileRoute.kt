@@ -6,6 +6,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedViewModel
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreandroidnativeTheme
 
 /**
@@ -16,27 +18,43 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreandroidnativeTheme
 
 @Composable
 fun ProfileRoute(
-	vm: ProfileViewModel = hiltViewModel(),
+	profileVm: ProfileViewModel = hiltViewModel(),
+	feedViewModel: FeedViewModel = hiltViewModel(),
 	onLogoutClick: () -> Unit
 ) {
-	val profileState by vm.profileState.collectAsState()
-	val token by vm.token.collectAsState()
-	val userId by vm.userId.collectAsState()
+	// states from profile viewmodel
+	val profileState by profileVm.profileState.collectAsState()
+	val userId by profileVm.userId.collectAsState()
+	val token by profileVm.token.collectAsState()
+
+	// Get post list state from feed viewmodel
+	val feedState by feedViewModel.uiState.collectAsStateWithLifecycle()
+
 
 	// trigger fetch when entering this page
-	LaunchedEffect(Unit) {
-		vm.fetchUserProfile()
+	LaunchedEffect(userId) {
+		if (userId.isNotEmpty()) {
+			profileVm.fetchUserProfile()
+			feedViewModel.refresh(userId)
+		}
 	}
 
 	profileState?.let {
 		ProfileScreen(
 			profileState = it,
-			onRetry = { vm.fetchUserProfile() },
+			feedState = feedState,
+			onRetry = { profileVm.fetchUserProfile() },
+			onLoadNextPage = {
+				if (userId.isNotEmpty()) {
+					feedViewModel.loadNextPage(userId)
+				}
+			},
 			onExitClick = {
-				vm.clearDataStore()
+				profileVm.clearDataStore()
 				onLogoutClick()
 			},
-			userId = userId
+			userId = userId,
+			token = token
 		)
 	}
 }

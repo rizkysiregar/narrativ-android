@@ -1,19 +1,16 @@
 package com.rizkysiregar.feedzmore.ui.feature.home.feed
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.rizkysiregar.feedzmore.constants.PrefKeys
 import com.rizkysiregar.feedzmore.data.cache.DataStoreManager
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.request.GetFeedPostRequest
 import com.rizkysiregar.feedzmore.domain.feed.GetFeedPostUseCase
+import com.rizkysiregar.feedzmore.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -29,7 +26,7 @@ import javax.inject.Inject
 class FeedViewModel @Inject constructor(
 	private val getFeedPostUseCase: GetFeedPostUseCase,
 	private val dataStore: DataStoreManager
-) : ViewModel() {
+) : BaseViewModel(dataStore) {
 
 	private val _uiState = MutableStateFlow(FeedUiState())
 	val uiState: StateFlow<FeedUiState> = _uiState.asStateFlow()
@@ -38,22 +35,9 @@ class FeedViewModel @Inject constructor(
 	private val endlessLoopEnabled = true // toggle: true = loop when last == true
 
 
-	val userId = dataStore.get(PrefKeys.userId, "")
-		.stateIn(
-			viewModelScope,
-			SharingStarted.WhileSubscribed(5000),
-			""
-		)
-
-	val token = dataStore.get(PrefKeys.token, "")
-		.stateIn(
-			scope = viewModelScope,
-			started = SharingStarted.WhileSubscribed(5000),
-			initialValue = ""
-		)
-
 	init {
 		// initial load
+		println("## FeedViewModel init")
 		viewModelScope.launch {
 			userId.collect { id ->
 				if (id.isNotEmpty()) {

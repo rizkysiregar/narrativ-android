@@ -4,12 +4,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.Button
@@ -23,14 +26,29 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import coil3.network.NetworkHeaders
+import coil3.network.httpHeaders
+import coil3.request.ImageRequest
+import coil3.request.placeholder
+import com.rizkysiregar.feedzmore.BuildConfig
+import com.rizkysiregar.feedzmore.R
+import com.rizkysiregar.feedzmore.constants.Constants
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
+import com.rizkysiregar.feedzmore.data.remote.model.response.FeedContentItem
 import com.rizkysiregar.feedzmore.data.remote.model.response.UserProfileResponse
 import com.rizkysiregar.feedzmore.ui.components.ProfileAvatar
+import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedUiState
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreandroidnativeTheme
+import com.rizkysiregar.feedzmore.util.buildGetUrl
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -42,10 +60,13 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreandroidnativeTheme
 @Composable
 fun ProfileScreen(
 	profileState: ResultState<UserProfileResponse>,
+	feedState: FeedUiState,
 	onExitClick: () -> Unit,
 	onRetry: () -> Unit,
+	onLoadNextPage: () -> Unit, // pagination handler
 	modifier: Modifier = Modifier,
-	userId: String
+	userId: String,
+	token: String
 ) {
 	Scaffold(
 		topBar = {
@@ -77,7 +98,8 @@ fun ProfileScreen(
 				is ResultState.Success -> {
 					val user = profileState.data
 					LazyColumn(
-						modifier = Modifier.fillMaxSize(),
+						modifier = Modifier
+							.fillMaxSize()
 					) {
 						// item 1: User Profile information section
 						item {
@@ -95,49 +117,93 @@ fun ProfileScreen(
 							)
 						}
 
+						// User post section
+						if (feedState.isError && feedState.items.isEmpty()) { // error or items empty
+							item {
+								Text(
+									"Could not load post.",
+									modifier = Modifier.padding(16.dp),
+									color = MaterialTheme.colorScheme.error
+								)
+							}
+						} else { // success show the list posts
+							// --- START: MODIFIED GRID SECTION ---
+							val posts = feedState.items
+							val itemsPerRow = 3
 
-						// item 3: The Post Grid.
-						// This is NOT a LazyVerticalGrid. It's a regular grid
-						// that lives inside the main LazyColumn.
-						// We achieve this by creating a grid layout manually with Rows.
-						val items = (1..20).toList() // Your list of posts
-						val columns = 3
-						val rows = (items.size + columns - 1) / columns // Calculate rows needed
-
-						items(rows) { rowIndex ->
-							Row(
-								modifier = Modifier
-									.fillMaxWidth()
-									.padding(horizontal = 12.dp), // Add padding for spacing
-								horizontalArrangement = Arrangement.spacedBy(4.dp)
-							) {
-								for (columnIndex in 0 until columns) {
-									val itemIndex = rowIndex * columns + columnIndex
-									if (itemIndex < items.size) {
+							// Group the posts into chunks of 3 for each row
+							val chunkedPosts = posts.chunked(itemsPerRow)
+							items(chunkedPosts) { rowItems ->
+								Row(
+									modifier = Modifier
+										.fillMaxWidth()
+										.padding(horizontal = 16.dp), // Add horizontal padding to the row
+									horizontalArrangement = Arrangement.spacedBy(4.dp) // Space between items
+								) {
+									// Create items in the row
+									for (post in rowItems) {
 										Surface(
 											modifier = Modifier
-												.weight(1f) // Each item takes equal space in the row
-												.aspectRatio(1f), // Makes it a square
-											shape = MaterialTheme.shapes.small,
-											color = MaterialTheme.colorScheme.surfaceVariant
+												.weight(1f) // Each item takes equal space
+												.aspectRatio(1f), // Make it a square
+											shape = RectangleShape
 										) {
-											Box(contentAlignment = Alignment.Center) {
-												Text("Post $itemIndex")
-											}
+											AsyncImage(
+												model = ImageRequest.Builder(LocalContext.current)
+													.data(
+														buildGetUrl(
+															BuildConfig.BASE_IMAGE_URL, mapOf(
+																"objectName" to post.imageUrl,
+																"bucketName" to Constants.BUCKET_FEED
+															)
+														)
+													).httpHeaders(
+														NetworkHeaders.Builder()
+															.add("Authorization", "Bearer $token")
+															.build()
+													).placeholder(R.drawable.outline_person_gray_24)
+													.build(),
+												contentDescription = "User Feed Photo Item",
+												modifier = Modifier.fillMaxSize(), // Fill the Surface
+												contentScale = ContentScale.Crop // Crop to fill the square
+											)
 										}
-									} else {
-										// Add an empty Spacer for incomplete rows
-										Box(modifier = Modifier.weight(1f))
+									}
+									// Add invisible spacers to fill the row if it's not full
+									// This ensures all rows have the same height
+									val remainingItems = itemsPerRow - rowItems.size
+									if (remainingItems > 0) {
+										for (i in 0 until remainingItems) {
+											Spacer(
+												modifier = Modifier
+													.weight(1f)
+													.aspectRatio(1f)
+											)
+										}
 									}
 								}
+								// Add vertical spacing between the rows
+								Spacer(modifier = Modifier.height(4.dp))
 							}
-							// Add vertical spacing between rows
-							if (rowIndex < rows - 1) {
-								androidx.compose.foundation.layout.Spacer(
-									modifier = Modifier.padding(
-										2.dp
-									)
-								)
+							// --- END: MODIFIED GRID SECTION ---
+						}
+
+						// Loading / Pagination Trigger
+						item {
+							if (feedState.isLoadingMore) {
+								// Show loading spinner at the bottom
+								Box(
+									modifier = Modifier
+										.fillMaxWidth()
+										.padding(16.dp),
+									contentAlignment = Alignment.Center
+								) {
+									CircularProgressIndicator()
+								}
+							} else {
+								LaunchedEffect(Unit) {
+									onLoadNextPage()
+								}
 							}
 						}
 					}
@@ -232,10 +298,27 @@ private fun ProfileScreenPreview() {
 					phoneNumber = "08123123123",
 					profileImageUrl = "https://dummy.com"
 				)
-			), onRetry = {},
+			),
+			onRetry = {},
 			onExitClick = {},
+			onLoadNextPage = {},
 			modifier = Modifier,
-			userId = "userId"
+			userId = "userId",
+			token = "123",
+			feedState = FeedUiState(
+				items = List(10) { index ->
+					FeedContentItem(
+						id = index.toString(),
+						caption = "This is caption $index",
+						commentCount = 1,
+						likeCount = 1,
+						liked = true,
+						createdAt = "2023-11-25",
+						imageUrl = "https://dummy-url",
+						username = "John Doe"
+					)
+				}
+			),
 		)
 	}
 }
