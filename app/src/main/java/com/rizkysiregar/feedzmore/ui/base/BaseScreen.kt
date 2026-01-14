@@ -1,4 +1,4 @@
-package com.rizkysiregar.feedzmore.ui.feature.common
+package com.rizkysiregar.feedzmore.ui.base
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.rizkysiregar.feedzmore.ui.feature.common.ErrorDialog
 
 /**
  * Author: Habib Rizky Almajid Siregar

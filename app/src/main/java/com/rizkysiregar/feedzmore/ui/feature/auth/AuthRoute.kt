@@ -11,7 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
-import com.rizkysiregar.feedzmore.ui.feature.common.BaseScreen
+import com.rizkysiregar.feedzmore.ui.base.BaseScreen
 
 /**
  * Author: Habib Rizky Almajid Siregar

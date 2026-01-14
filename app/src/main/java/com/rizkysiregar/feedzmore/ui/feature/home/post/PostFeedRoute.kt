@@ -9,7 +9,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.request.PostingFeedRequest
-import com.rizkysiregar.feedzmore.ui.feature.common.BaseScreen
+import com.rizkysiregar.feedzmore.ui.base.BaseScreen
 import com.rizkysiregar.feedzmore.ui.main.navigation.BottomNavScreen
 
 /**
