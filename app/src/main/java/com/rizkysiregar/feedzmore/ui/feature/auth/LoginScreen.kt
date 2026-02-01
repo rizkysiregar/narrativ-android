@@ -32,7 +32,7 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreandroidnativeTheme
 
 
 @Composable
-fun AuthScreen(
+fun LoginScreen(
 	username: String,
 	password: String,
 	onUsernameChange: (String) -> Unit,
@@ -119,7 +119,7 @@ fun OAuthIcon(
 @Composable
 fun AuthScreenPreview() {
 	FeedzmoreandroidnativeTheme {
-		AuthScreen(
+		LoginScreen(
 			username = "John Doe",
 			password = "",
 			onUsernameChange = {},

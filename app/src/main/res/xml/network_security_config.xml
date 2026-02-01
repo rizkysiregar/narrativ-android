@@ -19,4 +19,9 @@
         <domain includeSubdomains="false">10.0.2.2</domain>
     </domain-config>
 
+    <!--  Local IDE Via Real Device  -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">192.168.1.16</domain>
+    </domain-config>
+
 </network-security-config>

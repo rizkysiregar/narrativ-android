@@ -4,9 +4,8 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import com.rizkysiregar.feedzmore.constants.Constants
-import com.rizkysiregar.feedzmore.ui.main.navigation.routes.HomePathRoute
 import com.rizkysiregar.feedzmore.ui.main.navigation.routes.MainPathRoute
-import com.rizkysiregar.feedzmore.ui.feature.auth.AuthRoute
+import com.rizkysiregar.feedzmore.ui.feature.auth.LoginRoute
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -17,7 +16,7 @@ import com.rizkysiregar.feedzmore.ui.feature.auth.AuthRoute
 
 fun NavGraphBuilder.authGraph(navController: NavHostController) {
 	composable(MainPathRoute.Auth.route) {
-		AuthRoute(
+		LoginRoute(
 			navController,
 			onLoginSuccess = {
 				navController.navigate(Constants.HOME_GRAPH) {
