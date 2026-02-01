@@ -39,16 +39,13 @@ import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import coil3.request.placeholder
-import com.rizkysiregar.feedzmore.BuildConfig
 import com.rizkysiregar.feedzmore.R
-import com.rizkysiregar.feedzmore.constants.Constants
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.response.FeedContentItem
 import com.rizkysiregar.feedzmore.data.remote.model.response.UserProfileResponse
 import com.rizkysiregar.feedzmore.ui.components.ProfileAvatar
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedUiState
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreandroidnativeTheme
-import com.rizkysiregar.feedzmore.util.buildGetUrl
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -151,12 +148,7 @@ fun ProfileScreen(
 											AsyncImage(
 												model = ImageRequest.Builder(LocalContext.current)
 													.data(
-														buildGetUrl(
-															BuildConfig.BASE_IMAGE_URL, mapOf(
-																"objectName" to post.imageUrl,
-																"bucketName" to Constants.BUCKET_FEED
-															)
-														)
+														data = post.imageUrl
 													).httpHeaders(
 														NetworkHeaders.Builder()
 															.add("Authorization", "Bearer $token")

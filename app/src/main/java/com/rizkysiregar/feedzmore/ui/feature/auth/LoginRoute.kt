@@ -21,7 +21,7 @@ import com.rizkysiregar.feedzmore.ui.base.BaseScreen
 
 
 @Composable
-fun AuthRoute(
+fun LoginRoute(
 	navController: NavController,
 	viewModel: AuthViewModel = hiltViewModel(),
 	onLoginSuccess: () -> Unit
@@ -48,7 +48,7 @@ fun AuthRoute(
 		errorMessage = if (loginState is ResultState.Failure) (loginState as ResultState.Failure).message else null,
 		onErrorDismiss = { viewModel.resetState() }
 	) {
-		AuthScreen(
+		LoginScreen(
 			username = username,
 			password = password,
 			onUsernameChange = { username = it },
@@ -58,21 +58,5 @@ fun AuthRoute(
 			}
 		)
 	}
-
-
-//	AuthScreen(
-//		username = username,
-//		password = password,
-//		loginState = loginState,
-//		onUsernameChange = { username = it },
-//		onPasswordChange = { password = it },
-//		onLoginClick = { viewModel.login(username, password) },
-//		onDismiss = { viewModel.clearError() },
-//		onGoogleClick = {
-//			println("## clicked")
-//			viewModel.buildLoginGoogleIntent()
-//		}
-//	)
-
 }
 

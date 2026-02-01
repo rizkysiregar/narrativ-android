@@ -22,17 +22,21 @@ android {
 
 	productFlavors {
 
-		create("local") {
+		create("local-emulator") {
 			dimension = "env"
 			buildConfigField(
 				"String",
 				"BASE_URL",
-				"\"http://localhost:9091/api/v1/\""
+				"\"http://10.0.2.2:9091/api/v1/\""
 			)
+		}
+
+		create("local-real-device") {
+			dimension = "env"
 			buildConfigField(
 				"String",
-				"BASE_IMAGE_URL",
-				"\"http://localhost:9091/api/v1/res/file\""
+				"BASE_URL",
+				"\"http://192.168.1.16:9091/api/v1/\""
 			)
 		}
 
@@ -42,11 +46,6 @@ android {
 				"String",
 				"BASE_URL",
 				"\"https://feedzmore-dev.rizkysiregar.my.id/api/v1/\""
-			)
-			buildConfigField(
-				"String",
-				"BASE_IMAGE_URL",
-				"\"https://feedzmore-dev.rizkysiregar.my.id/api/v1/res/file\""
 			)
 		}
 	}
@@ -62,8 +61,8 @@ android {
 
 		minSdk = 26
 		targetSdk = 35
-		versionCode = 1
-		versionName = "1.0"
+		versionCode = 2
+		versionName = "1.0.1"
 
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 	}

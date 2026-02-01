@@ -82,14 +82,8 @@ fun FeedItemCard(
 			// Profile picture
 			AsyncImage(
 				model = ImageRequest.Builder(LocalContext.current).data(
-						buildGetUrl(
-							BuildConfig.BASE_IMAGE_URL, mapOf(
-								"objectName" to item.imageUrl, "bucketName" to Constants.BUCKET_FEED
-							)
-						),
-					).httpHeaders(
-						NetworkHeaders.Builder().add("Authorization", "Bearer $token").build()
-					).placeholder(R.drawable.outline_person_gray_24).build(),
+					data = item.imageUrl
+				).placeholder(R.drawable.outline_person_gray_24).build(),
 				contentDescription = "Profile Picture",
 				modifier = Modifier
 					.size(42.dp)
@@ -112,14 +106,8 @@ fun FeedItemCard(
 		// -- Main POst Image with lottie as placeholder animation
 		SubcomposeAsyncImage(
 			model = ImageRequest.Builder(LocalContext.current).data(
-					buildGetUrl(
-						BuildConfig.BASE_IMAGE_URL, mapOf(
-							"objectName" to item.imageUrl, "bucketName" to Constants.BUCKET_FEED
-						)
-					),
-				).httpHeaders(
-					NetworkHeaders.Builder().add("Authorization", "Bearer $token").build()
-				).placeholder(R.drawable.outline_downloading_24).build(),
+				data = item.imageUrl
+			).placeholder(R.drawable.outline_downloading_24).build(),
 			contentDescription = "Feed Image",
 			modifier = Modifier
 				.fillMaxWidth()
