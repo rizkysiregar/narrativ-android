@@ -1,13 +1,18 @@
 package com.rizkysiregar.feedzmore.data.repository.impl
 
 import com.rizkysiregar.feedzmore.data.remote.api.AuthApi
-import com.rizkysiregar.feedzmore.data.remote.model.request.LoginRequest
-import com.rizkysiregar.feedzmore.data.remote.model.response.LoginResponse
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.EmailRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.LoginRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.RegisterRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.ResetNewPasswordRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.ResetPassVerifyOtpRequest
+import com.rizkysiregar.feedzmore.data.remote.model.response.auth.ForgotPasswordResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.auth.LoginResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.auth.ResetPassVerifyOtpResponse
 import com.rizkysiregar.feedzmore.data.repository.AuthRepository
-import com.rizkysiregar.feedzmore.util.safeApiCall
+import com.rizkysiregar.feedzmore.util.flowFromApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import retrofit2.Retrofit
 import javax.inject.Inject
 
@@ -24,25 +29,30 @@ class AuthRepositoryImpl @Inject constructor(
 		retrofit.create(AuthApi::class.java)
 	}
 
-	override fun login(request: LoginRequest): Flow<ResultState<LoginResponse>> = flow {
-		emit(ResultState.Loading)
-		val result = safeApiCall {
+	override fun login(request: LoginRequest): Flow<ResultState<LoginResponse>> =
+		flowFromApi {
 			authApi.login(request)
 		}
 
-		when (result) {
-			is ResultState.Success -> {
-				val data = result.data
-
-				if (data.data != null) {
-					emit(ResultState.Success(data.data))
-				} else {
-					emit(ResultState.Failure(data.message))
-				}
-			}
-
-			is ResultState.Failure -> emit(result)
-			else -> {}
+	override fun register(registerRequest: RegisterRequest): Flow<ResultState<String>> =
+		flowFromApi {
+			authApi.register(registerRequest)
 		}
-	}
+
+	override fun forgotPassword(email: String): Flow<ResultState<ForgotPasswordResponse>> =
+		flowFromApi {
+			authApi.forgotPassword(EmailRequest(email))
+		}
+
+	override fun verifyOtp(request: ResetPassVerifyOtpRequest): Flow<ResultState<ResetPassVerifyOtpResponse>> =
+		flowFromApi {
+			authApi.verifyOtp(request)
+		}
+
+	override fun resetNewPassword(request: ResetNewPasswordRequest): Flow<ResultState<String>> =
+		flowFromApi {
+			authApi.resetNewPassword(request)
+		}
+
+
 }

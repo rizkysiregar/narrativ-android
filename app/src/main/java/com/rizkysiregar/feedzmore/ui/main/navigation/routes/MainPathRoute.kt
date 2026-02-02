@@ -9,8 +9,4 @@ sealed class MainPathRoute(val route: String) {
 
 	// onboard page
 	object Splash : MainPathRoute("splash")
-	object Auth : MainPathRoute("auth")
-	object Login : MainPathRoute("login")
-	object Register : MainPathRoute("register")
-
 }

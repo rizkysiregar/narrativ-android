@@ -25,7 +25,7 @@ import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.rizkysiregar.feedzmore.R
-import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreandroidnativeTheme
+import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -95,7 +95,7 @@ fun ErrorDialog(
 @Composable
 @Preview(showBackground = true)
 fun ErrorDialogPreview() {
-	FeedzmoreandroidnativeTheme {
+	FeedzmoreTheme {
 		ErrorDialog(
 			message = "Something went wrong",
 			onDismiss = {}

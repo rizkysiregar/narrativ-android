@@ -1,8 +1,14 @@
 package com.rizkysiregar.feedzmore.data.remote.api
 
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.EmailRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.LoginRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.RegisterRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.ResetNewPasswordRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.ResetPassVerifyOtpRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.BaseResponse
-import com.rizkysiregar.feedzmore.data.remote.model.request.LoginRequest
-import com.rizkysiregar.feedzmore.data.remote.model.response.LoginResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.auth.ForgotPasswordResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.auth.LoginResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.auth.ResetPassVerifyOtpResponse
 import retrofit2.http.Body
 import retrofit2.http.POST
 
@@ -13,8 +19,29 @@ import retrofit2.http.POST
  */
 interface AuthApi {
 
-    @POST("login")
-    suspend fun login(
-        @Body request: LoginRequest
-    ): BaseResponse<LoginResponse>
+	@POST("auth/login")
+	suspend fun login(
+		@Body request: LoginRequest
+	): BaseResponse<LoginResponse>
+
+	@POST("auth/register")
+	suspend fun register(
+		@Body request: RegisterRequest
+	): BaseResponse<String>
+
+	@POST("auth/password/forgot")
+	suspend fun forgotPassword(
+		@Body emailRequest: EmailRequest
+	): BaseResponse<ForgotPasswordResponse>
+
+	@POST("auth/password/verify-otp")
+	suspend fun verifyOtp(
+		@Body request: ResetPassVerifyOtpRequest
+	): BaseResponse<ResetPassVerifyOtpResponse>
+
+	@POST("auth/password/reset")
+	suspend fun resetNewPassword(
+		@Body request: ResetNewPasswordRequest
+	): BaseResponse<String>
+
 }
