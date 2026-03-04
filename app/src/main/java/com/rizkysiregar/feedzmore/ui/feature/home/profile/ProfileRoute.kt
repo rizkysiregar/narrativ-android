@@ -8,7 +8,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedViewModel
-import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreandroidnativeTheme
+import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -63,7 +63,7 @@ fun ProfileRoute(
 @Preview(showBackground = true)
 @Composable
 private fun ProfileRoutePreview() {
-	FeedzmoreandroidnativeTheme {
+	FeedzmoreTheme {
 		ProfileRoute(
 			onLogoutClick = {}
 		)

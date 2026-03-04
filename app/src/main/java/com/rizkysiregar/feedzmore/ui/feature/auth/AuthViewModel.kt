@@ -10,9 +10,11 @@ import com.rizkysiregar.feedzmore.constants.PrefKeys
 import com.rizkysiregar.feedzmore.data.cache.DataStoreManager
 import com.rizkysiregar.feedzmore.data.cache.JwtTokenHolder
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
-import com.rizkysiregar.feedzmore.data.remote.model.request.LoginRequest
-import com.rizkysiregar.feedzmore.data.remote.model.response.LoginResponse
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.LoginRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.RegisterRequest
+import com.rizkysiregar.feedzmore.data.remote.model.response.auth.LoginResponse
 import com.rizkysiregar.feedzmore.domain.auth.LoginUseCase
+import com.rizkysiregar.feedzmore.domain.auth.RegisterUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,15 +28,30 @@ import javax.inject.Inject
 @HiltViewModel
 class AuthViewModel @Inject constructor(
 	private val loginUseCase: LoginUseCase,
+	private val registerUseCase: RegisterUseCase,
 	private val authService: AuthorizationService,
 	private val dataStore: DataStoreManager,
 	private val tokenHolder: JwtTokenHolder
 ) : ViewModel() {
 
+	// state for register
+	private val _registerState = MutableStateFlow<ResultState<String>?>(null)
+	val registerState: StateFlow<ResultState<String>?> = _registerState
 
-	// basic login username - password
+	// state for login
 	private val _loginState = MutableStateFlow<ResultState<LoginResponse>?>(null)
 	val loginState: StateFlow<ResultState<LoginResponse>?> = _loginState
+
+
+	fun register(registerRequest: RegisterRequest) {
+		_registerState.value = ResultState.Loading
+		viewModelScope.launch {
+			registerUseCase(registerRequest).collect { result ->
+				_registerState.value = result
+			}
+		}
+	}
+
 
 	fun login(username: String, password: String) {
 		_loginState.value = ResultState.Loading
@@ -56,9 +73,12 @@ class AuthViewModel @Inject constructor(
 		}
 	}
 
-	fun resetState() {
-		println("## clearError() called")
+	fun resetLoginState() {
 		_loginState.value = ResultState.Idle
+	}
+
+	fun resetRegisterState() {
+		_registerState.value = ResultState.Idle
 	}
 
 

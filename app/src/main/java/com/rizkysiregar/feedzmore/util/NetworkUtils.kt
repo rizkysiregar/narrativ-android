@@ -2,6 +2,9 @@ package com.rizkysiregar.feedzmore.util
 
 import android.util.Log
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
+import com.rizkysiregar.feedzmore.data.remote.model.response.BaseResponse
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import org.json.JSONObject
 import retrofit2.HttpException
 
@@ -30,5 +33,27 @@ suspend fun <T> safeApiCall(
 	} catch (e: Exception) {
 		Log.e("safeApiCall", "Exception: $e")
 		ResultState.Failure("Something went wrong, please try again later")
+	}
+}
+
+fun <T> flowFromApi(
+	apiCall: suspend () -> BaseResponse<T>
+): Flow<ResultState<T>> = flow {
+	emit(ResultState.Loading)
+
+	val result = safeApiCall { apiCall() }
+	when (result) {
+		is ResultState.Success -> {
+			val response = result.data
+			if (response.data != null) {
+				emit(ResultState.Success(response.data))
+			} else {
+				emit(ResultState.Failure(response.message))
+			}
+		}
+
+		is ResultState.Failure -> emit(result)
+		else -> { // di nothing }
+		}
 	}
 }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -20,7 +21,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,19 +35,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.SubcomposeAsyncImage
-import coil3.network.NetworkHeaders
-import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import coil3.request.placeholder
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.rememberLottieComposition
-import com.rizkysiregar.feedzmore.BuildConfig
 import com.rizkysiregar.feedzmore.R
-import com.rizkysiregar.feedzmore.constants.Constants
 import com.rizkysiregar.feedzmore.data.remote.model.response.FeedContentItem
-import com.rizkysiregar.feedzmore.util.buildGetUrl
+import com.rizkysiregar.feedzmore.ui.components.ShimmerEffect
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -64,9 +56,6 @@ fun FeedItemCard(
 	onUserClick: (FeedContentItem) -> Unit = {},
 	token: String
 ) {
-
-	val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.image_loader_blue))
-
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -105,24 +94,20 @@ fun FeedItemCard(
 
 		// -- Main POst Image with lottie as placeholder animation
 		SubcomposeAsyncImage(
-			model = ImageRequest.Builder(LocalContext.current).data(
-				data = item.imageUrl
-			).placeholder(R.drawable.outline_downloading_24).build(),
+			model = ImageRequest.Builder(LocalContext.current).data(item.imageUrl).build(),
 			contentDescription = "Feed Image",
 			modifier = Modifier
 				.fillMaxWidth()
-				.height(350.dp)
-				.background(Color.LightGray),
+				.height(350.dp),
 			contentScale = ContentScale.Crop,
 			loading = {
-				// show lottie while loading
-				LottieAnimation(
-					composition = composition, iterations = LottieConstants.IterateForever
-				)
+				// Using the custom shimmer instead of Lottie
+				ShimmerEffect(modifier = Modifier.fillMaxSize())
 			},
 			error = {
 				Icon(Icons.Outlined.Info, contentDescription = "Error")
-			})
+			}
+		)
 
 
 

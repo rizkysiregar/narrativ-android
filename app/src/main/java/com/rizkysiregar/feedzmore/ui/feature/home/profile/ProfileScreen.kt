@@ -45,7 +45,7 @@ import com.rizkysiregar.feedzmore.data.remote.model.response.FeedContentItem
 import com.rizkysiregar.feedzmore.data.remote.model.response.UserProfileResponse
 import com.rizkysiregar.feedzmore.ui.components.ProfileAvatar
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedUiState
-import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreandroidnativeTheme
+import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -277,7 +277,7 @@ private fun UserProfileInfoPreview() {
 @Preview(showSystemUi = true)
 @Composable
 private fun ProfileScreenPreview() {
-	FeedzmoreandroidnativeTheme {
+	FeedzmoreTheme {
 		ProfileScreen(
 			profileState = ResultState.Success(
 				UserProfileResponse(

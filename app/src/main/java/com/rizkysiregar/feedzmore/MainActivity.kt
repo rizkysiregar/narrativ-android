@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.rizkysiregar.feedzmore.ui.main.MainRoot
 
-import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreandroidnativeTheme
+import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
 		setContent {
-			FeedzmoreandroidnativeTheme {
+			FeedzmoreTheme {
 				MainRoot()
 			}
 		}

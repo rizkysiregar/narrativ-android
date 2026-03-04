@@ -24,7 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.rizkysiregar.feedzmore.data.remote.model.response.FeedContentItem
-import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreandroidnativeTheme
+import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 
 
 /**
@@ -102,7 +102,7 @@ fun FeedScreen(
 @Composable
 @Preview(showBackground = true)
 fun FeedScreenPreview(modifier: Modifier = Modifier) {
-	FeedzmoreandroidnativeTheme {
+	FeedzmoreTheme {
 		FeedScreen(
 			uiState = FeedUiState(
 				items = List(10) { index ->

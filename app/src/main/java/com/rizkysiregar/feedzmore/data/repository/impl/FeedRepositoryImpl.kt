@@ -7,9 +7,8 @@ import com.rizkysiregar.feedzmore.data.remote.model.request.PostingFeedRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.FeedsPostResponse
 import com.rizkysiregar.feedzmore.data.remote.model.response.PostingFeedResponse
 import com.rizkysiregar.feedzmore.data.repository.FeedRepository
-import com.rizkysiregar.feedzmore.util.safeApiCall
+import com.rizkysiregar.feedzmore.util.flowFromApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import retrofit2.Retrofit
 import javax.inject.Inject
 
@@ -26,56 +25,17 @@ class FeedRepositoryImpl @Inject constructor(
 	}
 
 	override fun getFeed(feedRequest: GetFeedPostRequest): Flow<ResultState<FeedsPostResponse>> =
-		flow {
-			emit(ResultState.Loading)
-			val result = safeApiCall {
-				feedApi.getFeed(feedRequest.page, feedRequest.size, feedRequest.userId)
-			}
+		flowFromApi {
+			feedApi.getFeed(feedRequest.page, feedRequest.size, feedRequest.userId)
 
-			when (result) {
-				is ResultState.Success -> {
-					val data = result.data
-
-					if (data.data != null) {
-						emit(ResultState.Success(data.data))
-					} else {
-						emit(ResultState.Failure(data.message))
-					}
-				}
-
-				is ResultState.Failure -> emit(result)
-				else -> {}
-			}
 		}
 
 	override fun postingFeed(postingFeedRequest: PostingFeedRequest): Flow<ResultState<PostingFeedResponse>> =
-		flow {
-			emit(ResultState.Loading)
-
-			val result = safeApiCall {
-				feedApi.postingFeed(
-					addPostRequest = postingFeedRequest,
-					image = postingFeedRequest.imagePart!!
-				)
-			}
-
-			when (result) {
-				is ResultState.Success -> {
-					val data = result.data
-
-					if (data.data != null) {
-						emit(ResultState.Success(data = data.data))
-					} else {
-						emit(ResultState.Failure(data.message))
-					}
-				}
-
-				is ResultState.Failure -> {
-					emit(result)
-				}
-
-				else -> {}
-			}
+		flowFromApi {
+			feedApi.postingFeed(
+				addPostRequest = postingFeedRequest,
+				image = postingFeedRequest.imagePart!!
+			)
 		}
 
 

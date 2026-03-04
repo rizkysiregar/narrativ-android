@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.rizkysiregar.feedzmore.constants.Constants
+import com.rizkysiregar.feedzmore.ui.main.navigation.routes.AuthPathRoutes
 import com.rizkysiregar.feedzmore.ui.main.navigation.routes.MainPathRoute
 
 /**
@@ -34,7 +35,7 @@ fun SplashRoute(
 			}
 
 			false -> {
-				navController.navigate(MainPathRoute.Auth.route) {
+				navController.navigate(AuthPathRoutes.Login.route) {
 					popUpTo(MainPathRoute.Splash.route) { inclusive = true }
 				}
 			}

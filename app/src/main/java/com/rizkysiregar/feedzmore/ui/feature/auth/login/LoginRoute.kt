@@ -1,4 +1,4 @@
-package com.rizkysiregar.feedzmore.ui.feature.auth
+package com.rizkysiregar.feedzmore.ui.feature.auth.login
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -7,11 +7,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.ui.base.BaseScreen
+import com.rizkysiregar.feedzmore.ui.feature.auth.AuthViewModel
+import com.rizkysiregar.feedzmore.ui.main.navigation.routes.AuthPathRoutes
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -26,9 +27,6 @@ fun LoginRoute(
 	viewModel: AuthViewModel = hiltViewModel(),
 	onLoginSuccess: () -> Unit
 ) {
-	// Context
-	val context = LocalContext.current
-
 	// username and password input
 	var username by remember { mutableStateOf("") }
 	var password by remember { mutableStateOf("") }
@@ -39,14 +37,14 @@ fun LoginRoute(
 	LaunchedEffect(loginState) {
 		if (loginState is ResultState.Success) {
 			onLoginSuccess()
-			viewModel.resetState()
+			viewModel.resetLoginState()
 		}
 	}
 
 	BaseScreen(
 		isLoading = loginState is ResultState.Loading,
 		errorMessage = if (loginState is ResultState.Failure) (loginState as ResultState.Failure).message else null,
-		onErrorDismiss = { viewModel.resetState() }
+		onErrorDismiss = { viewModel.resetLoginState() }
 	) {
 		LoginScreen(
 			username = username,
@@ -55,6 +53,12 @@ fun LoginRoute(
 			onPasswordChange = { password = it },
 			onLoginClick = {
 				viewModel.login(username, password)
+			},
+			onNavigateToRegister = {
+				navController.navigate(AuthPathRoutes.Register.route)
+			},
+			onForgotPasswordClick = {
+				navController.navigate(AuthPathRoutes.ResetPassword.route)
 			}
 		)
 	}

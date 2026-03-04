@@ -38,7 +38,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import coil3.compose.AsyncImage
-import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreandroidnativeTheme
+import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -171,7 +171,7 @@ fun PostFeedScreen(
 @Preview
 @Composable
 private fun PostImagePickerScreenPreview() {
-	FeedzmoreandroidnativeTheme {
+	FeedzmoreTheme {
 		PostFeedScreen(
 			uiState = PostFeedUiState(selectedImage = "https://example.com/image.jpg".toUri()),
 			onCaptionChange = {},

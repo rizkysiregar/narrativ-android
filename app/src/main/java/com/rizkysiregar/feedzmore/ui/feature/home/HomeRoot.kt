@@ -15,7 +15,7 @@ import com.rizkysiregar.feedzmore.ui.feature.home.post.PostFeedRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.profile.ProfileRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.search.SearchRoute
 import com.rizkysiregar.feedzmore.ui.main.navigation.BottomNavScreen
-import com.rizkysiregar.feedzmore.ui.main.navigation.routes.MainPathRoute
+import com.rizkysiregar.feedzmore.ui.main.navigation.routes.AuthPathRoutes
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -32,29 +32,6 @@ fun HomeRoot(
 	val homeNavController = rememberNavController()
 
 	Scaffold(
-//		topBar = {
-//			TopAppBar(
-//				title = { Text("Feedzmore") },
-//				actions = {
-//					IconButton(onClick = {
-//						// ---  logout --- //
-//
-//
-//						navController.navigate(MainPathRoute.Auth.route) {
-//							popUpTo(HomePathRoute.Feed.route) {
-//								inclusive = true
-//							}
-//							launchSingleTop = true
-//						}
-//					}) {
-//						Icon(
-//							Icons.AutoMirrored.Filled.ExitToApp,
-//							contentDescription = "Exit App"
-//						)
-//					}
-//				}
-//			)
-//		},
 		bottomBar = {
 			BottomBar(homeNavController)
 		}
@@ -75,7 +52,7 @@ fun HomeRoot(
 			composable(BottomNavScreen.Profile.route) {
 				ProfileRoute(
 					onLogoutClick = {
-						navController.navigate(MainPathRoute.Auth.route) {
+						navController.navigate(AuthPathRoutes.Login.route) {
 							popUpTo(Constants.HOME_GRAPH) {
 								inclusive = true
 							}

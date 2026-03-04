@@ -45,7 +45,7 @@ android {
 			buildConfigField(
 				"String",
 				"BASE_URL",
-				"\"https://feedzmore-dev.rizkysiregar.my.id/api/v1/\""
+				"\"https://feedzmore-k3s-dev.rizkysiregar.my.id/api/v1/\""
 			)
 		}
 	}
@@ -112,6 +112,8 @@ dependencies {
 	implementation(libs.androidx.ui.graphics)
 	implementation(libs.androidx.ui.tooling.preview)
 	implementation(libs.androidx.material3)
+	// material2 for: native pull request view
+	implementation(libs.androidx.compose.material)
 
 	// --- Compose Navigation + ViewModel ---
 	implementation(libs.navigation.compose)
@@ -150,9 +152,6 @@ dependencies {
 
 	// lottie
 	implementation(libs.lottie.compose)
-
-	// material2
-	implementation(libs.androidx.compose.material)
 
 	// image
 	implementation(libs.coil.compose)

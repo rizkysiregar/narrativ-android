@@ -1,8 +1,13 @@
 package com.rizkysiregar.feedzmore.data.repository
 
-import com.rizkysiregar.feedzmore.data.remote.model.request.LoginRequest
-import com.rizkysiregar.feedzmore.data.remote.model.response.LoginResponse
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.LoginRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.RegisterRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.ResetNewPasswordRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.ResetPassVerifyOtpRequest
+import com.rizkysiregar.feedzmore.data.remote.model.response.auth.ForgotPasswordResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.auth.LoginResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.auth.ResetPassVerifyOtpResponse
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -12,4 +17,8 @@ import kotlinx.coroutines.flow.Flow
  */
 interface AuthRepository {
 	fun login(request: LoginRequest): Flow<ResultState<LoginResponse>>
+	fun register(registerRequest: RegisterRequest): Flow<ResultState<String>>
+	fun forgotPassword(email: String): Flow<ResultState<ForgotPasswordResponse>>
+	fun verifyOtp(request: ResetPassVerifyOtpRequest): Flow<ResultState<ResetPassVerifyOtpResponse>>
+	fun resetNewPassword(request: ResetNewPasswordRequest): Flow<ResultState<String>>
 }
