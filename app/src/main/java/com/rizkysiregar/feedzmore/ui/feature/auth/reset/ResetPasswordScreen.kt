@@ -29,6 +29,7 @@ fun ResetPasswordScreen(
 	onSendOtp: (String) -> Unit,
 	onVerifyOtp: (ResetPassVerifyOtpRequest) -> Unit,
 	onResetNewPassword: (ResetNewPasswordRequest) -> Unit,
+	onBack: () -> Unit
 ) {
 	Scaffold { padding ->
 		Column(
@@ -44,12 +45,14 @@ fun ResetPasswordScreen(
 					ResetPasswordStep.EMAIL_ENTRY -> {
 						EmailEntryView(
 							onNext = onSendOtp,
+							onBack = onBack
 						)
 					}
 
 					ResetPasswordStep.OTP_VERIFICATION -> {
 						OtpVerificationView(
 							onNext = onVerifyOtp,
+							onBack = onBack,
 							email = email
 						)
 					}
@@ -57,6 +60,7 @@ fun ResetPasswordScreen(
 					ResetPasswordStep.NEW_PASSWORD_INPUT -> {
 						NewPasswordView(
 							onNext = onResetNewPassword,
+							onBack = onBack,
 							email = email,
 							resetToken = resetToken
 						)
@@ -81,7 +85,8 @@ private fun ResetPasswordScreenPreview() {
 			resetToken = "",
 			onSendOtp = {},
 			onVerifyOtp = {},
-			onResetNewPassword = {}
+			onResetNewPassword = {},
+			onBack = {}
 		)
 	}
 }

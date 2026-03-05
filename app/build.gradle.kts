@@ -112,6 +112,9 @@ dependencies {
 	implementation(libs.androidx.ui.graphics)
 	implementation(libs.androidx.ui.tooling.preview)
 	implementation(libs.androidx.material3)
+
+	// material icons
+	implementation(libs.androidx.compose.material.icons.core)
 	// material2 for: native pull request view
 	implementation(libs.androidx.compose.material)
 

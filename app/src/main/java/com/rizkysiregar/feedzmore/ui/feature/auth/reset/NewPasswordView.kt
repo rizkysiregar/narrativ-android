@@ -3,6 +3,7 @@ package com.rizkysiregar.feedzmore.ui.feature.auth.reset
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,6 +46,7 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 @Composable
 fun NewPasswordView(
 	onNext: (ResetNewPasswordRequest) -> Unit,
+	onBack: () -> Unit,
 	resetToken: String,
 	email: String
 ) {
@@ -84,7 +86,8 @@ fun NewPasswordView(
 				painter = painterResource(R.drawable.star_black),
 				contentDescription = "Header Logo",
 				modifier = Modifier
-					.size(38.dp),
+					.size(38.dp)
+					.clickable { onBack() }
 			)
 
 		}
@@ -160,6 +163,7 @@ private fun NewPasswordScreenPreview() {
 	FeedzmoreTheme {
 		NewPasswordView(
 			onNext = {},
+			onBack = {},
 			resetToken = "",
 			email = ""
 		)
