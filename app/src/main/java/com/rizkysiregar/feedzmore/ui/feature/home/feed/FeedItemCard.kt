@@ -15,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.MailOutline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -51,7 +51,7 @@ import com.rizkysiregar.feedzmore.ui.components.ShimmerEffect
 @Composable
 fun FeedItemCard(
 	item: FeedContentItem,
-	onLikeClick: (FeedContentItem) -> Unit = {},
+	onLikeClick: (String) -> Unit,
 	onCommentClick: (FeedContentItem) -> Unit = {},
 	onUserClick: (FeedContentItem) -> Unit = {},
 	token: String
@@ -80,9 +80,8 @@ fun FeedItemCard(
 				contentScale = ContentScale.Crop
 			)
 
-			Spacer(Modifier.width(10.dp))
-
 			// username
+			Spacer(Modifier.width(10.dp))
 			Text(
 				text = item.username,
 				style = MaterialTheme.typography.bodyMedium.copy(
@@ -92,7 +91,7 @@ fun FeedItemCard(
 			)
 		}
 
-		// -- Main POst Image with lottie as placeholder animation
+		// -- Main POst Image with lottie as placeholder animation -- //
 		SubcomposeAsyncImage(
 			model = ImageRequest.Builder(LocalContext.current).data(item.imageUrl).build(),
 			contentDescription = "Feed Image",
@@ -105,16 +104,15 @@ fun FeedItemCard(
 				ShimmerEffect(modifier = Modifier.fillMaxSize())
 			},
 			error = {
-				Icon(Icons.Outlined.Info, contentDescription = "Error")
+				Icon(
+					imageVector = Icons.Outlined.Info,
+					contentDescription = "Error",
+				)
 			}
 		)
 
-
-
-
+		// --- Action (Like, comment, repost etc) -- //
 		Spacer(Modifier.height(8.dp))
-
-		// --- Action (Like, comment, repost etc)
 		Row(
 			modifier = Modifier
 				.fillMaxWidth()
@@ -122,7 +120,10 @@ fun FeedItemCard(
 			verticalAlignment = Alignment.CenterVertically
 		) {
 			IconButton(
-				onClick = { onLikeClick(item) },
+				onClick = {
+					println("## like button clicked")
+					onLikeClick(item.id)
+				},
 			) {
 				Icon(
 					imageVector = if (item.liked) Icons.Filled.Favorite
@@ -131,23 +132,23 @@ fun FeedItemCard(
 					tint = if (item.liked) Color.Red else MaterialTheme.colorScheme.onBackground
 				)
 			}
-
 			Text(text = "${item.likeCount}")
 
-			Spacer(modifier = Modifier.width(16.dp))
+			Spacer(modifier = Modifier.width(8.dp))
 
 			IconButton(onClick = { onCommentClick(item) }) {
 				Icon(
-					imageVector = Icons.Outlined.MailOutline, contentDescription = "Comment"
+					painter = painterResource(R.drawable.comment_regular_full),
+					contentDescription = "Comment",
+					modifier = Modifier.size(24.dp)
 				)
 			}
-
 			Text(text = "${item.commentCount}")
 		}
 
-		Spacer(modifier = Modifier.height(8.dp))
 
-		// --- Caption ---
+		// --- Caption --- //
+		Spacer(modifier = Modifier.height(8.dp))
 		Column(
 			modifier = Modifier
 				.fillMaxWidth()
@@ -185,6 +186,8 @@ fun FeedItemCardPreview() {
 			createdAt = "2023-11-25",
 			imageUrl = "https://dummy-url",
 			username = "John Doe"
-		), token = "jwt-token"
+		),
+		token = "jwt-token",
+		onLikeClick = {}
 	)
 }

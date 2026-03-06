@@ -19,6 +19,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -41,8 +42,11 @@ fun FeedScreen(
 	onRefresh: () -> Unit,
 	onRetry: () -> Unit,
 	listState: LazyListState = rememberLazyListState(),
-	token: String
+	token: String,
+	onLikeClick: (String) -> Unit
 ) {
+	val currentOnLikeClick by androidx.compose.runtime.rememberUpdatedState(onLikeClick)
+
 	val pullState =
 		rememberPullRefreshState(refreshing = uiState.isRefreshing, onRefresh = onRefresh)
 
@@ -52,11 +56,15 @@ fun FeedScreen(
 			.pullRefresh(pullState)
 	) {
 		LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
-			items(uiState.items, key = { it.id }) { item ->
+			items(
+				items = uiState.items,
+				key = { it.id },
+				contentType = { "feed_item" }
+			) { item ->
 				FeedItemCard(
 					item = item,
-					onLikeClick = {},
-					onCommentClick = { },
+					onLikeClick = { id -> currentOnLikeClick(id) },
+					onCommentClick = {},
 					token = token
 				)
 			}
@@ -101,7 +109,7 @@ fun FeedScreen(
 
 @Composable
 @Preview(showBackground = true)
-fun FeedScreenPreview(modifier: Modifier = Modifier) {
+fun FeedScreenPreview() {
 	FeedzmoreTheme {
 		FeedScreen(
 			uiState = FeedUiState(
@@ -121,7 +129,8 @@ fun FeedScreenPreview(modifier: Modifier = Modifier) {
 			onRefresh = {},
 			onRetry = {},
 			listState = rememberLazyListState(),
-			token = "jwt-token"
+			token = "jwt-token",
+			onLikeClick = {}
 		)
 	}
 }

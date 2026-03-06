@@ -1,4 +1,4 @@
-package com.rizkysiregar.feedzmore.data.remote.model.request
+package com.rizkysiregar.feedzmore.data.remote.model.request.feed
 
 import android.net.Uri
 import okhttp3.MultipartBody

@@ -6,7 +6,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
-import com.rizkysiregar.feedzmore.data.remote.model.request.PostingFeedRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.feed.PostingFeedRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.PostingFeedResponse
 import com.rizkysiregar.feedzmore.data.repository.UserDataRepository
 import com.rizkysiregar.feedzmore.domain.feed.PostingFeedUseCase

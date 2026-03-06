@@ -1,7 +1,7 @@
 package com.rizkysiregar.feedzmore.domain.feed
 
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
-import com.rizkysiregar.feedzmore.data.remote.model.request.GetFeedPostRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetFeedPostRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.FeedsPostResponse
 import com.rizkysiregar.feedzmore.data.repository.FeedRepository
 import kotlinx.coroutines.flow.Flow

@@ -72,9 +72,11 @@ fun FeedRoute(
 			onRefresh = { viewModel.refresh(userId) },
 			onRetry = { viewModel.loadNextPage(userId) },
 			listState = listState,
-			token = token
+			token = token,
+			onLikeClick = viewModel::toggleLike
 		)
 	} else {
+		println("## goes to else hehe")
 		CircularProgressIndicator()
 	}
 

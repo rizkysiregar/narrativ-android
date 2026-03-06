@@ -2,14 +2,16 @@ package com.rizkysiregar.feedzmore.data.repository.impl
 
 import com.rizkysiregar.feedzmore.data.remote.api.FeedApi
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
-import com.rizkysiregar.feedzmore.data.remote.model.request.GetFeedPostRequest
-import com.rizkysiregar.feedzmore.data.remote.model.request.PostingFeedRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetFeedPostRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.feed.LikeFeedRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.feed.PostingFeedRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.FeedsPostResponse
 import com.rizkysiregar.feedzmore.data.remote.model.response.PostingFeedResponse
 import com.rizkysiregar.feedzmore.data.repository.FeedRepository
 import com.rizkysiregar.feedzmore.util.flowFromApi
 import kotlinx.coroutines.flow.Flow
 import retrofit2.Retrofit
+import java.util.UUID
 import javax.inject.Inject
 
 /**
@@ -38,5 +40,15 @@ class FeedRepositoryImpl @Inject constructor(
 			)
 		}
 
+	override fun likePost(postId: UUID): Flow<ResultState<String>> =
+		flowFromApi {
+			val request = LikeFeedRequest(postId = postId)
+			feedApi.likePost(request)
+		}
+
+	override fun dislikePost(postId: UUID): Flow<ResultState<String>> =
+		flowFromApi {
+			feedApi.dislikePost(postId)
+		}
 
 }
