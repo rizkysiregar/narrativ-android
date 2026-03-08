@@ -3,6 +3,7 @@ package com.rizkysiregar.feedzmore.ui.feature.auth.reset
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,6 +45,7 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 @Composable
 fun EmailEntryView(
 	onNext: (String) -> Unit,
+	onBack: () -> Unit
 ) {
 	var email by remember { mutableStateOf("") }
 
@@ -64,7 +66,8 @@ fun EmailEntryView(
 				modifier = Modifier
 					.padding(4.dp)
 					.border(1.dp, Color.LightGray, RoundedCornerShape(8.dp))
-					.size(35.dp),
+					.size(35.dp)
+					.clickable { onBack() },
 				contentAlignment = Alignment.Center
 			) {
 				Icon(
@@ -142,6 +145,7 @@ private fun EmailEntryViewPreview() {
 	FeedzmoreTheme {
 		EmailEntryView(
 			onNext = {},
+			onBack = {}
 		)
 	}
 }

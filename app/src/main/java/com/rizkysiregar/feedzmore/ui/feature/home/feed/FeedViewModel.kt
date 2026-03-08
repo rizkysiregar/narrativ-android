@@ -3,8 +3,11 @@ package com.rizkysiregar.feedzmore.ui.feature.home.feed
 import androidx.lifecycle.viewModelScope
 import com.rizkysiregar.feedzmore.data.cache.DataStoreManager
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
-import com.rizkysiregar.feedzmore.data.remote.model.request.GetFeedPostRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetCommentRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetFeedPostRequest
+import com.rizkysiregar.feedzmore.domain.feed.DislikePostUseCase
 import com.rizkysiregar.feedzmore.domain.feed.GetFeedPostUseCase
+import com.rizkysiregar.feedzmore.domain.feed.LikePostUseCase
 import com.rizkysiregar.feedzmore.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,6 +17,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import java.util.UUID
 import javax.inject.Inject
 
 /**
@@ -25,6 +29,8 @@ import javax.inject.Inject
 @HiltViewModel
 class FeedViewModel @Inject constructor(
 	private val getFeedPostUseCase: GetFeedPostUseCase,
+	private val dislikePostUseCase: DislikePostUseCase,
+	private val likePostUseCase: LikePostUseCase,
 	private val dataStore: DataStoreManager
 ) : BaseViewModel(dataStore) {
 
@@ -183,4 +189,62 @@ class FeedViewModel @Inject constructor(
 				}
 			}
 	}
+
+
+	// toggle like on post
+	fun toggleLike(postId: String) {
+		println("## ViewModel Received Like Click for ID: $postId")
+
+		// 1. find item on the list
+		val currentList = _uiState.value.items
+		val itemIndex = currentList.indexOfFirst { it.id == postId }
+		if (itemIndex == -1) return
+
+
+		val currentItem = currentList[itemIndex]
+		val isCurrentlyLiked = currentItem.liked
+
+		// 2. Update the the ui state immediately
+		val updatedItem = currentItem.copy(
+			liked = !isCurrentlyLiked,
+			likeCount = if (isCurrentlyLiked) currentItem.likeCount - 1 else currentItem.likeCount + 1
+		)
+
+		// Update the stateflow list with the updated item
+		_uiState.value = _uiState.value.copy(
+			items = currentList.toMutableList().apply {
+				set(itemIndex, updatedItem)
+			}
+		)
+
+		// 3. send to API
+		viewModelScope.launch {
+			val response = if (isCurrentlyLiked) { // dislike
+				dislikePostUseCase(UUID.fromString(postId))
+			} else { // like
+				likePostUseCase(UUID.fromString(postId))
+			}
+
+			response.collect { result ->
+				when (result) {
+					is ResultState.Success -> {
+						println("toggle like success")
+					}
+
+					is ResultState.Failure -> {
+						println("## toggle like failure: ${result.message}")
+					}
+
+					else -> {}
+				}
+			}
+
+		}
+	}
+
+	// load comment
+	fun loadComment(request: GetCommentRequest) {
+
+	}
+
 }

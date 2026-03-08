@@ -2,14 +2,20 @@ package com.rizkysiregar.feedzmore.data.repository.impl
 
 import com.rizkysiregar.feedzmore.data.remote.api.FeedApi
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
-import com.rizkysiregar.feedzmore.data.remote.model.request.GetFeedPostRequest
-import com.rizkysiregar.feedzmore.data.remote.model.request.PostingFeedRequest
-import com.rizkysiregar.feedzmore.data.remote.model.response.FeedsPostResponse
-import com.rizkysiregar.feedzmore.data.remote.model.response.PostingFeedResponse
+import com.rizkysiregar.feedzmore.data.remote.model.request.feed.AddCommentRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetCommentRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetFeedPostRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.feed.LikeFeedRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.feed.PostingFeedRequest
+import com.rizkysiregar.feedzmore.data.remote.model.response.PaginationResponseWrapper
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.CommentItem
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedsPostPaginationResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.PostingFeedResponse
 import com.rizkysiregar.feedzmore.data.repository.FeedRepository
 import com.rizkysiregar.feedzmore.util.flowFromApi
 import kotlinx.coroutines.flow.Flow
 import retrofit2.Retrofit
+import java.util.UUID
 import javax.inject.Inject
 
 /**
@@ -24,7 +30,7 @@ class FeedRepositoryImpl @Inject constructor(
 		retrofit.create(FeedApi::class.java)
 	}
 
-	override fun getFeed(feedRequest: GetFeedPostRequest): Flow<ResultState<FeedsPostResponse>> =
+	override fun getFeed(feedRequest: GetFeedPostRequest): Flow<ResultState<FeedsPostPaginationResponse>> =
 		flowFromApi {
 			feedApi.getFeed(feedRequest.page, feedRequest.size, feedRequest.userId)
 
@@ -38,5 +44,27 @@ class FeedRepositoryImpl @Inject constructor(
 			)
 		}
 
+	override fun likePost(postId: UUID): Flow<ResultState<String>> =
+		flowFromApi {
+			val request = LikeFeedRequest(postId = postId)
+			feedApi.likePost(request)
+		}
 
+	override fun dislikePost(postId: UUID): Flow<ResultState<String>> =
+		flowFromApi {
+			feedApi.dislikePost(postId)
+		}
+
+	override fun addComment(request: AddCommentRequest): Flow<ResultState<String>> =
+		flowFromApi {
+			feedApi.addComment(request)
+		}
+
+	override fun getComment(request: GetCommentRequest): Flow<ResultState<PaginationResponseWrapper<CommentItem>>> =
+		flowFromApi {
+			feedApi.getPostComment(
+				postId = request.postId,
+				page = request.page
+			)
+		}
 }

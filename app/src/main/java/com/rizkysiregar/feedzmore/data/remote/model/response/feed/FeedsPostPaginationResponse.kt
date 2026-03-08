@@ -1,8 +1,8 @@
-package com.rizkysiregar.feedzmore.data.remote.model.response
+package com.rizkysiregar.feedzmore.data.remote.model.response.feed
 
 import com.google.gson.annotations.SerializedName
 
-data class FeedsPostResponse(
+data class FeedsPostPaginationResponse(
 
 	@field:SerializedName("pageNumber")
 	val pageNumber: Int,

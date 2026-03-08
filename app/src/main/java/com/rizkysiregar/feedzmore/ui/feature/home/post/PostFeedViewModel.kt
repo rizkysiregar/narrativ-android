@@ -6,8 +6,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
-import com.rizkysiregar.feedzmore.data.remote.model.request.PostingFeedRequest
-import com.rizkysiregar.feedzmore.data.remote.model.response.PostingFeedResponse
+import com.rizkysiregar.feedzmore.data.remote.model.request.feed.PostingFeedRequest
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.PostingFeedResponse
 import com.rizkysiregar.feedzmore.data.repository.UserDataRepository
 import com.rizkysiregar.feedzmore.domain.feed.PostingFeedUseCase
 import com.rizkysiregar.feedzmore.util.uriToRequestBody
@@ -89,47 +89,6 @@ class PostFeedViewModel @Inject constructor(
 	fun resetPostingState() {
 		_postingState.value = ResultState.Idle
 	}
-
-
-	/*	private fun loadGalleryPhotos() {
-			viewModelScope.launch(Dispatchers.IO) {
-				val images = mutableListOf<String>()
-
-				val projection = arrayOf<String>(
-					MediaStore.Images.Media._ID,
-					MediaStore.Images.Media.DISPLAY_NAME
-				)
-
-				val sortOrder = "${MediaStore.Images.Media.DATE_ADDED} DESC"
-
-				val query = app.contentResolver.query(
-					MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-					projection,
-					null,
-					null,
-					sortOrder
-				)
-
-				query?.use { cursor ->
-					val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
-					while (cursor.moveToNext()) {
-						val id = cursor.getLong(idColumn)
-						val uri = "${MediaStore.Images.Media.EXTERNAL_CONTENT_URI}/$id"
-						images.add(uri)
-					}
-				}
-
-				println("## images size: " + images.size)
-				_uiState.update {
-					it.copy(galleryImage = images)
-				}
-			}
-		}
-
-
-
-
-	 */
 }
 
 

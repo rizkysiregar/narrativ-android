@@ -3,6 +3,7 @@ package com.rizkysiregar.feedzmore.ui.feature.auth.reset
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,6 +46,7 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 @Composable
 fun OtpVerificationView(
 	onNext: (ResetPassVerifyOtpRequest) -> Unit,
+	onBack: () -> Unit,
 	email: String
 ) {
 	var otpCode by remember { mutableStateOf("") }
@@ -76,6 +78,7 @@ fun OtpVerificationView(
 					modifier = Modifier
 						.size(24.dp)
 						.padding(3.dp)
+						.clickable { onBack() }
 				)
 			}
 
@@ -151,6 +154,7 @@ private fun OtpVerificationScreenPreview() {
 	FeedzmoreTheme {
 		OtpVerificationView(
 			onNext = {},
+			onBack = {},
 			email = "helloworld@gmail.com"
 		)
 	}
