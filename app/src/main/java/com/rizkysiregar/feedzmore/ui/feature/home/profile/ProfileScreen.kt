@@ -41,8 +41,8 @@ import coil3.request.ImageRequest
 import coil3.request.placeholder
 import com.rizkysiregar.feedzmore.R
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
-import com.rizkysiregar.feedzmore.data.remote.model.response.FeedContentItem
 import com.rizkysiregar.feedzmore.data.remote.model.response.UserProfileResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.feedzmore.ui.components.ProfileAvatar
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedUiState
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme

@@ -1,6 +1,7 @@
 package com.rizkysiregar.feedzmore.ui.feature.home.feed
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -38,7 +39,7 @@ import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import coil3.request.placeholder
 import com.rizkysiregar.feedzmore.R
-import com.rizkysiregar.feedzmore.data.remote.model.response.FeedContentItem
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.feedzmore.ui.components.ShimmerEffect
 
 /**
@@ -104,10 +105,17 @@ fun FeedItemCard(
 				ShimmerEffect(modifier = Modifier.fillMaxSize())
 			},
 			error = {
-				Icon(
-					imageVector = Icons.Outlined.Info,
-					contentDescription = "Error",
-				)
+				Box(
+					contentAlignment = Alignment.Center,
+					modifier = Modifier
+						.size(50.dp)
+				) {
+					Icon(
+						imageVector = Icons.Outlined.Info,
+						contentDescription = "Error",
+					)
+				}
+
 			}
 		)
 

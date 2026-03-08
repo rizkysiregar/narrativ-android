@@ -1,6 +1,6 @@
 package com.rizkysiregar.feedzmore.ui.feature.home.feed
 
-import com.rizkysiregar.feedzmore.data.remote.model.response.FeedContentItem
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
 
 /**
  * Author: Habib Rizky Almajid Siregar

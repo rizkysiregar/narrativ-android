@@ -3,6 +3,7 @@ package com.rizkysiregar.feedzmore.ui.feature.home.feed
 import androidx.lifecycle.viewModelScope
 import com.rizkysiregar.feedzmore.data.cache.DataStoreManager
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
+import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetCommentRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetFeedPostRequest
 import com.rizkysiregar.feedzmore.domain.feed.DislikePostUseCase
 import com.rizkysiregar.feedzmore.domain.feed.GetFeedPostUseCase
@@ -190,6 +191,7 @@ class FeedViewModel @Inject constructor(
 	}
 
 
+	// toggle like on post
 	fun toggleLike(postId: String) {
 		println("## ViewModel Received Like Click for ID: $postId")
 
@@ -240,5 +242,9 @@ class FeedViewModel @Inject constructor(
 		}
 	}
 
+	// load comment
+	fun loadComment(request: GetCommentRequest) {
+
+	}
 
 }

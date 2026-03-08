@@ -1,10 +1,13 @@
 package com.rizkysiregar.feedzmore.data.remote.api
 
+import com.rizkysiregar.feedzmore.data.remote.model.request.feed.AddCommentRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.LikeFeedRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.PostingFeedRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.BaseResponse
-import com.rizkysiregar.feedzmore.data.remote.model.response.FeedsPostResponse
-import com.rizkysiregar.feedzmore.data.remote.model.response.PostingFeedResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.PaginationResponseWrapper
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.CommentItem
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedsPostPaginationResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.PostingFeedResponse
 import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -26,7 +29,7 @@ interface FeedApi {
 		@Query("page") page: Int,
 		@Query("size") size: Int,
 		@Query("userId") userId: String
-	): BaseResponse<FeedsPostResponse>
+	): BaseResponse<FeedsPostPaginationResponse>
 
 	@Multipart
 	@POST("posts/upload")
@@ -45,4 +48,14 @@ interface FeedApi {
 		@Query("postId") postId: UUID
 	): BaseResponse<String>
 
+	@POST("comments")
+	suspend fun addComment(
+		@Body request: AddCommentRequest
+	): BaseResponse<String>
+
+	@GET("comments")
+	suspend fun getPostComment(
+		@Query("postId") postId: UUID,
+		@Query("page") page: Int
+	): BaseResponse<PaginationResponseWrapper<CommentItem>>
 }

@@ -20,11 +20,14 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.rizkysiregar.feedzmore.data.remote.model.response.FeedContentItem
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 
 
@@ -45,10 +48,13 @@ fun FeedScreen(
 	token: String,
 	onLikeClick: (String) -> Unit
 ) {
+	// feed state
 	val currentOnLikeClick by androidx.compose.runtime.rememberUpdatedState(onLikeClick)
-
 	val pullState =
 		rememberPullRefreshState(refreshing = uiState.isRefreshing, onRefresh = onRefresh)
+
+	var selectedPostId by remember { mutableStateOf<String?>(null) }
+	var showCommentSheet by remember { mutableStateOf(false) }
 
 	Box(
 		modifier = Modifier
@@ -64,7 +70,10 @@ fun FeedScreen(
 				FeedItemCard(
 					item = item,
 					onLikeClick = { id -> currentOnLikeClick(id) },
-					onCommentClick = {},
+					onCommentClick = { post ->
+						selectedPostId = post.id
+						showCommentSheet = true
+					},
 					token = token
 				)
 			}
@@ -97,6 +106,13 @@ fun FeedScreen(
 					}
 				}
 			}
+		}
+
+		if (showCommentSheet && selectedPostId != null) {
+			CommentSectionSheet(
+				postId = selectedPostId!!,
+				onDismiss = { showCommentSheet = false }
+			)
 		}
 
 		PullRefreshIndicator(
