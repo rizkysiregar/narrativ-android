@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.CommentItem
+import com.rizkysiregar.feedzmore.ui.components.InitialAvatar
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 
 /**
@@ -37,14 +38,10 @@ fun CommentRow(comment: CommentItem) {
 		modifier = Modifier.fillMaxWidth(),
 		horizontalArrangement = Arrangement.spacedBy(12.dp)
 	) {
-		AsyncImage(
-			model = comment.imageUrl, // Ensure your model has this
-			contentDescription = "Profile Picture",
-			modifier = Modifier
-				.size(36.dp)
-				.clip(CircleShape)
-				.background(Color.LightGray),
-			contentScale = ContentScale.Crop
+		// Profile picture Using initial avatar
+		InitialAvatar(
+			name = comment.username,
+			size = 36.dp
 		)
 
 		Column(modifier = Modifier.weight(1f)) {

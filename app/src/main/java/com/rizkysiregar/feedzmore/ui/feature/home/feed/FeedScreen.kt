@@ -45,7 +45,6 @@ fun FeedScreen(
 	onRefresh: () -> Unit,
 	onRetry: () -> Unit,
 	listState: LazyListState = rememberLazyListState(),
-	token: String,
 	onLikeClick: (String) -> Unit
 ) {
 	// feed state
@@ -73,8 +72,7 @@ fun FeedScreen(
 					onCommentClick = { post ->
 						selectedPostId = post.id
 						showCommentSheet = true
-					},
-					token = token
+					}
 				)
 			}
 
@@ -145,7 +143,6 @@ fun FeedScreenPreview() {
 			onRefresh = {},
 			onRetry = {},
 			listState = rememberLazyListState(),
-			token = "jwt-token",
 			onLikeClick = {}
 		)
 	}

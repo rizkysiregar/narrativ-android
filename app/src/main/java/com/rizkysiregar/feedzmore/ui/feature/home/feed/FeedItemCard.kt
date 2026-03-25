@@ -40,6 +40,7 @@ import coil3.request.ImageRequest
 import coil3.request.placeholder
 import com.rizkysiregar.feedzmore.R
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
+import com.rizkysiregar.feedzmore.ui.components.InitialAvatar
 import com.rizkysiregar.feedzmore.ui.components.ShimmerEffect
 
 /**
@@ -54,8 +55,7 @@ fun FeedItemCard(
 	item: FeedContentItem,
 	onLikeClick: (String) -> Unit,
 	onCommentClick: (FeedContentItem) -> Unit = {},
-	onUserClick: (FeedContentItem) -> Unit = {},
-	token: String
+	onUserClick: (FeedContentItem) -> Unit = {}
 ) {
 	Column(
 		modifier = Modifier
@@ -70,15 +70,10 @@ fun FeedItemCard(
 			verticalAlignment = Alignment.CenterVertically
 		) {
 			// Profile picture
-			AsyncImage(
-				model = ImageRequest.Builder(LocalContext.current).data(
-					data = item.imageUrl
-				).placeholder(R.drawable.outline_person_gray_24).build(),
-				contentDescription = "Profile Picture",
-				modifier = Modifier
-					.size(42.dp)
-					.clip(CircleShape),
-				contentScale = ContentScale.Crop
+			// Profile picture Using initial avatar
+			InitialAvatar(
+				name = item.username,
+				size = 35.dp
 			)
 
 			// username
@@ -195,7 +190,6 @@ fun FeedItemCardPreview() {
 			imageUrl = "https://dummy-url",
 			username = "John Doe"
 		),
-		token = "jwt-token",
 		onLikeClick = {}
 	)
 }
