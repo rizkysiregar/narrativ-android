@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
@@ -57,9 +58,12 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 fun ProfileScreen(
 	profileState: ResultState<UserProfileResponse>,
 	feedState: FeedUiState,
+	listState: LazyListState,          // added
 	onExitClick: () -> Unit,
 	onRetry: () -> Unit,
-	onLoadNextPage: () -> Unit, // pagination handler
+	onRefresh: () -> Unit,             // added
+	onLoadNextPage: () -> Unit,
+	onLikeClick: (String) -> Unit,     // added
 	modifier: Modifier = Modifier,
 ) {
 	Scaffold(
@@ -92,6 +96,7 @@ fun ProfileScreen(
 				is ResultState.Success -> {
 					val user = profileState.data
 					LazyColumn(
+						state = listState,
 						modifier = Modifier
 							.fillMaxSize()
 					) {
@@ -277,41 +282,27 @@ private fun UserProfileInfoPreview() {
 }
 
 
-@Preview(showSystemUi = true)
-@Composable
-private fun ProfileScreenPreview() {
-	FeedzmoreTheme {
-		ProfileScreen(
-			profileState = ResultState.Success(
-				UserProfileResponse(
-					id = "123",
-					username = "rizkysiregar",
-					email = "habib@example.com",
-					firstName = "Rizky",
-					lastName = "Siregar",
-					fullName = "Rizky Siregar",
-					phoneNumber = "08123123123",
-					profileImageUrl = "https://dummy.com"
-				)
-			),
-			onRetry = {},
-			onExitClick = {},
-			onLoadNextPage = {},
-			modifier = Modifier,
-			feedState = FeedUiState(
-				items = List(10) { index ->
-					FeedContentItem(
-						id = index.toString(),
-						caption = "This is caption $index",
-						commentCount = 1,
-						likeCount = 1,
-						liked = true,
-						createdAt = "2023-11-25",
-						imageUrl = "https://dummy-url",
-						username = "John Doe"
-					)
-				}
-			),
-		)
-	}
-}
+//@Preview(showSystemUi = true)
+//@Composable
+//private fun ProfileScreenPreview() {
+//	FeedzmoreTheme {
+//		ProfileScreen(
+//			profileState = ResultState.Success(
+//				UserProfileResponse(
+//					id = "123",
+//					username = "rizkysiregar",
+//					email = "habib@example.com",
+//					firstName = "Rizky",
+//					lastName = "Siregar",
+//					fullName = "Rizky Siregar",
+//					phoneNumber = "08123123123",
+//					profileImageUrl = "https://dummy.com"
+//				)
+//			),
+//			onRetry = {},
+//			onExitClick = {},
+//			onLoadNextPage = {},
+//			modifier = Modifier,
+//		)
+//	}
+//}
