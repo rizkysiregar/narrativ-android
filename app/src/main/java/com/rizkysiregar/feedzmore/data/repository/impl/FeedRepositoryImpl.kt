@@ -4,7 +4,8 @@ import com.rizkysiregar.feedzmore.data.remote.api.FeedApi
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.AddCommentRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetCommentRequest
-import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetFeedPostRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetAllFeedRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetFeedByUsernameRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.LikeFeedRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.PostingFeedRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.PaginationResponseWrapper
@@ -30,10 +31,18 @@ class FeedRepositoryImpl @Inject constructor(
 		retrofit.create(FeedApi::class.java)
 	}
 
-	override fun getFeed(feedRequest: GetFeedPostRequest): Flow<ResultState<FeedsPostPaginationResponse>> =
+	override fun getAllFeed(request: GetAllFeedRequest): Flow<ResultState<FeedsPostPaginationResponse>> =
 		flowFromApi {
-			feedApi.getFeed(feedRequest.page, feedRequest.size, feedRequest.userId)
+			feedApi.getFeed(request.page, request.size)
+		}
 
+	override fun getFeedByUsername(request: GetFeedByUsernameRequest): Flow<ResultState<FeedsPostPaginationResponse>> =
+		flowFromApi {
+			feedApi.getFeedByUsername(
+				request.page,
+				request.size,
+				request.username
+			)
 		}
 
 	override fun postingFeed(postingFeedRequest: PostingFeedRequest): Flow<ResultState<PostingFeedResponse>> =

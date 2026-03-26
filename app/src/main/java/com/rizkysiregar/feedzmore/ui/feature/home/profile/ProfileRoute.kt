@@ -22,20 +22,17 @@ fun ProfileRoute(
 	feedViewModel: FeedViewModel = hiltViewModel(),
 	onLogoutClick: () -> Unit
 ) {
-	// states from profile viewmodel
 	val profileState by profileVm.profileState.collectAsState()
-	val userId by profileVm.userId.collectAsState()
-	val token by profileVm.token.collectAsState()
-
-	// Get post list state from feed viewmodel
 	val feedState by feedViewModel.uiState.collectAsStateWithLifecycle()
-
+	val username by profileVm.usernameDataStore.collectAsState()
 
 	// trigger fetch when entering this page
-	LaunchedEffect(userId) {
-		if (userId.isNotEmpty()) {
-			profileVm.fetchUserProfile()
-			feedViewModel.refresh(userId)
+	LaunchedEffect(username) {
+		profileVm.fetchUserProfile()
+		if (username.isNotBlank()) {
+			print("## profile username: $username")
+			feedViewModel.setUsername(username)
+			feedViewModel.refresh()
 		}
 	}
 
@@ -45,16 +42,12 @@ fun ProfileRoute(
 			feedState = feedState,
 			onRetry = { profileVm.fetchUserProfile() },
 			onLoadNextPage = {
-				if (userId.isNotEmpty()) {
-					feedViewModel.loadNextPage(userId)
-				}
+				feedViewModel.loadNextPage()
 			},
 			onExitClick = {
 				profileVm.clearDataStore()
 				onLogoutClick()
 			},
-			userId = userId,
-			token = token
 		)
 	}
 }

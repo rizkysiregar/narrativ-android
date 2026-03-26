@@ -24,11 +24,18 @@ import java.util.UUID
  * Description: Software Engineer
  */
 interface FeedApi {
+
 	@GET("posts")
 	suspend fun getFeed(
 		@Query("page") page: Int,
+		@Query("size") size: Int
+	): BaseResponse<FeedsPostPaginationResponse>
+
+	@GET("posts/user")
+	suspend fun getFeedByUsername(
+		@Query("page") page: Int,
 		@Query("size") size: Int,
-		@Query("userId") userId: String
+		@Query("username") username: String
 	): BaseResponse<FeedsPostPaginationResponse>
 
 	@Multipart

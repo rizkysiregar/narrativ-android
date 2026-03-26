@@ -42,4 +42,11 @@ abstract class BaseViewModel(dataStore: DataStoreManager) : ViewModel() {
 			initialValue = ""
 		)
 
+
+	val usernameDataStore = dataStore.get(PrefKeys.username, "")
+		.stateIn(
+			scope = viewModelScope,
+			started = SharingStarted.WhileSubscribed(5000),
+			initialValue = ""
+		)
 }

@@ -22,7 +22,6 @@ fun FeedRoute(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
-    val userId by viewModel.userId.collectAsState()
 
     /**
      * INFINITE SCROLL / PAGINATION HANDLER
@@ -60,15 +59,15 @@ fun FeedRoute(
                     !uiState.isError // <-- stop if there is an error
                 ) {
                     println("## last: $last, total: $total")
-                    viewModel.loadNextPage(userId)
+                    viewModel.loadNextPage()
                 }
             }
     }
 
     FeedScreen(
         uiState = uiState,
-        onRefresh = { viewModel.refresh(userId) },
-        onRetry = { viewModel.loadNextPage(userId) },
+        onRefresh = { viewModel.refresh() },
+        onRetry = { viewModel.loadNextPage() },
         listState = listState,
         onLikeClick = viewModel::toggleLike
     )
