@@ -39,9 +39,9 @@ class FeedRepositoryImpl @Inject constructor(
 	override fun getFeedByUsername(request: GetFeedByUsernameRequest): Flow<ResultState<FeedsPostPaginationResponse>> =
 		flowFromApi {
 			feedApi.getFeedByUsername(
+				request.username,
 				request.page,
-				request.size,
-				request.username
+				request.size
 			)
 		}
 
@@ -55,8 +55,7 @@ class FeedRepositoryImpl @Inject constructor(
 
 	override fun likePost(postId: UUID): Flow<ResultState<String>> =
 		flowFromApi {
-			val request = LikeFeedRequest(postId = postId)
-			feedApi.likePost(request)
+			feedApi.likePost(postId)
 		}
 
 	override fun dislikePost(postId: UUID): Flow<ResultState<String>> =
@@ -66,7 +65,10 @@ class FeedRepositoryImpl @Inject constructor(
 
 	override fun addComment(request: AddCommentRequest): Flow<ResultState<String>> =
 		flowFromApi {
-			feedApi.addComment(request)
+			feedApi.addComment(
+				postId = request.postId,
+				request = request
+			)
 		}
 
 	override fun getComment(request: GetCommentRequest): Flow<ResultState<PaginationResponseWrapper<CommentItem>>> =

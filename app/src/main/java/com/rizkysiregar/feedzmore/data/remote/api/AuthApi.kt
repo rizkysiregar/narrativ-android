@@ -29,17 +29,17 @@ interface AuthApi {
 		@Body request: RegisterRequest
 	): BaseResponse<String>
 
-	@POST("auth/password/forgot")
+	@POST("auth/forgot-password")
 	suspend fun forgotPassword(
 		@Body emailRequest: EmailRequest
 	): BaseResponse<ForgotPasswordResponse>
 
-	@POST("auth/password/verify-otp")
+	@POST("auth/verify-otp")
 	suspend fun verifyOtp(
 		@Body request: ResetPassVerifyOtpRequest
 	): BaseResponse<ResetPassVerifyOtpResponse>
 
-	@POST("auth/password/reset")
+	@POST("auth/reset-password")
 	suspend fun resetNewPassword(
 		@Body request: ResetNewPasswordRequest
 	): BaseResponse<String>

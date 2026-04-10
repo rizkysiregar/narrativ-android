@@ -15,6 +15,7 @@ import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
+import retrofit2.http.Path
 import retrofit2.http.Query
 import java.util.UUID
 
@@ -31,38 +32,39 @@ interface FeedApi {
 		@Query("size") size: Int
 	): BaseResponse<FeedsPostPaginationResponse>
 
-	@GET("posts/user")
+	@GET("posts/users/{username}/posts")
 	suspend fun getFeedByUsername(
+		@Path("username") username: String,
 		@Query("page") page: Int,
-		@Query("size") size: Int,
-		@Query("username") username: String
+		@Query("size") size: Int
 	): BaseResponse<FeedsPostPaginationResponse>
 
 	@Multipart
-	@POST("posts/upload")
+	@POST("posts")
 	suspend fun postingFeed(
 		@Part("addPostRequest") addPostRequest: PostingFeedRequest,
 		@Part image: MultipartBody.Part
 	): BaseResponse<PostingFeedResponse>
 
-	@POST("post/like")
+	@POST("posts/{postId}/like")
 	suspend fun likePost(
-		@Body request: LikeFeedRequest
+		@Path("postId") postId: UUID
 	): BaseResponse<String>
 
-	@DELETE("post/dislike")
+	@DELETE("posts/{postId}/dislike")
 	suspend fun dislikePost(
-		@Query("postId") postId: UUID
+		@Path("postId") postId: UUID
 	): BaseResponse<String>
 
-	@POST("comments")
+	@POST("posts/{postId}/comments")
 	suspend fun addComment(
-		@Body request: AddCommentRequest
+		@Body request: AddCommentRequest,
+		@Path("postId") postId: UUID
 	): BaseResponse<String>
 
-	@GET("comments")
+	@GET("posts/{postId}/comments")
 	suspend fun getPostComment(
-		@Query("postId") postId: UUID,
+		@Path("postId") postId: UUID,
 		@Query("page") page: Int
 	): BaseResponse<PaginationResponseWrapper<CommentItem>>
 }

@@ -12,7 +12,7 @@ import retrofit2.http.Path
  */
 
 interface UserApi {
-	@GET("user/{userId}")
+	@GET("users/{userId}")
 	suspend fun getUserProfile(
 		@Path("userId") userId: String
 	): BaseResponse<UserProfileResponse>
