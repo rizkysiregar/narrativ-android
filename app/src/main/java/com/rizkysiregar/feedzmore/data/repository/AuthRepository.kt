@@ -1,6 +1,7 @@
 package com.rizkysiregar.feedzmore.data.repository
 
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.GoogleLoginRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.LoginRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.RegisterRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.ResetNewPasswordRequest
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.Flow
  */
 interface AuthRepository {
 	fun login(request: LoginRequest): Flow<ResultState<LoginResponse>>
+	fun googleLogin(request: GoogleLoginRequest): Flow<ResultState<LoginResponse>>
 	fun register(registerRequest: RegisterRequest): Flow<ResultState<String>>
 	fun forgotPassword(email: String): Flow<ResultState<ForgotPasswordResponse>>
 	fun verifyOtp(request: ResetPassVerifyOtpRequest): Flow<ResultState<ResetPassVerifyOtpResponse>>

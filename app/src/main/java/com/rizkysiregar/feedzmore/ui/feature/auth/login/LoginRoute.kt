@@ -33,7 +33,9 @@ fun LoginRoute(
 
 	// view model
 	val loginState by viewModel.loginState.collectAsState()
+	val googleLoginState by viewModel.googleLoginState.collectAsState()
 
+	// handle regular login
 	LaunchedEffect(loginState) {
 		if (loginState is ResultState.Success) {
 			onLoginSuccess()
@@ -41,10 +43,28 @@ fun LoginRoute(
 		}
 	}
 
+	// handle Google login success
+	LaunchedEffect(googleLoginState) {
+		if (googleLoginState is ResultState.Success) {
+			onLoginSuccess()
+			viewModel.resetGoogleLoginState()
+		}
+	}
+
+	val isLoading = loginState is ResultState.Loading || googleLoginState is ResultState.Loading
+	val errorMessage = when {
+		loginState is ResultState.Failure -> (loginState as ResultState.Failure).message
+		googleLoginState is ResultState.Failure -> (googleLoginState as ResultState.Failure).message
+		else -> null
+	}
+
 	BaseScreen(
-		isLoading = loginState is ResultState.Loading,
-		errorMessage = if (loginState is ResultState.Failure) (loginState as ResultState.Failure).message else null,
-		onErrorDismiss = { viewModel.resetLoginState() }
+		isLoading,
+		errorMessage,
+		onErrorDismiss = {
+			viewModel.resetLoginState()
+			viewModel.resetGoogleLoginState()
+		}
 	) {
 		LoginScreen(
 			username = username,
@@ -59,8 +79,15 @@ fun LoginRoute(
 			},
 			onForgotPasswordClick = {
 				navController.navigate(AuthPathRoutes.ResetPassword.route)
+			},
+			onGoogleLoginClick = {
+				println("google login")
+				viewModel.signInWithGoogle()
 			}
 		)
 	}
 }
+
+
+
 

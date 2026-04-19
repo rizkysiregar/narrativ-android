@@ -57,6 +57,7 @@ fun LoginScreen(
 	onUsernameChange: (String) -> Unit,
 	onPasswordChange: (String) -> Unit,
 	onLoginClick: () -> Unit,
+	onGoogleLoginClick: () -> Unit,
 	onNavigateToRegister: () -> Unit,
 	onForgotPasswordClick: () -> Unit
 ) {
@@ -74,7 +75,7 @@ fun LoginScreen(
 			onPasswordChange,
 			onForgotPasswordClick
 		)
-		MiddleSection(onLoginClick)
+		MiddleSection(onLoginClick, onGoogleLoginClick)
 		BottomSection(onNavigateToRegister)
 	}
 
@@ -125,7 +126,7 @@ fun TopSection(
 }
 
 @Composable
-fun MiddleSection(onLoginClick: () -> Unit) {
+fun MiddleSection(onLoginClick: () -> Unit, onGoogleLoginClick: () -> Unit) {
 	Column {
 		Button(
 			onClick = {
@@ -152,7 +153,7 @@ fun MiddleSection(onLoginClick: () -> Unit) {
 
 		Spacer(modifier = Modifier.height(16.dp))
 
-		OAuthButtonsRow()
+		OAuthButtonsRow(onGoogleLoginClick = onGoogleLoginClick)
 	}
 }
 
@@ -273,19 +274,19 @@ fun OrLoginWith() {
 }
 
 @Composable
-fun OAuthButtonsRow() {
+fun OAuthButtonsRow(onGoogleLoginClick: () -> Unit) {
 	Row(
 		modifier = Modifier.fillMaxWidth(),
 		horizontalArrangement = Arrangement.Center
 	) {
-		OAuthButton(R.drawable.google_g_logo)
+		OAuthButton(R.drawable.google_g_logo, onClick = onGoogleLoginClick )
 	}
 }
 
 @Composable
-fun OAuthButton(resId: Int) {
+fun OAuthButton(resId: Int, onClick: () -> Unit) {
 	OutlinedButton(
-		onClick = {},
+		onClick = { onClick() },
 		shape = RoundedCornerShape(12.dp),
 		modifier = Modifier.size(56.dp),
 		contentPadding = PaddingValues(8.dp)
@@ -309,7 +310,8 @@ fun AuthScreenPreview() {
 			onPasswordChange = {},
 			onLoginClick = {},
 			onNavigateToRegister = {},
-			onForgotPasswordClick = {}
+			onForgotPasswordClick = {},
+			onGoogleLoginClick = {}
 		)
 	}
 }
