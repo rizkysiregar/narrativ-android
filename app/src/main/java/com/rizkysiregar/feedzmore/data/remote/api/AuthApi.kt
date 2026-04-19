@@ -1,6 +1,7 @@
 package com.rizkysiregar.feedzmore.data.remote.api
 
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.EmailRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.GoogleLoginRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.LoginRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.RegisterRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.ResetNewPasswordRequest
@@ -9,6 +10,7 @@ import com.rizkysiregar.feedzmore.data.remote.model.response.BaseResponse
 import com.rizkysiregar.feedzmore.data.remote.model.response.auth.ForgotPasswordResponse
 import com.rizkysiregar.feedzmore.data.remote.model.response.auth.LoginResponse
 import com.rizkysiregar.feedzmore.data.remote.model.response.auth.ResetPassVerifyOtpResponse
+import okhttp3.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
 
@@ -22,6 +24,11 @@ interface AuthApi {
 	@POST("auth/login")
 	suspend fun login(
 		@Body request: LoginRequest
+	): BaseResponse<LoginResponse>
+
+	@POST("auth/google")
+	suspend fun googleLogin(
+		@Body request: GoogleLoginRequest
 	): BaseResponse<LoginResponse>
 
 	@POST("auth/register")

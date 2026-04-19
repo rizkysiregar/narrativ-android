@@ -3,6 +3,7 @@ package com.rizkysiregar.feedzmore.data.repository.impl
 import com.rizkysiregar.feedzmore.data.remote.api.AuthApi
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.EmailRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.GoogleLoginRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.LoginRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.RegisterRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.ResetNewPasswordRequest
@@ -32,6 +33,11 @@ class AuthRepositoryImpl @Inject constructor(
 	override fun login(request: LoginRequest): Flow<ResultState<LoginResponse>> =
 		flowFromApi {
 			authApi.login(request)
+		}
+
+	override fun googleLogin(request: GoogleLoginRequest): Flow<ResultState<LoginResponse>> =
+		flowFromApi {
+			authApi.googleLogin(request)
 		}
 
 	override fun register(registerRequest: RegisterRequest): Flow<ResultState<String>> =
