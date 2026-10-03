@@ -40,12 +40,12 @@ android {
 			)
 		}
 
-		create("dev") {
+		create("dev-public") {
 			dimension = "env"
 			buildConfigField(
 				"String",
 				"BASE_URL",
-				"\"https://feedzmore-k3s-dev.rizkysiregar.my.id/api/v1/\""
+				"\"https://api-dev-feedzmore.rizkysiregar.my.id/api/v1/\""
 			)
 		}
 	}

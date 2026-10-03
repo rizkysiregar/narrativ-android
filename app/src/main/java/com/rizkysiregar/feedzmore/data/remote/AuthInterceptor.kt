@@ -17,12 +17,21 @@ class AuthInterceptor @Inject constructor(
 
 	override fun intercept(chain: Interceptor.Chain): Response {
 		val token = tokenHolder.getToken()
-		val requestBuilder = chain.request().newBuilder()
+		val request = chain.request()
+		val requestBuilder = request.newBuilder()
 
-		if (!token.isNullOrEmpty()) {
-			requestBuilder.addHeader("Authorization", "Bearer $token")
+		if (!token.isNullOrEmpty() && !isPublicAuthEndpoint(request.url.encodedPath)) {
+			requestBuilder.header("Authorization", "Bearer $token")
 		}
 
 		return chain.proceed(requestBuilder.build())
 	}
+
+	/**
+	 * Authentication endpoints must work even when a previously stored JWT has
+	 * expired. Sending that stale token would make the backend reject the request
+	 * in its JWT filter before the login or registration controller is reached.
+	 */
+	private fun isPublicAuthEndpoint(path: String): Boolean =
+		path.contains("/auth/")
 }
