@@ -1,8 +1,10 @@
 package com.rizkysiregar.feedzmore.data.remote
 
 import com.rizkysiregar.feedzmore.data.cache.JwtTokenHolder
+import com.rizkysiregar.feedzmore.data.session.SessionManager
 import okhttp3.Interceptor
 import okhttp3.Response
+import org.json.JSONObject
 import javax.inject.Inject
 
 /**
@@ -12,7 +14,8 @@ import javax.inject.Inject
  */
 
 class AuthInterceptor @Inject constructor(
-	val tokenHolder: JwtTokenHolder
+	private val tokenHolder: JwtTokenHolder,
+	private val sessionManager: SessionManager
 ) : Interceptor {
 
 	override fun intercept(chain: Interceptor.Chain): Response {
@@ -24,7 +27,14 @@ class AuthInterceptor @Inject constructor(
 			requestBuilder.header("Authorization", "Bearer $token")
 		}
 
-		return chain.proceed(requestBuilder.build())
+		val protectedRequest = !isPublicAuthEndpoint(request.url.encodedPath)
+		val response = chain.proceed(requestBuilder.build())
+
+		if (protectedRequest && response.code == HTTP_UNAUTHORIZED) {
+			sessionManager.expireSession(extractErrorMessage(response))
+		}
+
+		return response
 	}
 
 	/**
@@ -34,4 +44,21 @@ class AuthInterceptor @Inject constructor(
 	 */
 	private fun isPublicAuthEndpoint(path: String): Boolean =
 		path.contains("/auth/")
+
+	/**
+	 * peekBody reads a copy, so Retrofit can still read the original error body.
+	 */
+	private fun extractErrorMessage(response: Response): String =
+		runCatching {
+			JSONObject(response.peekBody(MAX_ERROR_BODY_BYTES).string())
+				.optString("message")
+				.takeIf { it.isNotBlank() }
+		}.getOrNull() ?: DEFAULT_SESSION_EXPIRED_MESSAGE
+
+	private companion object {
+		const val HTTP_UNAUTHORIZED = 401
+		const val MAX_ERROR_BODY_BYTES = 64L * 1024L
+		const val DEFAULT_SESSION_EXPIRED_MESSAGE =
+			"Sesi Anda telah berakhir. Silakan masuk kembali."
+	}
 }
