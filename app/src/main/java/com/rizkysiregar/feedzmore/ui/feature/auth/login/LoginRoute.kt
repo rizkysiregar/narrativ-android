@@ -30,6 +30,8 @@ fun LoginRoute(
 	// username and password input
 	var username by remember { mutableStateOf("") }
 	var password by remember { mutableStateOf("") }
+	var usernameError by remember { mutableStateOf<String?>(null) }
+	var passwordError by remember { mutableStateOf<String?>(null) }
 
 	// view model
 	val loginState by viewModel.loginState.collectAsState()
@@ -69,10 +71,24 @@ fun LoginRoute(
 		LoginScreen(
 			username = username,
 			password = password,
-			onUsernameChange = { username = it },
-			onPasswordChange = { password = it },
+			usernameError = usernameError,
+			passwordError = passwordError,
+			onUsernameChange = {
+				username = it
+				if (it.isNotBlank()) usernameError = null
+			},
+			onPasswordChange = {
+				password = it
+				if (it.isNotBlank()) passwordError = null
+			},
 			onLoginClick = {
-				viewModel.login(username, password)
+				val validUsername = username.trim()
+				usernameError = if (validUsername.isEmpty()) "Username wajib diisi" else null
+				passwordError = if (password.isBlank()) "Password wajib diisi" else null
+
+				if (usernameError == null && passwordError == null) {
+					viewModel.login(validUsername, password)
+				}
 			},
 			onNavigateToRegister = {
 				navController.navigate(AuthPathRoutes.Register.route)
@@ -87,7 +103,6 @@ fun LoginRoute(
 		)
 	}
 }
-
 
 
 

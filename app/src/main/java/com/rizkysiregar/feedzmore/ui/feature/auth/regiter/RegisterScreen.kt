@@ -41,8 +41,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -57,9 +60,11 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
  */
 @Composable
 fun RegisterScreen(
-	onRegisterClick: (RegisterState) -> Unit
+	onRegisterClick: (RegisterState) -> Unit,
+	onNavigateToLogin: () -> Unit
 ) {
 	var registerState by remember { mutableStateOf(RegisterState()) }
+	var formErrors by remember { mutableStateOf(RegisterFormErrors()) }
 
 	Column(
 		modifier = Modifier
@@ -70,21 +75,30 @@ fun RegisterScreen(
 	) {
 		TopSection(
 			registerState = registerState,
-			onStateChange = { newState -> registerState = newState }
+			formErrors = formErrors,
+			onStateChange = { newState ->
+				registerState = newState
+				formErrors = formErrors.clearResolvedErrors(newState)
+			}
 		)
 		MiddleSection(
 			onRegisterClick = {
-				onRegisterClick(registerState)
+				val errors = registerState.validate()
+				formErrors = errors
+				if (!errors.hasErrors) {
+					onRegisterClick(registerState.trimmed())
+				}
 			}
 		)
-		BottomSection()
+		BottomSection(onNavigateToLogin)
 	}
 
 }
 
 @Composable
-fun TopSection(
+private fun TopSection(
 	registerState: RegisterState,
+	formErrors: RegisterFormErrors,
 	onStateChange: (RegisterState) -> Unit
 ) {
 	Column {
@@ -116,18 +130,26 @@ fun TopSection(
 			OutlinedTextField(
 				value = registerState.firstName,
 				onValueChange = { newFirstName ->
-					onStateChange(registerState.copy(firstName = newFirstName))
+					onStateChange(registerState.copy(firstName = newFirstName.removeLineBreaks()))
 				},
 				label = { Text("First Name") },
-				modifier = Modifier.weight(1f)
+				isError = formErrors.firstName != null,
+				supportingText = formErrors.firstName?.let { { Text(it) } },
+				modifier = Modifier.weight(1f),
+				singleLine = true,
+				keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
 			)
 			OutlinedTextField(
 				value = registerState.lastName,
 				onValueChange = { newLastName ->
-					onStateChange(registerState.copy(lastName = newLastName))
+					onStateChange(registerState.copy(lastName = newLastName.removeLineBreaks()))
 				},
 				label = { Text("Last Name") },
-				modifier = Modifier.weight(1f)
+				isError = formErrors.lastName != null,
+				supportingText = formErrors.lastName?.let { { Text(it) } },
+				modifier = Modifier.weight(1f),
+				singleLine = true,
+				keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
 			)
 		}
 
@@ -136,10 +158,17 @@ fun TopSection(
 		OutlinedTextField(
 			value = registerState.email,
 			onValueChange = { newEmail ->
-				onStateChange(registerState.copy(email = newEmail))
+				onStateChange(registerState.copy(email = newEmail.removeLineBreaks()))
 			},
 			label = { Text("Email") },
-			modifier = Modifier.fillMaxWidth()
+			isError = formErrors.email != null,
+			supportingText = formErrors.email?.let { { Text(it) } },
+			modifier = Modifier.fillMaxWidth(),
+			singleLine = true,
+			keyboardOptions = KeyboardOptions(
+				keyboardType = KeyboardType.Email,
+				imeAction = ImeAction.Next
+			)
 		)
 
 		// -- Phone Number -- //
@@ -147,16 +176,24 @@ fun TopSection(
 		OutlinedTextField(
 			value = registerState.phoneNumber,
 			onValueChange = { newPhoneNumber ->
-				onStateChange(registerState.copy(phoneNumber = newPhoneNumber))
+				onStateChange(registerState.copy(phoneNumber = newPhoneNumber.removeLineBreaks()))
 			},
 			label = { Text("Phone Number") },
-			modifier = Modifier.fillMaxWidth()
+			isError = formErrors.phoneNumber != null,
+			supportingText = formErrors.phoneNumber?.let { { Text(it) } },
+			modifier = Modifier.fillMaxWidth(),
+			singleLine = true,
+			keyboardOptions = KeyboardOptions(
+				keyboardType = KeyboardType.Phone,
+				imeAction = ImeAction.Next
+			)
 		)
 
 		// -- Username -- //
 		Spacer(modifier = Modifier.height(16.dp))
 		UsernameField(
 			username = registerState.username,
+			errorMessage = formErrors.username,
 			onUsernameChange = { newUsername ->
 				onStateChange(registerState.copy(username = newUsername))
 			}
@@ -166,6 +203,7 @@ fun TopSection(
 		Spacer(modifier = Modifier.height(16.dp))
 		PasswordField(
 			password = registerState.password,
+			errorMessage = formErrors.password,
 			onPasswordChange = { newPassword ->
 				onStateChange(registerState.copy(password = newPassword))
 			}
@@ -206,7 +244,7 @@ fun MiddleSection(onRegisterClick: () -> Unit) {
 }
 
 @Composable
-fun BottomSection() {
+fun BottomSection(onNavigateToLogin: () -> Unit) {
 	Row(
 		modifier = Modifier.fillMaxWidth(),
 		horizontalArrangement = Arrangement.Center
@@ -224,8 +262,7 @@ fun BottomSection() {
 				interactionSource = remember { MutableInteractionSource() },
 				indication = ripple()
 			) {
-				// action click goes here, login
-
+				onNavigateToLogin()
 			}
 		)
 	}
@@ -238,12 +275,15 @@ fun BottomSection() {
 @Composable
 fun UsernameField(
 	username: String,
+	errorMessage: String?,
 	onUsernameChange: (String) -> Unit
 ) {
 	OutlinedTextField(
 		value = username,
-		onValueChange = onUsernameChange,
+		onValueChange = { onUsernameChange(it.removeLineBreaks()) },
 		label = { Text("Username") },
+		isError = errorMessage != null,
+		supportingText = errorMessage?.let { { Text(it) } },
 		trailingIcon = {
 			if (username.isNotEmpty()) {
 				Icon(
@@ -252,21 +292,26 @@ fun UsernameField(
 				)
 			}
 		},
-		modifier = Modifier.fillMaxWidth()
+		modifier = Modifier.fillMaxWidth(),
+		singleLine = true,
+		keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
 	)
 }
 
 @Composable
 fun PasswordField(
 	password: String,
+	errorMessage: String?,
 	onPasswordChange: (String) -> Unit
 ) {
 	var isVisible by remember { mutableStateOf(false) }
 
 	OutlinedTextField(
 		value = password,
-		onValueChange = onPasswordChange,
+		onValueChange = { onPasswordChange(it.removeLineBreaks()) },
 		label = { Text("Password") },
+		isError = errorMessage != null,
+		supportingText = errorMessage?.let { { Text(it) } },
 		visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation(),
 		trailingIcon = {
 			IconButton(
@@ -281,9 +326,55 @@ fun PasswordField(
 				)
 			}
 		},
-		modifier = Modifier.fillMaxWidth()
+		modifier = Modifier.fillMaxWidth(),
+		singleLine = true,
+		keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done)
 	)
 }
+
+private data class RegisterFormErrors(
+	val firstName: String? = null,
+	val lastName: String? = null,
+	val username: String? = null,
+	val email: String? = null,
+	val password: String? = null,
+	val phoneNumber: String? = null
+) {
+	val hasErrors: Boolean
+		get() = listOf(firstName, lastName, username, email, password, phoneNumber).any { it != null }
+}
+
+private fun RegisterState.validate(): RegisterFormErrors = RegisterFormErrors(
+	firstName = firstName.requiredError("Nama depan"),
+	lastName = lastName.requiredError("Nama belakang"),
+	username = username.requiredError("Username"),
+	email = email.requiredError("Email"),
+	password = password.requiredError("Password"),
+	phoneNumber = phoneNumber.requiredError("Nomor telepon")
+)
+
+private fun RegisterFormErrors.clearResolvedErrors(state: RegisterState): RegisterFormErrors = copy(
+	firstName = firstName?.takeIf { state.firstName.isBlank() },
+	lastName = lastName?.takeIf { state.lastName.isBlank() },
+	username = username?.takeIf { state.username.isBlank() },
+	email = email?.takeIf { state.email.isBlank() },
+	password = password?.takeIf { state.password.isBlank() },
+	phoneNumber = phoneNumber?.takeIf { state.phoneNumber.isBlank() }
+)
+
+private fun String.requiredError(label: String): String? =
+	if (isBlank()) "$label wajib diisi" else null
+
+private fun RegisterState.trimmed(): RegisterState = copy(
+	firstName = firstName.trim(),
+	lastName = lastName.trim(),
+	username = username.trim(),
+	email = email.trim(),
+	phoneNumber = phoneNumber.trim()
+)
+
+private fun String.removeLineBreaks(): String =
+	replace("\n", "").replace("\r", "")
 
 @Composable
 fun ForgotPasswordText() {
@@ -349,7 +440,8 @@ fun OAuthButton(resId: Int) {
 fun AuthScreenPreview() {
 	FeedzmoreTheme {
 		RegisterScreen(
-			onRegisterClick = {}
+			onRegisterClick = {},
+			onNavigateToLogin = {}
 		)
 	}
 }

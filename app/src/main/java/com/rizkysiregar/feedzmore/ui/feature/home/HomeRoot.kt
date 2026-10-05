@@ -4,6 +4,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -30,6 +34,7 @@ fun HomeRoot(
 	navController: NavController
 ) {
 	val homeNavController = rememberNavController()
+	var feedRefreshVersion by remember { mutableIntStateOf(0) }
 
 	Scaffold(
 		bottomBar = {
@@ -42,11 +47,28 @@ fun HomeRoot(
 			startDestination = BottomNavScreen.Feed.route,
 			modifier = Modifier.padding(paddingValues)
 		) {
-			composable(BottomNavScreen.Feed.route) { FeedRoute() }
+			composable(BottomNavScreen.Feed.route) {
+				FeedRoute(
+					refreshVersion = feedRefreshVersion,
+					onCreateFeed = {
+						homeNavController.navigate(BottomNavScreen.PostFeed.route) {
+							launchSingleTop = true
+						}
+					}
+				)
+			}
 			composable(BottomNavScreen.Search.route) { SearchRoute() }
 			composable(BottomNavScreen.PostFeed.route) {
 				PostFeedRoute(
-					navController = homeNavController
+					onPostSuccess = {
+						feedRefreshVersion += 1
+						homeNavController.navigate(BottomNavScreen.Feed.route) {
+							popUpTo(BottomNavScreen.PostFeed.route) {
+								inclusive = true
+							}
+							launchSingleTop = true
+						}
+					}
 				)
 			}
 			composable(BottomNavScreen.Profile.route) {

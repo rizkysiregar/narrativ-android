@@ -41,8 +41,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,6 +56,8 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 fun LoginScreen(
 	username: String,
 	password: String,
+	usernameError: String?,
+	passwordError: String?,
 	onUsernameChange: (String) -> Unit,
 	onPasswordChange: (String) -> Unit,
 	onLoginClick: () -> Unit,
@@ -71,6 +75,8 @@ fun LoginScreen(
 		TopSection(
 			username,
 			password,
+			usernameError,
+			passwordError,
 			onUsernameChange,
 			onPasswordChange,
 			onForgotPasswordClick
@@ -85,6 +91,8 @@ fun LoginScreen(
 fun TopSection(
 	username: String,
 	password: String,
+	usernameError: String?,
+	passwordError: String?,
 	onUsernameChange: (String) -> Unit,
 	onPasswordChange: (String) -> Unit,
 	onForgotPasswordClick: () -> Unit
@@ -112,11 +120,11 @@ fun TopSection(
 
 		Spacer(modifier = Modifier.height(24.dp))
 
-		UsernameField(username, onUsernameChange)
+		UsernameField(username, usernameError, onUsernameChange)
 
 		Spacer(modifier = Modifier.height(16.dp))
 
-		PasswordField(password, onPasswordChange)
+		PasswordField(password, passwordError, onPasswordChange)
 
 		Spacer(modifier = Modifier.height(8.dp))
 
@@ -191,12 +199,15 @@ fun BottomSection(onNavigateToRegister: () -> Unit) {
 @Composable
 fun UsernameField(
 	username: String,
+	errorMessage: String?,
 	onUsernameChange: (String) -> Unit
 ) {
 	OutlinedTextField(
 		value = username,
-		onValueChange = onUsernameChange,
+		onValueChange = { onUsernameChange(it.removeLineBreaks()) },
 		label = { Text("Username") },
+		isError = errorMessage != null,
+		supportingText = errorMessage?.let { { Text(it) } },
 		trailingIcon = {
 			if (username.isNotEmpty()) {
 				Icon(
@@ -206,20 +217,25 @@ fun UsernameField(
 			}
 		},
 		modifier = Modifier.fillMaxWidth(),
+		singleLine = true,
+		keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
 	)
 }
 
 @Composable
 fun PasswordField(
 	password: String,
+	errorMessage: String?,
 	onPasswordChange: (String) -> Unit
 ) {
 	var isVisible by remember { mutableStateOf(false) }
 
 	OutlinedTextField(
 		value = password,
-		onValueChange = onPasswordChange,
+		onValueChange = { onPasswordChange(it.removeLineBreaks()) },
 		label = { Text("Password") },
+		isError = errorMessage != null,
+		supportingText = errorMessage?.let { { Text(it) } },
 		visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation(),
 		trailingIcon = {
 			IconButton(
@@ -234,9 +250,14 @@ fun PasswordField(
 				)
 			}
 		},
-		modifier = Modifier.fillMaxWidth()
+		modifier = Modifier.fillMaxWidth(),
+		singleLine = true,
+		keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done)
 	)
 }
+
+private fun String.removeLineBreaks(): String =
+	replace("\n", "").replace("\r", "")
 
 @Composable
 fun ForgotPasswordText(onForgotPasswordClick: () -> Unit) {
@@ -306,6 +327,8 @@ fun AuthScreenPreview() {
 		LoginScreen(
 			username = "John Doe",
 			password = "",
+			usernameError = null,
+			passwordError = null,
 			onUsernameChange = {},
 			onPasswordChange = {},
 			onLoginClick = {},

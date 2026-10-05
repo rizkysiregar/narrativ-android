@@ -6,11 +6,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.navigation.NavHostController
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.PostingFeedRequest
 import com.rizkysiregar.feedzmore.ui.base.BaseScreen
-import com.rizkysiregar.feedzmore.ui.main.navigation.BottomNavScreen
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -21,7 +19,7 @@ import com.rizkysiregar.feedzmore.ui.main.navigation.BottomNavScreen
 
 @Composable
 fun PostFeedRoute(
-	navController: NavHostController,
+	onPostSuccess: () -> Unit,
 	vm: PostFeedViewModel = hiltViewModel()
 ) {
 	val uiState by vm.uiState.collectAsState()
@@ -29,13 +27,7 @@ fun PostFeedRoute(
 
 	LaunchedEffect(postingState) {
 		if (postingState is ResultState.Success) {
-			// navigate to home screen
-			navController.navigate(BottomNavScreen.Feed.route) {
-				popUpTo(BottomNavScreen.PostFeed.route) {
-					inclusive = true
-				}
-				launchSingleTop = true
-			}
+			onPostSuccess()
 			vm.resetPostingState()
 		}
 	}
@@ -47,6 +39,7 @@ fun PostFeedRoute(
 		PostFeedScreen(
 			uiState = uiState,
 			onPickImage = { vm.onImageSelected(it) },
+			onLoadRecentImages = vm::loadRecentImages,
 			onCaptionChange = { vm.onCaptionChanged(it) },
 			onNext = {
 				Log.i("onNext Button", vm.uiState.value.toString())

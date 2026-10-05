@@ -30,6 +30,7 @@ fun NavGraphBuilder.authGraph(navController: NavHostController) {
 
 	composable(AuthPathRoutes.Register.route) {
 		RegisterRoute(
+			navController = navController,
 			onRegisterSuccess = {
 				navController.navigate(AuthPathRoutes.Login.route) {
 					popUpTo(AuthPathRoutes.Register.route) { inclusive = true }

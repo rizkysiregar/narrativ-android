@@ -54,6 +54,7 @@ abstract class BaseFeedViewModel(
                     items = emptyList(),
                     page = 0,
                     pageSize = 10,
+					hasLoadedInitialPage = false,
                     hasMore = true
                 )
             }
@@ -96,6 +97,7 @@ abstract class BaseFeedViewModel(
                                     it.copy(
                                         items = it.items + resp.content + restart.data.content,
                                         page = 1,
+										hasLoadedInitialPage = true,
                                         isLoadingMore = false,
                                         isRefreshing = false,
                                         hasMore = true
@@ -108,6 +110,7 @@ abstract class BaseFeedViewModel(
                                     it.copy(
                                         items = it.items + resp.content,
                                         page = page + 1,
+										hasLoadedInitialPage = true,
                                         isLoadingMore = false,
                                         isRefreshing = false,
                                         hasMore = false,
@@ -121,6 +124,7 @@ abstract class BaseFeedViewModel(
                                     it.copy(
                                         items = it.items + resp.content,
                                         page = page + 1,
+										hasLoadedInitialPage = true,
                                         isLoadingMore = false,
                                         isRefreshing = false,
                                         hasMore = !resp.last
@@ -133,6 +137,7 @@ abstract class BaseFeedViewModel(
                             it.copy(
                                 items = it.items + resp.content,
                                 page = page + 1,
+								hasLoadedInitialPage = true,
                                 isLoadingMore = false,
                                 isRefreshing = false,
                                 hasMore = !resp.last

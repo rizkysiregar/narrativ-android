@@ -7,10 +7,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.RegisterRequest
 import com.rizkysiregar.feedzmore.ui.base.BaseScreen
 import com.rizkysiregar.feedzmore.ui.feature.auth.AuthViewModel
+import com.rizkysiregar.feedzmore.ui.main.navigation.routes.AuthPathRoutes
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -21,7 +23,9 @@ import com.rizkysiregar.feedzmore.ui.feature.auth.AuthViewModel
 
 @Composable
 fun RegisterRoute(
-	authViewModel: AuthViewModel = hiltViewModel(), onRegisterSuccess: () -> Unit
+	navController: NavController,
+	authViewModel: AuthViewModel = hiltViewModel(),
+	onRegisterSuccess: () -> Unit
 ) {
 	val context = LocalContext.current
 
@@ -57,6 +61,13 @@ fun RegisterRoute(
 				)
 
 				authViewModel.register(request)
-			})
+			},
+			onNavigateToLogin = {
+				navController.navigate(AuthPathRoutes.Login.route) {
+					popUpTo(AuthPathRoutes.Register.route) { inclusive = true }
+					launchSingleTop = true
+				}
+			}
+		)
 	}
 }

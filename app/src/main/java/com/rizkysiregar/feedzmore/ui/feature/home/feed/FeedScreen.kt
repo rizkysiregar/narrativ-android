@@ -2,6 +2,7 @@ package com.rizkysiregar.feedzmore.ui.feature.home.feed
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,7 +46,8 @@ fun FeedScreen(
 	onRefresh: () -> Unit,
 	onRetry: () -> Unit,
 	listState: LazyListState = rememberLazyListState(),
-	onLikeClick: (String) -> Unit
+	onLikeClick: (String) -> Unit,
+	onCreateFeed: () -> Unit
 ) {
 	// feed state
 	val currentOnLikeClick by androidx.compose.runtime.rememberUpdatedState(onLikeClick)
@@ -60,47 +62,43 @@ fun FeedScreen(
 			.fillMaxSize()
 			.pullRefresh(pullState)
 	) {
-		LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
-			items(
-				items = uiState.items,
-				key = { it.id },
-				contentType = { "feed_item" }
-			) { item ->
-				FeedItemCard(
-					item = item,
-					onLikeClick = { id -> currentOnLikeClick(id) },
-					onCommentClick = { post ->
-						selectedPostId = post.id
-						showCommentSheet = true
-					}
-				)
+		when {
+			uiState.errorMessage != null && uiState.items.isEmpty() -> {
+				FeedErrorContent(message = uiState.errorMessage, onRetry = onRetry)
 			}
 
-			if (uiState.isLoadingMore) {
-				item {
-					Box(
-						modifier = Modifier
-							.fillMaxWidth()
-							.padding(16.dp),
-						contentAlignment = Alignment.Center
-					) {
-						CircularProgressIndicator()
-					}
-				}
+			uiState.hasLoadedInitialPage && uiState.items.isEmpty() && !uiState.isRefreshing -> {
+				EmptyFeedContent(onCreateFeed = onCreateFeed)
 			}
 
-			if (uiState.errorMessage != null && uiState.items.isEmpty()) {
-				// full screen error with retry if initial load failed
-				item {
-					Column(
-						modifier = Modifier
-							.fillMaxSize()
-							.padding(24.dp),
-						horizontalAlignment = Alignment.CenterHorizontally
-					) {
-						Text(text = uiState.errorMessage)
-						Spacer(modifier = Modifier.height(8.dp))
-						Button(onClick = onRetry) { Text("Retry") }
+			else -> {
+				LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+					items(
+						items = uiState.items,
+						key = { it.id },
+						contentType = { "feed_item" }
+					) { item ->
+						FeedItemCard(
+							item = item,
+							onLikeClick = { id -> currentOnLikeClick(id) },
+							onCommentClick = { post ->
+								selectedPostId = post.id
+								showCommentSheet = true
+							}
+						)
+					}
+
+					if (uiState.isLoadingMore) {
+						item {
+							Box(
+								modifier = Modifier
+									.fillMaxWidth()
+									.padding(16.dp),
+								contentAlignment = Alignment.Center
+							) {
+								CircularProgressIndicator()
+							}
+						}
 					}
 				}
 			}
@@ -118,6 +116,40 @@ fun FeedScreen(
 			state = pullState,
 			modifier = Modifier.align(Alignment.TopCenter)
 		)
+	}
+}
+
+@Composable
+private fun EmptyFeedContent(onCreateFeed: () -> Unit) {
+	Column(
+		modifier = Modifier
+			.fillMaxSize()
+			.padding(24.dp),
+		verticalArrangement = Arrangement.Center,
+		horizontalAlignment = Alignment.CenterHorizontally
+	) {
+		Text("Belum ada feed untuk ditampilkan")
+		Spacer(modifier = Modifier.height(8.dp))
+		Text("Bagikan feed pertama Anda atau ikuti pengguna lain untuk melihat aktivitas mereka di sini.")
+		Spacer(modifier = Modifier.height(16.dp))
+		Button(onClick = onCreateFeed) {
+			Text("Buat feed baru")
+		}
+	}
+}
+
+@Composable
+private fun FeedErrorContent(message: String, onRetry: () -> Unit) {
+	Column(
+		modifier = Modifier
+			.fillMaxSize()
+			.padding(24.dp),
+		verticalArrangement = Arrangement.Center,
+		horizontalAlignment = Alignment.CenterHorizontally
+	) {
+		Text(text = message)
+		Spacer(modifier = Modifier.height(8.dp))
+		Button(onClick = onRetry) { Text("Retry") }
 	}
 }
 
@@ -143,7 +175,8 @@ fun FeedScreenPreview() {
 			onRefresh = {},
 			onRetry = {},
 			listState = rememberLazyListState(),
-			onLikeClick = {}
+			onLikeClick = {},
+			onCreateFeed = {}
 		)
 	}
 }
