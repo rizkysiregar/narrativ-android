@@ -32,16 +32,6 @@ private val LightColorScheme = lightColorScheme(
 	*/
 )
 
-private val AppTypography = androidx.compose.material3.Typography(
-	bodyLarge = androidx.compose.material3.Typography().bodyLarge.copy(fontFamily = Poppins),
-	bodyMedium = androidx.compose.material3.Typography().bodyMedium.copy(fontFamily = Poppins),
-	titleLarge = androidx.compose.material3.Typography().titleLarge.copy(fontFamily = Poppins),
-	titleMedium = androidx.compose.material3.Typography().titleMedium.copy(fontFamily = Poppins),
-	headlineLarge = androidx.compose.material3.Typography().headlineLarge.copy(fontFamily = Poppins),
-	labelLarge = androidx.compose.material3.Typography().labelLarge.copy(fontFamily = Poppins),
-)
-
-
 @Composable
 fun FeedzmoreTheme(
 	darkTheme: Boolean = isSystemInDarkTheme(),

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rizkysiregar.feedzmore.constants.PrefKeys
 import com.rizkysiregar.feedzmore.data.cache.DataStoreManager
+import com.rizkysiregar.feedzmore.data.session.SessionManager
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.response.UserProfileResponse
 import com.rizkysiregar.feedzmore.domain.profile.FetchUserProfileUseCase
@@ -25,14 +26,13 @@ import javax.inject.Inject
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
 	private val dataStore: DataStoreManager,
+	private val sessionManager: SessionManager,
 	private val fetchUserProfileUseCase: FetchUserProfileUseCase
 ) : BaseViewModel(dataStore) {
 
 	// clear user data aka logout
 	fun clearDataStore() {
-		viewModelScope.launch {
-			dataStore.clearAll()
-		}
+		sessionManager.logout()
 	}
 
 	private val _profileState = MutableStateFlow<ResultState<UserProfileResponse>?>(null)

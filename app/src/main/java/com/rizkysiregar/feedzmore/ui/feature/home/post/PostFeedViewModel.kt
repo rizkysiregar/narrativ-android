@@ -1,7 +1,9 @@
 package com.rizkysiregar.feedzmore.ui.feature.home.post
 
 import android.app.Application
+import android.content.ContentUris
 import android.net.Uri
+import android.provider.MediaStore
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.MultipartBody
 import javax.inject.Inject
@@ -51,6 +54,45 @@ class PostFeedViewModel @Inject constructor(
 		Log.i("PostFeedViewModel", "## onImageSelected() called")
 		_uiState.update {
 			it.copy(selectedImage = uri)
+		}
+	}
+
+	fun loadRecentImages() {
+		if (_uiState.value.isLoadingGallery) return
+
+		viewModelScope.launch(Dispatchers.IO) {
+			_uiState.update { it.copy(isLoadingGallery = true) }
+
+			val images = runCatching {
+				val projection = arrayOf(MediaStore.Images.Media._ID)
+				app.contentResolver.query(
+					MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+					projection,
+					null,
+					null,
+					"${MediaStore.Images.Media.DATE_ADDED} DESC"
+				)?.use { cursor ->
+					val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
+					buildList {
+						while (cursor.moveToNext() && size < RECENT_IMAGE_LIMIT) {
+							add(
+								ContentUris.withAppendedId(
+									MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+									cursor.getLong(idColumn)
+								)
+							)
+						}
+					}
+				} ?: emptyList()
+			}.getOrDefault(emptyList())
+
+			_uiState.update { state ->
+				state.copy(
+					recentImages = images,
+					selectedImage = state.selectedImage ?: images.firstOrNull(),
+					isLoadingGallery = false
+				)
+			}
 		}
 	}
 
@@ -89,6 +131,9 @@ class PostFeedViewModel @Inject constructor(
 	fun resetPostingState() {
 		_postingState.value = ResultState.Idle
 	}
-}
 
+	private companion object {
+		const val RECENT_IMAGE_LIMIT = 18
+	}
+}
 

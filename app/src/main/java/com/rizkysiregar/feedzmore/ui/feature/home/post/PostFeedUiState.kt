@@ -9,5 +9,7 @@ import android.net.Uri
  */
 data class PostFeedUiState(
 	val selectedImage: Uri? = null,
-	val caption: String = ""
+	val caption: String = "",
+	val recentImages: List<Uri> = emptyList(),
+	val isLoadingGallery: Boolean = false
 )

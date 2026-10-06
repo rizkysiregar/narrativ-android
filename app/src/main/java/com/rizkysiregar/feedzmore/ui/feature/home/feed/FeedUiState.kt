@@ -11,6 +11,7 @@ data class FeedUiState(
 	val items: List<FeedContentItem> = emptyList(),
 	val page: Int = 0,
 	val pageSize: Int = 0,
+	val hasLoadedInitialPage: Boolean = false,
 	val isRefreshing: Boolean = false,
 	val isLoadingMore: Boolean = false,
 	val hasMore: Boolean = true,

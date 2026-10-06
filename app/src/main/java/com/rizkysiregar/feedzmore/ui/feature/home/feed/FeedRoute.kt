@@ -18,10 +18,19 @@ import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun FeedRoute(
-    viewModel: FeedViewModel = hiltViewModel()
+    refreshVersion: Int = 0,
+    viewModel: FeedViewModel = hiltViewModel(),
+	onCreateFeed: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
+
+    // This value changes only after a post is successfully uploaded.
+    LaunchedEffect(refreshVersion) {
+        if (refreshVersion > 0) {
+            viewModel.refresh()
+        }
+    }
 
     /**
      * INFINITE SCROLL / PAGINATION HANDLER
@@ -69,6 +78,7 @@ fun FeedRoute(
         onRefresh = { viewModel.refresh() },
         onRetry = { viewModel.loadNextPage() },
         listState = listState,
-        onLikeClick = viewModel::toggleLike
+		onLikeClick = viewModel::toggleLike,
+		onCreateFeed = onCreateFeed
     )
 }
