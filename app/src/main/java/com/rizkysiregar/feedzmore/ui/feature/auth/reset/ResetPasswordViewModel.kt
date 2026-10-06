@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.ResetNewPasswordRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.ResetPassVerifyOtpRequest
+import com.rizkysiregar.feedzmore.data.remote.model.response.auth.ForgotPasswordResponse
 import com.rizkysiregar.feedzmore.domain.auth.ResetNewPasswordUseCase
 import com.rizkysiregar.feedzmore.domain.auth.SendResetOtpUseCase
 import com.rizkysiregar.feedzmore.domain.auth.VerifyOtpResetPasswordUseCase
@@ -35,6 +36,8 @@ class ResetPasswordViewModel @Inject constructor(
 	// 2. Network/API State (Uses your ResultState)
 	private val _resetState = MutableStateFlow<ResultState<Any>>(ResultState.Idle)
 	val resetState = _resetState.asStateFlow()
+	private val _otpDelivery = MutableStateFlow<ForgotPasswordResponse?>(null)
+	val otpDelivery = _otpDelivery.asStateFlow()
 
 
 	// 3. Persistent Data (Needed across steps)
@@ -43,11 +46,13 @@ class ResetPasswordViewModel @Inject constructor(
 
 	fun sendOtp(email: String) {
 		savedEmail = email
+		_otpDelivery.value = null
 		viewModelScope.launch {
 			_resetState.value = ResultState.Loading
 			sendResetOtpUseCase(email)
 				.collect { result ->
 					if (result is ResultState.Success) {
+						_otpDelivery.value = result.data
 						_currentStep.value = ResetPasswordStep.OTP_VERIFICATION
 					}
 					_resetState.value = result
@@ -74,8 +79,10 @@ class ResetPasswordViewModel @Inject constructor(
 			_resetState.value = ResultState.Loading
 			resetNewPasswordUseCase(request)
 				.collect { result ->
+					if (result is ResultState.Success) {
+						_currentStep.value = ResetPasswordStep.FINISH
+					}
 					_resetState.value = result
-					_currentStep.value = ResetPasswordStep.FINISH
 				}
 		}
 	}

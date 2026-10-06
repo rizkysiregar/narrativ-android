@@ -21,6 +21,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,6 +37,7 @@ import com.rizkysiregar.feedzmore.R
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.ResetPassVerifyOtpRequest
 import com.rizkysiregar.feedzmore.ui.components.OtpInputField
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
+import kotlinx.coroutines.delay
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -47,9 +49,20 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 fun OtpVerificationView(
 	onNext: (ResetPassVerifyOtpRequest) -> Unit,
 	onBack: () -> Unit,
-	email: String
+	email: String,
+	otpSendToEmailAddress: String,
+	expirationTimeInMinute: String
 ) {
 	var otpCode by remember { mutableStateOf("") }
+	val durationSeconds = expirationTimeInMinute.toLongOrNull()?.coerceAtLeast(0L)?.times(60L) ?: 0L
+	var remainingSeconds by remember(durationSeconds) { mutableStateOf(durationSeconds) }
+
+	LaunchedEffect(durationSeconds) {
+		while (remainingSeconds > 0L) {
+			delay(1_000L)
+			remainingSeconds--
+		}
+	}
 
 	Column(
 		modifier = Modifier
@@ -100,7 +113,7 @@ fun OtpVerificationView(
 			)
 			Spacer(Modifier.height(8.dp))
 			Text(
-				text = "We’ve sent a code to helloworld@gmail.com",
+				text = "We’ve sent a code to $otpSendToEmailAddress",
 				style = MaterialTheme.typography.bodyMedium
 			)
 		}
@@ -110,7 +123,7 @@ fun OtpVerificationView(
 		Spacer(Modifier.height(32.dp))
 		OtpInputField(
 			otpText = otpCode,
-			onOtpTextChange = { otpCode = it },
+			onOtpTextChange = { otpCode = it.filter(Char::isDigit).take(6) },
 		)
 
 		// --- Button Verify --- //
@@ -124,6 +137,7 @@ fun OtpVerificationView(
 					)
 				)
 			},
+			enabled = otpCode.length == 6,
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(52.dp),
@@ -141,7 +155,7 @@ fun OtpVerificationView(
 
 		// resend code or and count down
 		Spacer(Modifier.height(16.dp))
-		Text("Send code again in 00:20")
+		Text("Send code again in %02d:%02d".format(remainingSeconds / 60, remainingSeconds % 60))
 
 
 	}
@@ -155,7 +169,9 @@ private fun OtpVerificationScreenPreview() {
 		OtpVerificationView(
 			onNext = {},
 			onBack = {},
-			email = "helloworld@gmail.com"
+			email = "rizky@gmail.com",
+			otpSendToEmailAddress = "r****y@gmail.com",
+			expirationTimeInMinute = "1"
 		)
 	}
 }

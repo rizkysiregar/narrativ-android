@@ -1,5 +1,6 @@
 package com.rizkysiregar.feedzmore.ui.feature.auth.reset
 
+import android.util.Patterns
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,6 +16,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -30,6 +33,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,6 +53,7 @@ fun EmailEntryView(
 	onBack: () -> Unit
 ) {
 	var email by remember { mutableStateOf("") }
+	val isValidEmail = email.isNotEmpty() && Patterns.EMAIL_ADDRESS.matcher(email).matches()
 
 	Column(
 		modifier = Modifier
@@ -110,16 +116,27 @@ fun EmailEntryView(
 			OutlinedTextField(
 				value = email,
 				onValueChange = {
-					email = it
+					email = it.filterNot(Char::isWhitespace).take(254)
 				},
 				label = { Text("Enter your Email Address") },
 				modifier = Modifier.fillMaxWidth(),
+				singleLine = true,
+				isError = email.isNotEmpty() && !isValidEmail,
+				supportingText = if (email.isNotEmpty() && !isValidEmail) {
+					{ Text("Enter a valid email address") }
+				} else null,
+				keyboardOptions = KeyboardOptions(
+					keyboardType = KeyboardType.Email,
+					imeAction = ImeAction.Done
+				),
+				keyboardActions = KeyboardActions(onDone = {
+					if (isValidEmail) onNext(email)
+				})
 			)
 			Spacer(Modifier.height(24.dp))
 			Button(
-				onClick = {
-					onNext(email)
-				},
+				onClick = { onNext(email) },
+				enabled = isValidEmail,
 				modifier = Modifier
 					.fillMaxWidth()
 					.height(52.dp),

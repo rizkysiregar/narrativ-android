@@ -25,6 +25,8 @@ fun ResetPasswordScreen(
 	currentSte: ResetPasswordStep,
 	resetState: ResultState<Any>,
 	email: String,
+	otpSendToEmailAddress: String,
+	expirationTimeInMinute: String,
 	resetToken: String,
 	onSendOtp: (String) -> Unit,
 	onVerifyOtp: (ResetPassVerifyOtpRequest) -> Unit,
@@ -53,14 +55,15 @@ fun ResetPasswordScreen(
 						OtpVerificationView(
 							onNext = onVerifyOtp,
 							onBack = onBack,
-							email = email
+							email = email,
+							otpSendToEmailAddress = otpSendToEmailAddress,
+							expirationTimeInMinute = expirationTimeInMinute
 						)
 					}
 
 					ResetPasswordStep.NEW_PASSWORD_INPUT -> {
 						NewPasswordView(
 							onNext = onResetNewPassword,
-							onBack = onBack,
 							email = email,
 							resetToken = resetToken
 						)
@@ -82,6 +85,8 @@ private fun ResetPasswordScreenPreview() {
 			currentSte = ResetPasswordStep.EMAIL_ENTRY,
 			resetState = ResultState.Idle,
 			email = "",
+			otpSendToEmailAddress = "r****y@gmail.com",
+			expirationTimeInMinute = "1",
 			resetToken = "",
 			onSendOtp = {},
 			onVerifyOtp = {},

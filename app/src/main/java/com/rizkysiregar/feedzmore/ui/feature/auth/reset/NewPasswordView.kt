@@ -2,10 +2,7 @@ package com.rizkysiregar.feedzmore.ui.feature.auth.reset
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,19 +14,21 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -46,12 +45,13 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 @Composable
 fun NewPasswordView(
 	onNext: (ResetNewPasswordRequest) -> Unit,
-	onBack: () -> Unit,
 	resetToken: String,
 	email: String
 ) {
-	var newPassword by remember { mutableStateOf("") }
-	var confirmNewPassword by remember { mutableStateOf("") }
+	var newPassword by rememberSaveable { mutableStateOf("") }
+	var confirmNewPassword by rememberSaveable { mutableStateOf("") }
+	val passwordsMatch = confirmNewPassword == newPassword
+	val canSubmit = newPassword.length >= 6 && passwordsMatch && resetToken.isNotBlank()
 
 
 	Column(
@@ -60,36 +60,15 @@ fun NewPasswordView(
 			.fillMaxSize()
 			.padding(16.dp),
 	) {
-		// --- Header: Back Button & Logo --- //
 		Row(
-			modifier = Modifier
-				.fillMaxWidth(),
-			horizontalArrangement = Arrangement.SpaceBetween
+			modifier = Modifier.fillMaxWidth(),
+			horizontalArrangement = Arrangement.End
 		) {
-			Box(
-				modifier = Modifier
-					.padding(4.dp)
-					.border(1.dp, Color.LightGray, RoundedCornerShape(8.dp))
-					.size(35.dp),
-				contentAlignment = Alignment.Center
-			) {
-				Icon(
-					painter = painterResource(R.drawable.outline_arrow_back_ios_24),
-					contentDescription = "Back",
-					modifier = Modifier
-						.size(24.dp)
-						.padding(3.dp)
-				)
-			}
-
 			Image(
 				painter = painterResource(R.drawable.star_black),
 				contentDescription = "Header Logo",
-				modifier = Modifier
-					.size(38.dp)
-					.clickable { onBack() }
+				modifier = Modifier.size(38.dp)
 			)
-
 		}
 
 		// -- Header Title and caption -- //
@@ -107,15 +86,18 @@ fun NewPasswordView(
 		}
 
 
-		// --- Inout field --- //
+		// --- Input fields --- //
 		Spacer(Modifier.height(32.dp))
 		Column {
 			Text("New password", style = MaterialTheme.typography.labelSmall)
 			OutlinedTextField(
 				value = newPassword,
 				onValueChange = { newPassword = it },
-				label = { Text("Must be at least 6 digit characters") },
+				label = { Text("At least 6 characters") },
 				modifier = Modifier.fillMaxWidth(),
+				singleLine = true,
+				visualTransformation = PasswordVisualTransformation(),
+				keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next)
 			)
 
 			Spacer(Modifier.height(16.dp))
@@ -125,6 +107,13 @@ fun NewPasswordView(
 				onValueChange = { confirmNewPassword = it },
 				label = { Text("Repeat password") },
 				modifier = Modifier.fillMaxWidth(),
+				singleLine = true,
+				visualTransformation = PasswordVisualTransformation(),
+				isError = confirmNewPassword.isNotEmpty() && !passwordsMatch,
+				supportingText = if (confirmNewPassword.isNotEmpty() && !passwordsMatch) {
+					{ Text("Passwords do not match") }
+				} else null,
+				keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done)
 			)
 
 			Spacer(Modifier.height(24.dp))
@@ -138,6 +127,7 @@ fun NewPasswordView(
 						)
 					)
 				},
+				enabled = canSubmit,
 				modifier = Modifier
 					.fillMaxWidth()
 					.height(52.dp),
@@ -148,7 +138,7 @@ fun NewPasswordView(
 				)
 			) {
 				Text(
-					text = "Send Code",
+					text = "Reset Password",
 					fontSize = 14.sp
 				)
 			}
@@ -163,7 +153,6 @@ private fun NewPasswordScreenPreview() {
 	FeedzmoreTheme {
 		NewPasswordView(
 			onNext = {},
-			onBack = {},
 			resetToken = "",
 			email = ""
 		)
