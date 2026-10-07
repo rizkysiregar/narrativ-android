@@ -29,7 +29,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
@@ -58,12 +57,12 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 fun ProfileScreen(
 	profileState: ResultState<UserProfileResponse>,
 	feedState: FeedUiState,
-	listState: LazyListState,          // added
+	listState: LazyListState,
 	onExitClick: () -> Unit,
 	onRetry: () -> Unit,
-	onRefresh: () -> Unit,             // added
-	onLoadNextPage: () -> Unit,
-	onLikeClick: (String) -> Unit,     // added
+	onRetryFeed: () -> Unit,
+	onRefresh: () -> Unit,
+	onLikeClick: (String) -> Unit,
 	modifier: Modifier = Modifier,
 ) {
 	Scaffold(
@@ -117,15 +116,14 @@ fun ProfileScreen(
 						}
 
 						// User post section
-						if (feedState.isError && feedState.items.isEmpty()) { // error or items empty
-							item {
-								Text(
-									"Could not load post.",
-									modifier = Modifier.padding(16.dp),
-									color = MaterialTheme.colorScheme.error
-								)
+						if (feedState.isError && feedState.items.isEmpty()) {
+								item {
+									Column(modifier = Modifier.padding(16.dp)) {
+										Text("Could not load post.", color = MaterialTheme.colorScheme.error)
+										Button(onClick = onRetryFeed) { Text("Retry") }
+									}
 							}
-						} else { // success show the list posts
+						} else {
 							// --- START: MODIFIED GRID SECTION ---
 							val posts = feedState.items
 							val itemsPerRow = 3
@@ -192,23 +190,19 @@ fun ProfileScreen(
 							// --- END: MODIFIED GRID SECTION ---
 						}
 
-						// Loading / Pagination Trigger
-						item {
-							if (feedState.isLoadingMore) {
-								// Show loading spinner at the bottom
-								Box(
+							// Footer displays progress or a retry action for the current page.
+							if (feedState.isLoadingMore || (feedState.isError && feedState.items.isNotEmpty())) {
+								item {
+									Box(
 									modifier = Modifier
 										.fillMaxWidth()
 										.padding(16.dp),
 									contentAlignment = Alignment.Center
 								) {
-									CircularProgressIndicator()
+										if (feedState.isLoadingMore) CircularProgressIndicator()
+										else Button(onClick = onRetryFeed) { Text("Retry") }
+									}
 								}
-							} else {
-								LaunchedEffect(Unit) {
-									onLoadNextPage()
-								}
-							}
 						}
 					}
 				}
@@ -301,7 +295,6 @@ private fun UserProfileInfoPreview() {
 //			),
 //			onRetry = {},
 //			onExitClick = {},
-//			onLoadNextPage = {},
 //			modifier = Modifier,
 //		)
 //	}

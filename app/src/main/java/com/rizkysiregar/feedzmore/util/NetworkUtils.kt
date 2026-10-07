@@ -3,6 +3,7 @@ package com.rizkysiregar.feedzmore.util
 import android.util.Log
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.response.BaseResponse
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import org.json.JSONObject
@@ -31,6 +32,7 @@ suspend fun <T> safeApiCall(
 
 		ResultState.Failure(msg)
 	} catch (e: Exception) {
+		if (e is CancellationException) throw e
 		Log.e("safeApiCall", "Exception: $e")
 		ResultState.Failure("Something went wrong, please try again later")
 	}

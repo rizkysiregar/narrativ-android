@@ -7,14 +7,13 @@ import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedsPostPagin
 import com.rizkysiregar.feedzmore.domain.feed.DislikePostUseCase
 import com.rizkysiregar.feedzmore.domain.feed.LikePostUseCase
 import com.rizkysiregar.feedzmore.ui.base.BaseViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
 import java.util.UUID
 
 abstract class BaseFeedViewModel(
@@ -26,128 +25,58 @@ abstract class BaseFeedViewModel(
     private val _uiState = MutableStateFlow(FeedUiState())
     val uiState: StateFlow<FeedUiState> = _uiState.asStateFlow()
 
-    private val loadMutex = Mutex()
-    private val endlessLoopEnabled = true
+    private var loadJob: Job? = null
+    private var loadGeneration = 0
 
-    // each subclass provides the correct data source
     abstract suspend fun fetchPage(
         page: Int,
         size: Int
     ): Flow<ResultState<FeedsPostPaginationResponse>>
 
-    // override this in FeedViewModel to loop back to page 0 using getAllFeed
-    // default just fetches page 0 using the same fetchPage (used by profile)
-    open suspend fun fetchLoopPage(size: Int): Flow<ResultState<FeedsPostPaginationResponse>> =
-        fetchPage(0, size)
-
-
     fun refresh() {
-        println("## BaseFeedViewModel.refresh() called")
-        _uiState.update { it.copy(isError = false) }
-        if (_uiState.value.isRefreshing) return
-
-        viewModelScope.launch {
-            _uiState.update {
-                it.copy(
-                    isRefreshing = true,
-                    errorMessage = null,
-                    items = emptyList(),
-                    page = 0,
-                    pageSize = 10,
-					hasLoadedInitialPage = false,
-                    hasMore = true
-                )
-            }
-            loadPage(page = 0, size = _uiState.value.pageSize)
+        loadGeneration++
+        loadJob?.cancel()
+        val generation = loadGeneration
+        _uiState.value = FeedUiState(isRefreshing = true)
+        loadJob = viewModelScope.launch {
+            loadPage(page = 0, size = _uiState.value.pageSize, generation = generation)
         }
     }
 
     fun loadNextPage() {
-        println("## BaseFeedViewModel.loadNextPage() called")
-        _uiState.update { it.copy(isError = false) }
         val state = _uiState.value
-        if (!state.hasMore || state.isLoadingMore || state.isRefreshing) return
+        if (!state.hasLoadedInitialPage || !state.hasMore ||
+            state.isLoadingMore || state.isRefreshing
+        ) return
 
-        viewModelScope.launch {
-            if (!loadMutex.tryLock()) return@launch
-            try {
-                _uiState.update { it.copy(isLoadingMore = true, errorMessage = null) }
-                loadPage(page = state.page, size = state.pageSize)
-            } finally {
-                loadMutex.unlock()
-            }
+        _uiState.update { it.copy(isLoadingMore = true, errorMessage = null, isError = false) }
+        val generation = loadGeneration
+        loadJob = viewModelScope.launch {
+            loadPage(page = state.page, size = state.pageSize, generation = generation)
         }
     }
 
-
-    private suspend fun loadPage(page: Int, size: Int) {
-        println("## BaseFeedViewModel.loadPage() called, page: $page")
+    private suspend fun loadPage(page: Int, size: Int, generation: Int) {
         fetchPage(page, size).collect { result ->
+            if (generation != loadGeneration) return@collect
             when (result) {
-                is ResultState.Loading -> {}
-
+                is ResultState.Loading -> Unit
                 is ResultState.Success -> {
-                    val resp = result.data
-
-                    if (resp.last && endlessLoopEnabled) {
-                        val restart = fetchLoopPage(size).firstOrNull()
-                        when (restart) {
-                            is ResultState.Success -> {
-                                _uiState.update {
-                                    it.copy(
-                                        items = it.items + resp.content + restart.data.content,
-                                        page = 1,
-										hasLoadedInitialPage = true,
-                                        isLoadingMore = false,
-                                        isRefreshing = false,
-                                        hasMore = true
-                                    )
-                                }
-                            }
-
-                            is ResultState.Failure -> {
-                                _uiState.update {
-                                    it.copy(
-                                        items = it.items + resp.content,
-                                        page = page + 1,
-										hasLoadedInitialPage = true,
-                                        isLoadingMore = false,
-                                        isRefreshing = false,
-                                        hasMore = false,
-                                        errorMessage = restart.message
-                                    )
-                                }
-                            }
-
-                            else -> {
-                                _uiState.update {
-                                    it.copy(
-                                        items = it.items + resp.content,
-                                        page = page + 1,
-										hasLoadedInitialPage = true,
-                                        isLoadingMore = false,
-                                        isRefreshing = false,
-                                        hasMore = !resp.last
-                                    )
-                                }
-                            }
-                        }
-                    } else {
-                        _uiState.update {
-                            it.copy(
-                                items = it.items + resp.content,
-                                page = page + 1,
-								hasLoadedInitialPage = true,
-                                isLoadingMore = false,
-                                isRefreshing = false,
-                                hasMore = !resp.last
-                            )
-                        }
+                    val response = result.data
+                    _uiState.update {
+                        it.copy(
+                            items = if (page == 0) response.content else it.items + response.content,
+                            page = page + 1,
+                            hasLoadedInitialPage = true,
+                            isLoadingMore = false,
+                            isRefreshing = false,
+                            hasMore = !response.last && response.content.isNotEmpty(),
+                            errorMessage = null,
+                            isError = false
+                        )
                     }
                 }
-
                 is ResultState.Failure -> {
-                    println("## BaseFeedViewModel.loadPage() Failure: ${result.message}")
                     _uiState.update {
                         it.copy(
                             isLoadingMore = false,
@@ -157,14 +86,12 @@ abstract class BaseFeedViewModel(
                         )
                     }
                 }
-
                 is ResultState.Idle -> Unit
             }
         }
     }
 
     fun toggleLike(postId: String) {
-        println("## BaseFeedViewModel toggleLike for ID: $postId")
         val currentList = _uiState.value.items
         val itemIndex = currentList.indexOfFirst { it.id == postId }
         if (itemIndex == -1) return
@@ -197,6 +124,4 @@ abstract class BaseFeedViewModel(
             }
         }
     }
-
-
 }

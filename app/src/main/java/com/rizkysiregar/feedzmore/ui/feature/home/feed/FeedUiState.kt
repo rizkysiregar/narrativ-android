@@ -10,11 +10,11 @@ import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentIte
 data class FeedUiState(
 	val items: List<FeedContentItem> = emptyList(),
 	val page: Int = 0,
-	val pageSize: Int = 0,
+	val pageSize: Int = 10,
 	val hasLoadedInitialPage: Boolean = false,
 	val isRefreshing: Boolean = false,
 	val isLoadingMore: Boolean = false,
-	val hasMore: Boolean = true,
+	val hasMore: Boolean = false,
 	val errorMessage: String? = null,
 	val isError: Boolean = false
 )

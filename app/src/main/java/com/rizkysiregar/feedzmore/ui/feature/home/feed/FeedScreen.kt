@@ -104,22 +104,29 @@ fun FeedScreen(
 						)
 					}
 
-					if (uiState.isLoadingMore) {
-						item {
-							Surface(
-								modifier = Modifier.fillMaxWidth(),
-								shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
-								color = MaterialTheme.colorScheme.surface
-							) {
-								Box(
-									modifier = Modifier.padding(18.dp),
-									contentAlignment = Alignment.Center
+						if (uiState.isLoadingMore) {
+							item {
+								Surface(
+									modifier = Modifier.fillMaxWidth(),
+									shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
+									color = MaterialTheme.colorScheme.surface
 								) {
-									CircularProgressIndicator(modifier = Modifier.height(28.dp))
+									Box(
+										modifier = Modifier.padding(18.dp),
+										contentAlignment = Alignment.Center
+									) {
+										CircularProgressIndicator(modifier = Modifier.height(28.dp))
+									}
+									}
+								}
+							}
+							if (uiState.isError && uiState.items.isNotEmpty()) {
+							item {
+								Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+									Button(onClick = onRetry) { Text("Retry") }
 								}
 							}
 						}
-					}
 				}
 			}
 		}

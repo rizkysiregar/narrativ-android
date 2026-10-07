@@ -9,6 +9,7 @@ import com.rizkysiregar.feedzmore.data.remote.model.response.feed.CommentItem
 import com.rizkysiregar.feedzmore.domain.feed.AddCommentUseCase
 import com.rizkysiregar.feedzmore.domain.feed.GetCommentUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,6 +34,10 @@ class CommentViewModel @Inject constructor(
 
 	private val _isLoading = MutableStateFlow(false)
 	val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+	private val _hasMore = MutableStateFlow(true)
+	val hasMore: StateFlow<Boolean> = _hasMore.asStateFlow()
+	private val _errorMessage = MutableStateFlow<String?>(null)
+	val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
 	// state for submit or post comment
 	private val _isSubmitting = MutableStateFlow(false)
@@ -40,47 +45,52 @@ class CommentViewModel @Inject constructor(
 
 
 	private var currentPage = 0
-	private var isLastPage = false
 	private var currentPostId: String? = null
+	private var loadJob: Job? = null
+	private var loadGeneration = 0
 
 	fun loadComments(postId: String, isRefresh: Boolean = false) {
-		if (isRefresh) {
-			println("## comment refreshed")
+		if (isRefresh || postId != currentPostId) {
+			loadGeneration++
+			loadJob?.cancel()
+			currentPostId = postId
 			currentPage = 0
-			isLastPage = false
+			_hasMore.value = true
 			_comments.value = emptyList()
+			_isLoading.value = false
+			_errorMessage.value = null
 		}
 
-		if (isLastPage || _isLoading.value) return
+		if (!_hasMore.value || _isLoading.value) return
 
-		currentPostId = postId
 		_isLoading.value = true
+		_errorMessage.value = null
+		val generation = loadGeneration
+		val page = currentPage
+		val request = GetCommentRequest(UUID.fromString(postId), page)
 
-		val request = GetCommentRequest(UUID.fromString(postId), currentPage)
-
-		viewModelScope.launch {
-			getCommentUseCase(request).collect { result ->
-				when (result) {
-					is ResultState.Success -> {
-						val newComments = result.data.content
-						_comments.value = _comments.value + newComments
-
-						// check if its the last page
-						isLastPage = newComments.isEmpty() || currentPage >= result.data.totalPages
-						if (!isLastPage) currentPage++
-
-						_isLoading.value = false
+		loadJob = viewModelScope.launch {
+			try {
+				getCommentUseCase(request).collect { result ->
+					if (generation != loadGeneration || postId != currentPostId) return@collect
+					when (result) {
+						is ResultState.Success -> {
+							_comments.value = _comments.value + result.data.content
+							_hasMore.value = !result.data.last && result.data.content.isNotEmpty()
+							currentPage = page + 1
+							_errorMessage.value = null
+							_isLoading.value = false
+						}
+						is ResultState.Failure -> {
+							_errorMessage.value = result.message
+							_isLoading.value = false
+						}
+						else -> Unit
 					}
-
-					is ResultState.Failure -> {
-						_isLoading.value = false
 					}
-
-					is ResultState.Loading -> {
-						_isLoading.value = true
-					}
-
-					else -> {}
+			} finally {
+				if (generation == loadGeneration && postId == currentPostId) {
+					_isLoading.value = false
 				}
 			}
 		}

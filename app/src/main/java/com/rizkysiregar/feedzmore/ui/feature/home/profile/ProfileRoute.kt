@@ -34,7 +34,7 @@ fun ProfileRoute(
         profileVm.fetchUserProfile()
     }
 
-    // infinite scroll handler — same pattern as FeedRoute
+    // Load another page when the visible rows approach the end.
     LaunchedEffect(
         listState,
         feedState.hasMore,
@@ -47,6 +47,7 @@ fun ProfileRoute(
                 val total = listState.layoutInfo.totalItemsCount
                 if (last != null &&
                     last >= total - 3 &&
+                    feedState.hasLoadedInitialPage &&
                     !feedState.isLoadingMore &&
                     feedState.hasMore &&
                     !feedState.isRefreshing &&
@@ -65,8 +66,11 @@ fun ProfileRoute(
             feedState = feedState,
             listState = listState,
             onRetry = { profileVm.fetchUserProfile() },
+            onRetryFeed = {
+                if (feedState.hasLoadedInitialPage) profileFeedVm.loadNextPage()
+                else profileFeedVm.refresh()
+            },
             onRefresh = { profileFeedVm.refresh() },
-            onLoadNextPage = { profileFeedVm.loadNextPage() },
             onLikeClick = profileFeedVm::toggleLike,
             onExitClick = {
                 profileVm.clearDataStore()
