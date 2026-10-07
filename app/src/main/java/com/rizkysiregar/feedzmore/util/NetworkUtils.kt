@@ -23,18 +23,20 @@ suspend fun <T> safeApiCall(
 		ResultState.Success(result)
 
 	} catch (e: HttpException) {
-		val errorBody = e.response()?.errorBody()?.string()
-		val msg = try {
-			JSONObject(errorBody ?: "").optString("message", "Unknown error")
-		} catch (_: Exception) {
-			"Something went wrong, please try again later"
-		}
-
-		ResultState.Failure(msg)
+		ResultState.Failure(parseHttpErrorMessage(e))
 	} catch (e: Exception) {
 		if (e is CancellationException) throw e
 		Log.e("safeApiCall", "Exception: $e")
 		ResultState.Failure("Something went wrong, please try again later")
+	}
+}
+
+private fun parseHttpErrorMessage(e: HttpException): String {
+	val errorBody = e.response()?.errorBody()?.string()
+	return try {
+		JSONObject(errorBody ?: "").optString("message", "Unknown error")
+	} catch (_: Exception) {
+		"Something went wrong, please try again later"
 	}
 }
 
@@ -57,5 +59,32 @@ fun <T> flowFromApi(
 		is ResultState.Failure -> emit(result)
 		else -> { // di nothing }
 		}
+	}
+}
+
+fun <T> flowFromApiOrEmptyOn404(
+	emptyValue: T,
+	apiCall: suspend () -> BaseResponse<T>
+): Flow<ResultState<T>> = flow {
+	emit(ResultState.Loading)
+
+	try {
+		val response = apiCall()
+		val data = response.data
+		if (data != null) {
+			emit(ResultState.Success(data))
+		} else {
+			emit(ResultState.Failure(response.message))
+		}
+	} catch (e: HttpException) {
+		if (e.code() == 404) {
+			emit(ResultState.Success(emptyValue))
+		} else {
+			emit(ResultState.Failure(parseHttpErrorMessage(e)))
+		}
+	} catch (e: Exception) {
+		if (e is CancellationException) throw e
+		Log.e("flowFromApiOrEmptyOn404", "Exception: $e")
+		emit(ResultState.Failure("Something went wrong, please try again later"))
 	}
 }

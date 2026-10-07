@@ -1,7 +1,7 @@
 package com.rizkysiregar.feedzmore.domain.profile
 
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
-import com.rizkysiregar.feedzmore.data.remote.model.response.UserProfileResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.user.UserSearchItemResponse
 import com.rizkysiregar.feedzmore.data.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -14,7 +14,7 @@ import javax.inject.Inject
 class FetchUserProfileUseCase @Inject constructor(
 	private val repo: UserRepository
 ) {
-	operator fun invoke(userId: String): Flow<ResultState<UserProfileResponse>> {
+	operator fun invoke(userId: String): Flow<ResultState<UserSearchItemResponse>> {
 		return repo.getUserProfile(userId)
 	}
 }

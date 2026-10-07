@@ -1,23 +1,16 @@
 package com.rizkysiregar.feedzmore.ui.feature.home.profile
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,24 +18,17 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil3.compose.SubcomposeAsyncImage
-import coil3.request.ImageRequest
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
-import com.rizkysiregar.feedzmore.data.remote.model.response.UserProfileResponse
-import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
+import com.rizkysiregar.feedzmore.data.remote.model.response.user.UserSearchItemResponse
 import com.rizkysiregar.feedzmore.ui.components.InitialAvatar
-import com.rizkysiregar.feedzmore.ui.components.ShimmerEffect
+import com.rizkysiregar.feedzmore.ui.components.PostGrid
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedUiState
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 
@@ -55,7 +41,7 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-	profileState: ResultState<UserProfileResponse>,
+	profileState: ResultState<UserSearchItemResponse>,
 	feedState: FeedUiState,
 	listState: LazyListState,
 	onExitClick: () -> Unit,
@@ -124,70 +110,7 @@ fun ProfileScreen(
 									}
 							}
 						} else {
-							// --- START: MODIFIED GRID SECTION ---
-							val posts = feedState.items
-							val itemsPerRow = 3
-
-							// Group the posts into chunks of 3 for each row
-							val chunkedPosts = posts.chunked(itemsPerRow)
-							items(chunkedPosts) { rowItems ->
-								Row(
-									modifier = Modifier
-										.fillMaxWidth()
-										.padding(horizontal = 16.dp), // Add horizontal padding to the row
-									horizontalArrangement = Arrangement.spacedBy(4.dp) // Space between items
-								) {
-									// Create items in the row
-									for (post in rowItems) {
-										Surface(
-											modifier = Modifier
-												.weight(1f) // Each item takes equal space
-												.aspectRatio(1f), // Make it a square
-											shape = RectangleShape
-										) {
-											SubcomposeAsyncImage(
-												model = ImageRequest.Builder(LocalContext.current)
-													.data(post.imageUrl).build(),
-												contentDescription = "Feed Image",
-												modifier = Modifier
-													.fillMaxSize(),
-												contentScale = ContentScale.Crop,
-												loading = {
-													// Using the custom shimmer instead of Lottie
-													ShimmerEffect(modifier = Modifier.fillMaxSize())
-												},
-												error = {
-													Box(
-														contentAlignment = Alignment.Center,
-														modifier = Modifier
-															.size(50.dp)
-													) {
-														Icon(
-															imageVector = Icons.Outlined.Info,
-															contentDescription = "Error",
-														)
-													}
-												}
-											)
-										}
-									}
-									// Add invisible spacers to fill the row if it's not full
-									// This ensures all rows have the same height
-									val remainingItems = itemsPerRow - rowItems.size
-									if (remainingItems > 0) {
-										for (i in 0 until remainingItems) {
-											Spacer(
-												modifier = Modifier
-													.weight(1f)
-													.aspectRatio(1f)
-											)
-										}
-									}
-								}
-								// Add vertical spacing between the rows
-								Spacer(modifier = Modifier.height(4.dp))
-							}
-							// --- END: MODIFIED GRID SECTION ---
+							PostGrid(posts = feedState.items)
 						}
 
 							// Footer displays progress or a retry action for the current page.
@@ -230,7 +153,7 @@ fun ProfileScreen(
 
 @Composable
 fun UserProfileInfo(
-	user: UserProfileResponse,
+	user: UserSearchItemResponse,
 ) {
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -244,7 +167,7 @@ fun UserProfileInfo(
 		)
 
 		Text(
-			text = user.fullName,
+			text = user.displayName(),
 			style = MaterialTheme.typography.headlineSmall,
 			modifier = Modifier
 				.padding(top = 16.dp)
@@ -262,15 +185,13 @@ fun UserProfileInfo(
 @Composable
 private fun UserProfileInfoPreview() {
 	UserProfileInfo(
-		user = UserProfileResponse(
-			"Rizky",
-			"Siregar",
-			"habib@example.com",
-			"Rizky Siregar",
-			"123",
-			"http://dummy.com",
-			"dumy@mail.com",
-			"rizkysiregar",
+		user = UserSearchItemResponse(
+			id = "123",
+			username = "rizkysiregar",
+			firstName = "Rizky",
+			lastName = "Siregar",
+			email = "dumy@mail.com",
+			profileImageUrl = "http://dummy.com",
 		),
 	)
 }
@@ -282,7 +203,7 @@ private fun UserProfileInfoPreview() {
 //	FeedzmoreTheme {
 //		ProfileScreen(
 //			profileState = ResultState.Success(
-//				UserProfileResponse(
+//				UserSearchItemResponse(
 //					id = "123",
 //					username = "rizkysiregar",
 //					email = "habib@example.com",

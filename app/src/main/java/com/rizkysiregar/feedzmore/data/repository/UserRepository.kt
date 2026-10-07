@@ -1,7 +1,9 @@
 package com.rizkysiregar.feedzmore.data.repository
 
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
-import com.rizkysiregar.feedzmore.data.remote.model.response.UserProfileResponse
+import com.rizkysiregar.feedzmore.data.remote.model.request.user.SearchUserRequest
+import com.rizkysiregar.feedzmore.data.remote.model.response.PaginationResponseWrapper
+import com.rizkysiregar.feedzmore.data.remote.model.response.user.UserSearchItemResponse
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -10,5 +12,7 @@ import kotlinx.coroutines.flow.Flow
  * Description: Software Engineer
  */
 interface UserRepository {
-	fun getUserProfile(userId: String): Flow<ResultState<UserProfileResponse>>
+	fun getUserProfile(userId: String): Flow<ResultState<UserSearchItemResponse>>
+
+	fun searchUsers(request: SearchUserRequest): Flow<ResultState<PaginationResponseWrapper<UserSearchItemResponse>>>
 }

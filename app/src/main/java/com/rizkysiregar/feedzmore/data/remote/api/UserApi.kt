@@ -1,9 +1,11 @@
 package com.rizkysiregar.feedzmore.data.remote.api
 
 import com.rizkysiregar.feedzmore.data.remote.model.response.BaseResponse
-import com.rizkysiregar.feedzmore.data.remote.model.response.UserProfileResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.PaginationResponseWrapper
+import com.rizkysiregar.feedzmore.data.remote.model.response.user.UserSearchItemResponse
 import retrofit2.http.GET
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -15,6 +17,13 @@ interface UserApi {
 	@GET("users/{userId}")
 	suspend fun getUserProfile(
 		@Path("userId") userId: String
-	): BaseResponse<UserProfileResponse>
+	): BaseResponse<UserSearchItemResponse>
+
+	@GET("users")
+	suspend fun searchUsers(
+		@Query("username") username: String?,
+		@Query("page") page: Int,
+		@Query("size") size: Int
+	): BaseResponse<PaginationResponseWrapper<UserSearchItemResponse>>
 
 }

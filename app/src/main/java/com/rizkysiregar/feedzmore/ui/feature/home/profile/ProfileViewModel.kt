@@ -6,7 +6,7 @@ import com.rizkysiregar.feedzmore.constants.PrefKeys
 import com.rizkysiregar.feedzmore.data.cache.DataStoreManager
 import com.rizkysiregar.feedzmore.data.session.SessionManager
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
-import com.rizkysiregar.feedzmore.data.remote.model.response.UserProfileResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.user.UserSearchItemResponse
 import com.rizkysiregar.feedzmore.domain.profile.FetchUserProfileUseCase
 import com.rizkysiregar.feedzmore.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,8 +35,8 @@ class ProfileViewModel @Inject constructor(
 		sessionManager.logout()
 	}
 
-	private val _profileState = MutableStateFlow<ResultState<UserProfileResponse>?>(null)
-	val profileState: StateFlow<ResultState<UserProfileResponse>?> = _profileState
+	private val _profileState = MutableStateFlow<ResultState<UserSearchItemResponse>?>(null)
+	val profileState: StateFlow<ResultState<UserSearchItemResponse>?> = _profileState
 
 	fun fetchUserProfile() {
 		viewModelScope.launch {

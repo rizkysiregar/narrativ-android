@@ -10,16 +10,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.rizkysiregar.feedzmore.constants.Constants
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.post.PostFeedRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.profile.ProfileRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.search.SearchRoute
+import com.rizkysiregar.feedzmore.ui.feature.home.userdetail.UserDetailRoute
 import com.rizkysiregar.feedzmore.ui.main.navigation.BottomNavScreen
 import com.rizkysiregar.feedzmore.ui.main.navigation.routes.AuthPathRoutes
+import com.rizkysiregar.feedzmore.ui.main.navigation.routes.HomePathRoute
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -35,10 +40,13 @@ fun HomeRoot(
 ) {
 	val homeNavController = rememberNavController()
 	var feedRefreshVersion by remember { mutableIntStateOf(0) }
+	val currentRoute = homeNavController.currentBackStackEntryAsState().value?.destination?.route
 
 	Scaffold(
 		bottomBar = {
-			BottomBar(homeNavController)
+			if (currentRoute != HomePathRoute.UserDetail.route) {
+				BottomBar(homeNavController)
+			}
 		}
 	) { paddingValues ->
 		NavHost(
@@ -57,7 +65,13 @@ fun HomeRoot(
 					}
 				)
 			}
-			composable(BottomNavScreen.Search.route) { SearchRoute() }
+			composable(BottomNavScreen.Search.route) {
+				SearchRoute(
+					onUserClick = { userId, username ->
+						homeNavController.navigate(HomePathRoute.UserDetail.create(userId, username))
+					}
+				)
+			}
 			composable(BottomNavScreen.PostFeed.route) {
 				PostFeedRoute(
 					onPostSuccess = {
@@ -81,6 +95,19 @@ fun HomeRoot(
 							launchSingleTop = true
 						}
 					}
+				)
+			}
+			composable(
+				route = HomePathRoute.UserDetail.route,
+				arguments = listOf(
+					navArgument(HomePathRoute.UserDetail.ARG_USER_ID) { type = NavType.StringType },
+					navArgument(HomePathRoute.UserDetail.ARG_USERNAME) { type = NavType.StringType }
+				)
+			) { entry ->
+				UserDetailRoute(
+					userId = entry.arguments?.getString(HomePathRoute.UserDetail.ARG_USER_ID).orEmpty(),
+					username = entry.arguments?.getString(HomePathRoute.UserDetail.ARG_USERNAME).orEmpty(),
+					onBackClick = { homeNavController.popBackStack() }
 				)
 			}
 		}

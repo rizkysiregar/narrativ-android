@@ -12,4 +12,11 @@ sealed class HomePathRoute(val route: String) {
 	object PostDetail : MainPathRoute("post-detail")
 	object SearchPage : MainPathRoute("search-page")
 	object Profile : MainPathRoute("profile")
+
+	object UserDetail : HomePathRoute("user_detail/{userId}/{username}") {
+		const val ARG_USER_ID = "userId"
+		const val ARG_USERNAME = "username"
+
+		fun create(userId: String, username: String): String = "user_detail/$userId/$username"
+	}
 }
