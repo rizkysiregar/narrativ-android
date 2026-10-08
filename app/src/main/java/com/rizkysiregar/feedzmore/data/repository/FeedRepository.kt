@@ -20,6 +20,7 @@ import java.util.UUID
  */
 interface FeedRepository {
 	fun getAllFeed(request: GetAllFeedRequest): Flow<ResultState<FeedsPostPaginationResponse>>
+	fun getExplorePosts(request: GetAllFeedRequest): Flow<ResultState<FeedsPostPaginationResponse>>
 	fun getFeedByUsername(request: GetFeedByUsernameRequest): Flow<ResultState<FeedsPostPaginationResponse>>
 	fun postingFeed(postingFeedRequest: PostingFeedRequest): Flow<ResultState<PostingFeedResponse>>
 	fun likePost(postId: UUID): Flow<ResultState<String>>

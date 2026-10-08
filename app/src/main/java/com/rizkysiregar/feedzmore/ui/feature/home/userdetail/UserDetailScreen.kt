@@ -1,6 +1,7 @@
 package com.rizkysiregar.feedzmore.ui.feature.home.userdetail
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -59,7 +60,12 @@ fun UserDetailScreen(
 	listState: LazyListState = rememberLazyListState(),
 	onBackClick: () -> Unit,
 	onRetry: () -> Unit,
-	onRetryFeed: () -> Unit
+	onRetryFeed: () -> Unit,
+	followStatus: ResultState<com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowStatusResponse>? = null,
+	isFollowActionLoading: Boolean = false,
+	onFollowClick: () -> Unit = {},
+	onFollowersClick: () -> Unit = {},
+	onFollowingClick: () -> Unit = {}
 ) {
 	Scaffold(
 		topBar = {
@@ -95,8 +101,17 @@ fun UserDetailScreen(
 						state = listState,
 						modifier = Modifier.fillMaxSize()
 					) {
-						item { UserDetailHeader(user = user) }
-						item { UserInfoCard(user = user) }
+					item { UserDetailHeader(user = user) }
+					item {
+						FollowStatusSection(
+							followStatus = followStatus,
+							isFollowActionLoading = isFollowActionLoading,
+							onFollowClick = onFollowClick,
+							onFollowersClick = onFollowersClick,
+							onFollowingClick = onFollowingClick
+						)
+					}
+					item { UserInfoCard(user = user) }
 						item {
 							Text(
 								text = "Posts",
@@ -197,6 +212,63 @@ private fun UserDetailHeader(user: UserSearchItemResponse) {
 		Text(
 			text = "@${user.username}",
 			style = MaterialTheme.typography.bodyMedium,
+			color = MaterialTheme.colorScheme.onSurfaceVariant
+		)
+	}
+}
+
+@Composable
+private fun FollowStatusSection(
+	followStatus: ResultState<com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowStatusResponse>?,
+	isFollowActionLoading: Boolean,
+	onFollowClick: () -> Unit,
+	onFollowersClick: () -> Unit,
+	onFollowingClick: () -> Unit
+) {
+	Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+		if (followStatus is ResultState.Success) {
+			val status = followStatus.data
+			Row(
+				modifier = Modifier.fillMaxWidth(),
+				horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+			) {
+				FollowMetric(count = status.followerCount, label = "Followers", onClick = onFollowersClick)
+				FollowMetric(count = status.followingCount, label = "Following", onClick = onFollowingClick)
+			}
+			Spacer(modifier = Modifier.height(12.dp))
+			Button(
+				onClick = onFollowClick,
+				enabled = !isFollowActionLoading,
+				modifier = Modifier.fillMaxWidth(),
+				colors = if (status.isFollowing) androidx.compose.material3.ButtonDefaults.outlinedButtonColors()
+				else androidx.compose.material3.ButtonDefaults.buttonColors()
+			) {
+				if (isFollowActionLoading) {
+					CircularProgressIndicator(modifier = Modifier.size(18.dp))
+				} else {
+					Text(if (status.isFollowing) "Unfollow" else "Follow")
+				}
+			}
+		}
+	}
+}
+
+@Composable
+private fun FollowMetric(count: Long, label: String, onClick: () -> Unit) {
+	Column(
+		horizontalAlignment = Alignment.CenterHorizontally,
+		modifier = Modifier
+			.padding(horizontal = 20.dp)
+			.clickable(onClick = onClick)
+	) {
+		Text(
+			text = count.toString(),
+			style = MaterialTheme.typography.titleLarge,
+			fontWeight = FontWeight.Bold
+		)
+		Text(
+			text = label,
+			style = MaterialTheme.typography.bodySmall,
 			color = MaterialTheme.colorScheme.onSurfaceVariant
 		)
 	}

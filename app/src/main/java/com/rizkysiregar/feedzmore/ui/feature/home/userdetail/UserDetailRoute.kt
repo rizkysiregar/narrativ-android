@@ -26,15 +26,20 @@ fun UserDetailRoute(
 	userId: String,
 	username: String,
 	onBackClick: () -> Unit,
+	onFollowersClick: (String) -> Unit = {},
+	onFollowingClick: (String) -> Unit = {},
 	detailViewModel: UserDetailViewModel = hiltViewModel(),
 	feedViewModel: UserDetailFeedViewModel = hiltViewModel()
 ) {
 	val profileState by detailViewModel.profileState.collectAsState()
 	val feedState by feedViewModel.uiState.collectAsStateWithLifecycle()
+	val followStatus by detailViewModel.followStatus.collectAsState()
+	val isFollowActionLoading by detailViewModel.isFollowActionLoading.collectAsState()
 	val listState = rememberLazyListState()
 
 	LaunchedEffect(userId) {
 		detailViewModel.loadUser(userId)
+		detailViewModel.loadFollowStatus(userId)
 	}
 
 	LaunchedEffect(username) {
@@ -83,7 +88,12 @@ fun UserDetailRoute(
 			onRetryFeed = {
 				if (feedState.hasLoadedInitialPage) feedViewModel.loadNextPage()
 				else feedViewModel.refresh()
-			}
+			},
+			followStatus = followStatus,
+			isFollowActionLoading = isFollowActionLoading,
+			onFollowClick = { detailViewModel.toggleFollow(userId) },
+			onFollowersClick = { onFollowersClick(userId) },
+			onFollowingClick = { onFollowingClick(userId) }
 		)
 	}
 }

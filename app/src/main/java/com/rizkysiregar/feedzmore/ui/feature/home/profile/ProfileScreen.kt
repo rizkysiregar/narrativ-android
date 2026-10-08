@@ -1,5 +1,6 @@
 package com.rizkysiregar.feedzmore.ui.feature.home.profile
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -49,6 +50,9 @@ fun ProfileScreen(
 	onRetryFeed: () -> Unit,
 	onRefresh: () -> Unit,
 	onLikeClick: (String) -> Unit,
+	followStatus: ResultState<com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowStatusResponse>?,
+	onFollowersClick: (String) -> Unit,
+	onFollowingClick: (String) -> Unit,
 	modifier: Modifier = Modifier,
 ) {
 	Scaffold(
@@ -87,7 +91,12 @@ fun ProfileScreen(
 					) {
 						// item 1: User Profile information section
 						item {
-							UserProfileInfo(user = user)
+							UserProfileInfo(
+								user = user,
+								followStatus = followStatus,
+								onFollowersClick = { onFollowersClick(user.id) },
+								onFollowingClick = { onFollowingClick(user.id) }
+							)
 						}
 
 						// item 2: Post collection section
@@ -154,6 +163,9 @@ fun ProfileScreen(
 @Composable
 fun UserProfileInfo(
 	user: UserSearchItemResponse,
+	followStatus: ResultState<com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowStatusResponse>? = null,
+	onFollowersClick: () -> Unit = {},
+	onFollowingClick: () -> Unit = {},
 ) {
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -175,6 +187,40 @@ fun UserProfileInfo(
 		Text(
 			text = "@${user.username}",
 			style = MaterialTheme.typography.bodyMedium,
+			color = MaterialTheme.colorScheme.onSurfaceVariant
+		)
+
+		if (followStatus is ResultState.Success) {
+			val status = followStatus.data
+			androidx.compose.foundation.layout.Row(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(top = 16.dp),
+				horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+			) {
+				FollowMetric(count = status.followerCount, label = "Followers", onClick = onFollowersClick)
+				FollowMetric(count = status.followingCount, label = "Following", onClick = onFollowingClick)
+			}
+		}
+	}
+}
+
+@Composable
+private fun FollowMetric(count: Long, label: String, onClick: () -> Unit) {
+	Column(
+		horizontalAlignment = Alignment.CenterHorizontally,
+		modifier = Modifier
+			.padding(horizontal = 20.dp)
+			.clickable(onClick = onClick)
+	) {
+		Text(
+			text = count.toString(),
+			style = MaterialTheme.typography.titleLarge,
+			fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+		)
+		Text(
+			text = label,
+			style = MaterialTheme.typography.bodySmall,
 			color = MaterialTheme.colorScheme.onSurfaceVariant
 		)
 	}

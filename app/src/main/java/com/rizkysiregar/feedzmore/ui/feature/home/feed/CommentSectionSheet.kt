@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
@@ -78,7 +79,7 @@ fun CommentSectionSheet(
 		containerColor = MaterialTheme.colorScheme.surface,
 		tonalElevation = 8.dp
 	) {
-		Column(modifier = Modifier.fillMaxSize()) {
+		Column(modifier = Modifier.fillMaxWidth().heightIn(max = 640.dp)) {
 			// Header
 			Text(
 				text = "Comments",
@@ -92,7 +93,7 @@ fun CommentSectionSheet(
 			HorizontalDivider(thickness = 0.5.dp, color = Color.LightGray.copy(alpha = 0.5f))
 
 			// Comments List
-			Box(modifier = Modifier.weight(1f)) {
+			Box(modifier = Modifier.heightIn(min = 120.dp, max = 420.dp)) {
 				if (errorMessage != null && comments.isEmpty() && !isLoading) {
 					Column(
 						modifier = Modifier.fillMaxSize(),

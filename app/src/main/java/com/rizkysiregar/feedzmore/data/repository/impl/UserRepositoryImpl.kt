@@ -4,6 +4,8 @@ import com.rizkysiregar.feedzmore.data.remote.api.UserApi
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.request.user.SearchUserRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.PaginationResponseWrapper
+import com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowStatusResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowUserResponse
 import com.rizkysiregar.feedzmore.data.remote.model.response.user.UserSearchItemResponse
 import com.rizkysiregar.feedzmore.data.repository.UserRepository
 import com.rizkysiregar.feedzmore.util.flowFromApi
@@ -24,6 +26,29 @@ class UserRepositoryImpl @Inject constructor(
 		flowFromApi {
 			userApi.getUserProfile(userId)
 		}
+
+	override fun follow(userId: String): Flow<ResultState<String>> =
+		flowFromApi { userApi.follow(userId) }
+
+	override fun unfollow(userId: String): Flow<ResultState<String>> =
+		flowFromApi { userApi.unfollow(userId) }
+
+	override fun getFollowStatus(userId: String): Flow<ResultState<FollowStatusResponse>> =
+		flowFromApi { userApi.getFollowStatus(userId) }
+
+	override fun getFollowers(
+		userId: String,
+		page: Int,
+		size: Int
+	): Flow<ResultState<PaginationResponseWrapper<FollowUserResponse>>> =
+		flowFromApi { userApi.getFollowers(userId, page, size) }
+
+	override fun getFollowing(
+		userId: String,
+		page: Int,
+		size: Int
+	): Flow<ResultState<PaginationResponseWrapper<FollowUserResponse>>> =
+		flowFromApi { userApi.getFollowing(userId, page, size) }
 
 	override fun searchUsers(
 		request: SearchUserRequest

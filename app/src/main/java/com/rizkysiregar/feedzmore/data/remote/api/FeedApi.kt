@@ -32,6 +32,12 @@ interface FeedApi {
 		@Query("size") size: Int
 	): BaseResponse<FeedsPostPaginationResponse>
 
+	@GET("posts/explore")
+	suspend fun getExplorePosts(
+		@Query("page") page: Int,
+		@Query("size") size: Int
+	): BaseResponse<FeedsPostPaginationResponse>
+
 	@GET("posts/users/{username}/posts")
 	suspend fun getFeedByUsername(
 		@Path("username") username: String,

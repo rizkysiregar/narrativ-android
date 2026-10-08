@@ -44,7 +44,7 @@ fun HomeRoot(
 
 	Scaffold(
 		bottomBar = {
-			if (currentRoute != HomePathRoute.UserDetail.route) {
+			if (currentRoute != HomePathRoute.UserDetail.route && currentRoute != HomePathRoute.FollowList.route) {
 				BottomBar(homeNavController)
 			}
 		}
@@ -65,7 +65,10 @@ fun HomeRoot(
 					}
 				)
 			}
-			composable(BottomNavScreen.Search.route) {
+				composable(BottomNavScreen.Explore.route) {
+					com.rizkysiregar.feedzmore.ui.feature.home.explore.ExploreRoute()
+				}
+				composable(BottomNavScreen.Search.route) {
 				SearchRoute(
 					onUserClick = { userId, username ->
 						homeNavController.navigate(HomePathRoute.UserDetail.create(userId, username))
@@ -93,12 +96,34 @@ fun HomeRoot(
 								inclusive = true
 							}
 							launchSingleTop = true
-						}
 					}
-				)
+				},
+				onFollowersClick = { userId ->
+					homeNavController.navigate(HomePathRoute.FollowList.create(userId, "followers"))
+				},
+				onFollowingClick = { userId ->
+					homeNavController.navigate(HomePathRoute.FollowList.create(userId, "following"))
+				}
+			)
+		}
+				composable(
+					route = HomePathRoute.FollowList.route,
+					arguments = listOf(
+						navArgument(HomePathRoute.FollowList.ARG_USER_ID) { type = NavType.StringType },
+						navArgument(HomePathRoute.FollowList.ARG_TYPE) { type = NavType.StringType }
+					)
+				) { entry ->
+					com.rizkysiregar.feedzmore.ui.feature.home.profile.FollowListRoute(
+						userId = entry.arguments?.getString(HomePathRoute.FollowList.ARG_USER_ID).orEmpty(),
+						type = entry.arguments?.getString(HomePathRoute.FollowList.ARG_TYPE).orEmpty(),
+			onUserClick = { userId, username ->
+				homeNavController.navigate(HomePathRoute.UserDetail.create(userId, username))
+			},
+			onBackClick = { homeNavController.popBackStack() }
+		)
 			}
-			composable(
-				route = HomePathRoute.UserDetail.route,
+				composable(
+					route = HomePathRoute.UserDetail.route,
 				arguments = listOf(
 					navArgument(HomePathRoute.UserDetail.ARG_USER_ID) { type = NavType.StringType },
 					navArgument(HomePathRoute.UserDetail.ARG_USERNAME) { type = NavType.StringType }
@@ -107,9 +132,15 @@ fun HomeRoot(
 				UserDetailRoute(
 					userId = entry.arguments?.getString(HomePathRoute.UserDetail.ARG_USER_ID).orEmpty(),
 					username = entry.arguments?.getString(HomePathRoute.UserDetail.ARG_USERNAME).orEmpty(),
-					onBackClick = { homeNavController.popBackStack() }
-				)
+			onBackClick = { homeNavController.popBackStack() },
+			onFollowersClick = { id ->
+				homeNavController.navigate(HomePathRoute.FollowList.create(id, "followers"))
+			},
+			onFollowingClick = { id ->
+				homeNavController.navigate(HomePathRoute.FollowList.create(id, "following"))
 			}
+		)
 		}
+	}
 	}
 }

@@ -2,6 +2,7 @@ package com.rizkysiregar.feedzmore.ui.main.navigation
 
 import androidx.annotation.DrawableRes
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -20,6 +21,7 @@ sealed class BottomNavScreen(
 	val icon: IconSource
 ) {
 	object Feed : BottomNavScreen("feed", "Feed", IconSource.Vector(Icons.Default.Home))
+	object Explore : BottomNavScreen("explore", "Explore", IconSource.Vector(Icons.Default.Explore))
 	object Search : BottomNavScreen("search", "Search", IconSource.Vector(Icons.Default.Search))
 	object PostFeed : BottomNavScreen(
 		"post_feed",

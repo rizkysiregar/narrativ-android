@@ -27,7 +27,8 @@ import javax.inject.Inject
 class ProfileViewModel @Inject constructor(
 	private val dataStore: DataStoreManager,
 	private val sessionManager: SessionManager,
-	private val fetchUserProfileUseCase: FetchUserProfileUseCase
+	private val fetchUserProfileUseCase: FetchUserProfileUseCase,
+	private val getFollowStatusUseCase: com.rizkysiregar.feedzmore.domain.user.GetFollowStatusUseCase
 ) : BaseViewModel(dataStore) {
 
 	// clear user data aka logout
@@ -37,6 +38,9 @@ class ProfileViewModel @Inject constructor(
 
 	private val _profileState = MutableStateFlow<ResultState<UserSearchItemResponse>?>(null)
 	val profileState: StateFlow<ResultState<UserSearchItemResponse>?> = _profileState
+
+	private val _followStatus = MutableStateFlow<ResultState<com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowStatusResponse>?>(null)
+	val followStatus: StateFlow<ResultState<com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowStatusResponse>?> = _followStatus
 
 	fun fetchUserProfile() {
 		viewModelScope.launch {
@@ -53,6 +57,10 @@ class ProfileViewModel @Inject constructor(
 				.collect { resultState ->
 					_profileState.value = resultState
 				}
+
+			getFollowStatusUseCase(userId).collect { status ->
+				_followStatus.value = status
+			}
 		}
 	}
 

@@ -23,9 +23,12 @@ import kotlinx.coroutines.flow.collectLatest
 fun ProfileRoute(
     profileVm: ProfileViewModel = hiltViewModel(),
     profileFeedVm: ProfileFeedViewModel = hiltViewModel(),
-    onLogoutClick: () -> Unit
+	onLogoutClick: () -> Unit,
+	onFollowersClick: (String) -> Unit = {},
+	onFollowingClick: (String) -> Unit = {}
 ) {
     val profileState by profileVm.profileState.collectAsState()
+    val followStatus by profileVm.followStatus.collectAsState()
     val feedState by profileFeedVm.uiState.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
 
@@ -75,7 +78,10 @@ fun ProfileRoute(
             onExitClick = {
                 profileVm.clearDataStore()
                 onLogoutClick()
-            }
+            },
+            followStatus = followStatus,
+            onFollowersClick = { userId -> onFollowersClick(userId) },
+            onFollowingClick = { userId -> onFollowingClick(userId) }
         )
     }
 

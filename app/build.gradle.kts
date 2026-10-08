@@ -115,6 +115,7 @@ dependencies {
 
 	// material icons
 	implementation(libs.androidx.compose.material.icons.core)
+	implementation(libs.androidx.compose.material.icons.extended)
 	// material2 for: native pull request view
 	implementation(libs.androidx.compose.material)
 

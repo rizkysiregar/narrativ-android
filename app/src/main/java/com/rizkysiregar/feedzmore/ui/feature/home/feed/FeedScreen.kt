@@ -1,6 +1,8 @@
 package com.rizkysiregar.feedzmore.ui.feature.home.feed
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
@@ -171,19 +173,39 @@ private fun FeedListHeader() {
 
 @Composable
 private fun EmptyFeedContent(onCreateFeed: () -> Unit) {
-	Column(
+	Box(
 		modifier = Modifier
 			.fillMaxSize()
-			.padding(24.dp),
-		verticalArrangement = Arrangement.Center,
-		horizontalAlignment = Alignment.CenterHorizontally
+			.padding(24.dp)
+			.verticalScroll(rememberScrollState()),
+		contentAlignment = Alignment.Center
 	) {
-		Text("Belum ada feed untuk ditampilkan")
-		Spacer(modifier = Modifier.height(8.dp))
-		Text("Bagikan feed pertama Anda atau ikuti pengguna lain untuk melihat aktivitas mereka di sini.")
-		Spacer(modifier = Modifier.height(16.dp))
-		Button(onClick = onCreateFeed) {
-			Text("Buat feed baru")
+		Surface(
+			shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+			color = MaterialTheme.colorScheme.surface,
+			tonalElevation = 6.dp,
+			shadowElevation = 8.dp
+		) {
+			Column(
+				modifier = Modifier.padding(24.dp),
+				horizontalAlignment = Alignment.CenterHorizontally
+			) {
+				Text(
+					text = "Belum ada cerita",
+					style = MaterialTheme.typography.titleMedium,
+					fontWeight = FontWeight.Bold
+				)
+				Spacer(modifier = Modifier.height(8.dp))
+				Text(
+					text = "Ikuti pengguna lain untuk melihat dan berbagi momen",
+					style = MaterialTheme.typography.bodyMedium,
+					color = MaterialTheme.colorScheme.onSurfaceVariant
+				)
+				Spacer(modifier = Modifier.height(16.dp))
+				Button(onClick = onCreateFeed) {
+					Text("Buat feed baru")
+				}
+			}
 		}
 	}
 }
@@ -193,7 +215,8 @@ private fun FeedErrorContent(message: String, onRetry: () -> Unit) {
 	Column(
 		modifier = Modifier
 			.fillMaxSize()
-			.padding(24.dp),
+			.padding(24.dp)
+			.verticalScroll(rememberScrollState()),
 		verticalArrangement = Arrangement.Center,
 		horizontalAlignment = Alignment.CenterHorizontally
 	) {

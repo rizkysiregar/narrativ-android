@@ -24,6 +24,7 @@ fun BottomBar(
 ) {
 	val items = listOf(
 		BottomNavScreen.Feed,
+		BottomNavScreen.Explore,
 		BottomNavScreen.PostFeed,
 		BottomNavScreen.Search,
 		BottomNavScreen.Profile
