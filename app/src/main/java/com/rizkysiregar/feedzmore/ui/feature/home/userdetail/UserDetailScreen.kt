@@ -353,7 +353,9 @@ fun UserDetailScreenPreview() {
 					FeedContentItem(
 						id = index.toString(),
 						createdAt = "2026-10-07",
-						imageUrl = "https://dummy-url",
+						mediaUrl = "https://dummy-url",
+					mediaType = com.rizkysiregar.feedzmore.data.remote.model.response.feed.MediaType.IMAGE,
+					thumbnailUrl = null,
 						caption = "caption $index",
 						likeCount = 1,
 						commentCount = 1,

@@ -11,5 +11,7 @@ data class PostFeedUiState(
 	val selectedImage: Uri? = null,
 	val caption: String = "",
 	val recentImages: List<Uri> = emptyList(),
-	val isLoadingGallery: Boolean = false
+	val isLoadingGallery: Boolean = false,
+	val selectedMimeType: String? = null,
+	val validationError: String? = null
 )

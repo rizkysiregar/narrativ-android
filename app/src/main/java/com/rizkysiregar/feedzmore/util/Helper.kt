@@ -34,10 +34,10 @@ fun buildGetUrl(baseUrl: String, params: Map<String, String>): String {
 }
 
 // convert URI to Request Body
-fun uriToRequestBody(context: Context, uri: Uri): RequestBody {
+fun uriToRequestBody(context: Context, uri: Uri, mimeType: String? = null): RequestBody {
 	return object : RequestBody() {
 		override fun contentType(): MediaType? {
-			return "image/*".toMediaType()
+			return (mimeType ?: "image/*").toMediaType()
 		}
 
 		override fun writeTo(sink: BufferedSink) {

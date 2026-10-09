@@ -2,6 +2,8 @@ package com.rizkysiregar.feedzmore.data.remote.model.response.feed
 
 import com.google.gson.annotations.SerializedName
 
+enum class MediaType { IMAGE, VIDEO }
+
 data class FeedsPostPaginationResponse(
 
 	@field:SerializedName("pageNumber")
@@ -28,8 +30,14 @@ data class FeedContentItem(
 	@field:SerializedName("createdAt")
 	val createdAt: String,
 
-	@field:SerializedName("imageUrl")
-	val imageUrl: String,
+	@field:SerializedName("mediaUrl")
+	val mediaUrl: String,
+
+	@field:SerializedName("mediaType")
+	val mediaType: MediaType,
+
+	@field:SerializedName("thumbnailUrl")
+	val thumbnailUrl: String?,
 
 	@field:SerializedName("caption")
 	val caption: String,

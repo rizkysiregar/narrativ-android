@@ -27,16 +27,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.MediaType
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 
 
@@ -55,7 +58,8 @@ fun FeedScreen(
 	onRetry: () -> Unit,
 	listState: LazyListState = rememberLazyListState(),
 	onLikeClick: (String) -> Unit,
-	onCreateFeed: () -> Unit
+	onCreateFeed: () -> Unit,
+	onVideoClick: (FeedContentItem) -> Unit = {}
 ) {
 	// feed state
 	val currentOnLikeClick by androidx.compose.runtime.rememberUpdatedState(onLikeClick)
@@ -64,6 +68,21 @@ fun FeedScreen(
 
 	var selectedPostId by remember { mutableStateOf<String?>(null) }
 	var showCommentSheet by remember { mutableStateOf(false) }
+	var isVideoMuted by remember { mutableStateOf(false) }
+	var activeVideoPostId by remember { mutableStateOf<String?>(null) }
+
+	LaunchedEffect(listState, uiState.items) {
+		snapshotFlow { listState.layoutInfo }.collect { layoutInfo ->
+			val center = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
+			val activeInfo = layoutInfo.visibleItemsInfo
+				.filter { it.contentType == "feed_item" }
+				.minByOrNull { info ->
+					kotlin.math.abs((info.offset + info.size / 2) - center)
+				}
+			val activeItem = activeInfo?.index?.let { idx -> uiState.items.getOrNull(idx - 1) }
+			activeVideoPostId = if (activeItem?.mediaType == MediaType.VIDEO) activeItem.id else null
+		}
+	}
 
 	Box(
 		modifier = Modifier
@@ -102,7 +121,11 @@ fun FeedScreen(
 							onCommentClick = { post ->
 								selectedPostId = post.id
 								showCommentSheet = true
-							}
+							},
+							shouldPlayVideo = item.id == activeVideoPostId,
+							isVideoMuted = isVideoMuted,
+							onToggleVideoMute = { isVideoMuted = !isVideoMuted },
+							onVideoClick = { onVideoClick(item) }
 						)
 					}
 
@@ -240,7 +263,9 @@ fun FeedScreenPreview() {
 						likeCount = 1,
 						liked = true,
 						createdAt = "2023-11-25",
-						imageUrl = "https://dummy-url",
+						mediaUrl = "https://dummy-url",
+					mediaType = MediaType.IMAGE,
+					thumbnailUrl = null,
 						username = "John Doe"
 					)
 				}

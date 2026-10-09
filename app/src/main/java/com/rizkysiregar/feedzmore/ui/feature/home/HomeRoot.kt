@@ -41,10 +41,11 @@ fun HomeRoot(
 	val homeNavController = rememberNavController()
 	var feedRefreshVersion by remember { mutableIntStateOf(0) }
 	val currentRoute = homeNavController.currentBackStackEntryAsState().value?.destination?.route
+	val isDetailRoute = currentRoute?.startsWith("post_detail/") == true
 
 	Scaffold(
 		bottomBar = {
-			if (currentRoute != HomePathRoute.UserDetail.route && currentRoute != HomePathRoute.FollowList.route) {
+			if (currentRoute != HomePathRoute.UserDetail.route && currentRoute != HomePathRoute.FollowList.route && !isDetailRoute) {
 				BottomBar(homeNavController)
 			}
 		}
@@ -62,12 +63,15 @@ fun HomeRoot(
 						homeNavController.navigate(BottomNavScreen.PostFeed.route) {
 							launchSingleTop = true
 						}
-					}
+					},
+					navController = homeNavController
 				)
 			}
 				composable(BottomNavScreen.Explore.route) {
-					com.rizkysiregar.feedzmore.ui.feature.home.explore.ExploreRoute()
-				}
+				com.rizkysiregar.feedzmore.ui.feature.home.explore.ExploreRoute(
+					navController = homeNavController
+				)
+			}
 				composable(BottomNavScreen.Search.route) {
 				SearchRoute(
 					onUserClick = { userId, username ->
@@ -141,6 +145,16 @@ fun HomeRoot(
 			}
 		)
 		}
-	}
+			composable(
+				route = HomePathRoute.PostDetail.route,
+				arguments = listOf(
+					navArgument(HomePathRoute.PostDetail.ARG_POST_ID) { type = NavType.StringType }
+				)
+			) {
+				com.rizkysiregar.feedzmore.ui.feature.home.feed.PostDetailDestination(
+					navController = homeNavController
+				)
+			}
+		}
 	}
 }

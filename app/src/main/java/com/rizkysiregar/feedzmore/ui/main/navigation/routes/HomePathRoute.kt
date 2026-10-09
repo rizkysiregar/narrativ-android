@@ -9,7 +9,11 @@ package com.rizkysiregar.feedzmore.ui.main.navigation.routes
 sealed class HomePathRoute(val route: String) {
 	object Feed : MainPathRoute("feed_post")
 	object UploadPost : MainPathRoute("upload-post")
-	object PostDetail : MainPathRoute("post-detail")
+	object PostDetail : HomePathRoute("post_detail/{postId}") {
+		const val ARG_POST_ID = "postId"
+
+		fun create(postId: String): String = "post_detail/$postId"
+	}
 	object SearchPage : MainPathRoute("search-page")
 	object Profile : MainPathRoute("profile")
 

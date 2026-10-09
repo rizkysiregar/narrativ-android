@@ -2,13 +2,13 @@ package com.rizkysiregar.feedzmore.data.remote.api
 
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.AddCommentRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.LikeFeedRequest
-import com.rizkysiregar.feedzmore.data.remote.model.request.feed.PostingFeedRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.BaseResponse
 import com.rizkysiregar.feedzmore.data.remote.model.response.PaginationResponseWrapper
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.CommentItem
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedsPostPaginationResponse
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.PostingFeedResponse
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -48,8 +48,8 @@ interface FeedApi {
 	@Multipart
 	@POST("posts")
 	suspend fun postingFeed(
-		@Part("addPostRequest") addPostRequest: PostingFeedRequest,
-		@Part image: MultipartBody.Part
+		@Part("addPostRequest") addPostRequest: RequestBody,
+		@Part media: MultipartBody.Part
 	): BaseResponse<PostingFeedResponse>
 
 	@POST("posts/{postId}/like")

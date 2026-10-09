@@ -45,10 +45,10 @@ fun PostFeedRoute(
 				Log.i("onNext Button", vm.uiState.value.toString())
 				vm.postingFeed(
 					PostingFeedRequest(
-						imageUri = uiState.selectedImage!!,
-						caption = uiState.caption,
-						imagePart = null,
-						username = ""
+					mediaUri = uiState.selectedImage!!,
+					caption = uiState.caption,
+					mediaPart = null,
+					username = ""
 					)
 				)
 			})

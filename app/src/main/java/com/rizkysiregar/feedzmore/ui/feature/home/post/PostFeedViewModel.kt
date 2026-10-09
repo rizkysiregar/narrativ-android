@@ -52,8 +52,46 @@ class PostFeedViewModel @Inject constructor(
 	val postingState: StateFlow<ResultState<PostingFeedResponse>?> = _postingState
 	fun onImageSelected(uri: Uri) {
 		Log.i("PostFeedViewModel", "## onImageSelected() called")
+		val mimeType = app.contentResolver.getType(uri)
+		val error = validateMedia(app, uri, mimeType)
 		_uiState.update {
-			it.copy(selectedImage = uri)
+			if (error != null) {
+				it.copy(validationError = error, selectedImage = null, selectedMimeType = null)
+			} else {
+				it.copy(
+					selectedImage = uri,
+					selectedMimeType = mimeType,
+					validationError = null
+				)
+			}
+		}
+	}
+
+	private fun validateMedia(context: Application, uri: Uri, mimeType: String?): String? {
+		if (mimeType == null) return "Tipe media tidak dikenali"
+		val sizeBytes = runCatching {
+			context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize }
+		}.getOrNull()
+		return when {
+			mimeType.startsWith("image/") -> {
+				if (sizeBytes != null && sizeBytes > 5L * 1024 * 1024) "Ukuran gambar maksimal 5MB"
+				else null
+			}
+			mimeType == "video/mp4" || mimeType == "video/quicktime" || mimeType == "video/webm" -> {
+				if (sizeBytes != null && sizeBytes > 50L * 1024 * 1024) return "Ukuran video maksimal 50MB"
+				val durationMs = runCatching {
+					val retriever = android.media.MediaMetadataRetriever()
+					context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { afd ->
+						retriever.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+					}
+					val d = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)
+					retriever.release()
+					d?.toLongOrNull()
+				}.getOrNull()
+				if (durationMs != null && durationMs > 60_000L) "Durasi video maksimal 60 detik"
+				else null
+			}
+			else -> "Format media tidak didukung. Gunakan gambar atau video mp4/mov/webm"
 		}
 	}
 
@@ -107,18 +145,20 @@ class PostFeedViewModel @Inject constructor(
 		viewModelScope.launch {
 			val currentUsername = userDataRepository.username.first() { it.isNotEmpty() }
 
-			// -- Convert Image URI to MultipartBody.Part -- //
-			val imageRequestBody =
-				uriToRequestBody(app.applicationContext, postingFeedRequest.imageUri)
+		// -- Convert Media URI to MultipartBody.Part -- //
+		val mimeType = app.contentResolver.getType(postingFeedRequest.mediaUri)
+		val mediaRequestBody =
+			uriToRequestBody(app.applicationContext, postingFeedRequest.mediaUri, mimeType)
 
-			val imagePart = MultipartBody.Part.createFormData(
-				name = "image",
-				filename = "upload_image.jpg",
-				body = imageRequestBody
-			)
+		val extension = mimeToExtension(mimeType)
+		val mediaPart = MultipartBody.Part.createFormData(
+			name = "media",
+			filename = "upload_media.$extension",
+			body = mediaRequestBody
+		)
 
-			postingFeedRequest.imagePart = imagePart
-			postingFeedRequest.username = currentUsername
+		postingFeedRequest.mediaPart = mediaPart
+		postingFeedRequest.username = currentUsername
 
 			// -- Invoke UseCase -- //
 			postingFeedUseCase(postingFeedRequest).collect { result ->
@@ -130,6 +170,16 @@ class PostFeedViewModel @Inject constructor(
 
 	fun resetPostingState() {
 		_postingState.value = ResultState.Idle
+	}
+
+	private fun mimeToExtension(mimeType: String?): String = when (mimeType) {
+		"video/mp4" -> "mp4"
+		"video/quicktime" -> "mov"
+		"video/webm" -> "webm"
+		"image/png" -> "png"
+		"image/webp" -> "webp"
+		"image/gif" -> "gif"
+		else -> if (mimeType?.startsWith("video/") == true) "mp4" else "jpg"
 	}
 
 	private companion object {

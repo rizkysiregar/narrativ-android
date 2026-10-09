@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.MediaType
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -53,7 +54,7 @@ fun LazyListScope.PostGrid(
 				) {
 					SubcomposeAsyncImage(
 						model = ImageRequest.Builder(LocalContext.current)
-							.data(post.imageUrl).build(),
+							.data(if (post.mediaType == MediaType.VIDEO) post.thumbnailUrl ?: post.mediaUrl else post.mediaUrl).build(),
 						contentDescription = "Feed Image",
 						modifier = Modifier.fillMaxSize(),
 						contentScale = ContentScale.Crop,

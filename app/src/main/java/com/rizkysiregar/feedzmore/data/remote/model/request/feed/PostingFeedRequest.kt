@@ -11,6 +11,6 @@ import okhttp3.MultipartBody
 data class PostingFeedRequest(
 	var username: String,
 	val caption: String,
-	val imageUri: Uri,
-	var imagePart: MultipartBody.Part?
+	val mediaUri: Uri,
+	var mediaPart: MultipartBody.Part?
 )

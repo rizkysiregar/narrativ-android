@@ -37,6 +37,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -113,12 +114,20 @@ fun PostFeedScreen(
 		PostHeader()
 		SelectedPhotoPreview(
 			imageUri = uiState.selectedImage,
+			mimeType = uiState.selectedMimeType,
 			onChooseAnother = {
 				photoPickerLauncher.launch(
-					PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+					PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
 				)
 			}
 		)
+		if (uiState.validationError != null) {
+			Text(
+				text = uiState.validationError,
+				color = MaterialTheme.colorScheme.error,
+				style = MaterialTheme.typography.bodyMedium
+			)
+		}
 		RecentPhotosSection(
 			images = uiState.recentImages,
 			selectedImage = uiState.selectedImage,
@@ -127,7 +136,7 @@ fun PostFeedScreen(
 			onImageSelected = onPickImage,
 			onChooseAnother = {
 				photoPickerLauncher.launch(
-					PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+					PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
 				)
 			}
 		)
@@ -155,7 +164,11 @@ private fun PostHeader() {
 }
 
 @Composable
-private fun SelectedPhotoPreview(imageUri: Uri?, onChooseAnother: () -> Unit) {
+private fun SelectedPhotoPreview(
+	imageUri: Uri?,
+	mimeType: String?,
+	onChooseAnother: () -> Unit
+) {
 	Surface(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -166,18 +179,22 @@ private fun SelectedPhotoPreview(imageUri: Uri?, onChooseAnother: () -> Unit) {
 	) {
 		Box(contentAlignment = Alignment.Center) {
 			AnimatedVisibility(visible = imageUri != null) {
-				AsyncImage(
-					model = imageUri,
-					contentDescription = "Foto yang dipilih",
-					modifier = Modifier.fillMaxSize(),
-					contentScale = ContentScale.Crop
-				)
+				if (mimeType?.startsWith("video/") == true) {
+					VideoPreviewPlaceholder()
+				} else {
+					AsyncImage(
+						model = imageUri,
+						contentDescription = "Media yang dipilih",
+						modifier = Modifier.fillMaxSize(),
+						contentScale = ContentScale.Crop
+					)
+				}
 			}
 			if (imageUri == null) {
 				Column(horizontalAlignment = Alignment.CenterHorizontally) {
 					Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(36.dp))
 					Spacer(Modifier.height(8.dp))
-					Text("Pilih foto untuk memulai")
+					Text("Pilih foto atau video untuk memulai")
 				}
 			}
 			OutlinedButton(
@@ -192,6 +209,22 @@ private fun SelectedPhotoPreview(imageUri: Uri?, onChooseAnother: () -> Unit) {
 				Spacer(Modifier.width(6.dp))
 				Text(if (imageUri == null) "Pilih foto" else "Ganti")
 			}
+		}
+	}
+}
+
+@Composable
+private fun VideoPreviewPlaceholder() {
+	Box(
+		modifier = Modifier
+			.fillMaxSize()
+			.background(MaterialTheme.colorScheme.surfaceVariant),
+		contentAlignment = Alignment.Center
+	) {
+		Column(horizontalAlignment = Alignment.CenterHorizontally) {
+			Icon(Icons.Default.PlayCircle, contentDescription = null, modifier = Modifier.size(48.dp))
+			Spacer(Modifier.height(8.dp))
+			Text("Video dipilih")
 		}
 	}
 }
@@ -287,7 +320,7 @@ private fun CaptionSection(caption: String, onCaptionChange: (String) -> Unit) {
 		OutlinedTextField(
 			value = caption,
 			onValueChange = onCaptionChange,
-			placeholder = { Text("Ceritakan tentang foto ini...") },
+			placeholder = { Text("Ceritakan tentang post ini...") },
 			modifier = Modifier
 				.fillMaxWidth()
 				.heightIn(min = 120.dp),

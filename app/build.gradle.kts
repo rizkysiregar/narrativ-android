@@ -36,7 +36,7 @@ android {
 			buildConfigField(
 				"String",
 				"BASE_URL",
-				"\"http://192.168.1.5:9091/api/v1/\""
+				"\"http://192.168.1.4:9091/api/v1/\""
 			)
 		}
 
@@ -160,6 +160,10 @@ dependencies {
 	// image
 	implementation(libs.coil.compose)
 	implementation(libs.coil.network.okhttp)
+
+	// video playback
+	implementation(libs.media3.exoplayer)
+	implementation(libs.media3.ui)
 
 
 	// Credential Manager for Google Sign-In
