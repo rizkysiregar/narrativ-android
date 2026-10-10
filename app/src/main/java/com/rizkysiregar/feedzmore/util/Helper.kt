@@ -1,12 +1,5 @@
 package com.rizkysiregar.feedzmore.util
 
-import android.content.Context
-import android.net.Uri
-import okhttp3.MediaType
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody
-import okio.BufferedSink
-import okio.source
 import java.net.URLEncoder
 
 /**
@@ -31,19 +24,4 @@ fun buildGetUrl(baseUrl: String, params: Map<String, String>): String {
 
 	builder.append(query)
 	return builder.toString()
-}
-
-// convert URI to Request Body
-fun uriToRequestBody(context: Context, uri: Uri): RequestBody {
-	return object : RequestBody() {
-		override fun contentType(): MediaType? {
-			return "image/*".toMediaType()
-		}
-
-		override fun writeTo(sink: BufferedSink) {
-			context.contentResolver.openInputStream(uri)?.use { inputStream ->
-				sink.writeAll(inputStream.source())
-			}
-		}
-	}
 }

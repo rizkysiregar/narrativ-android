@@ -8,6 +8,6 @@ package com.rizkysiregar.feedzmore.data.remote.model.response.feed
 
 data class CommentItem(
 	val username: String,
-	val imageUrl: String,
+	val profileImageUrl: String,
 	val commentContent: String
 )

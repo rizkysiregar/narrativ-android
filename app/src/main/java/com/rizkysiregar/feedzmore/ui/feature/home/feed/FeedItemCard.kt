@@ -42,10 +42,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.media3.exoplayer.ExoPlayer
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import com.rizkysiregar.feedzmore.R
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.MediaType
 import com.rizkysiregar.feedzmore.ui.components.InitialAvatar
 import com.rizkysiregar.feedzmore.ui.components.ShimmerEffect
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
@@ -54,7 +56,12 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 fun FeedItemCard(
 	item: FeedContentItem,
 	onLikeClick: (String) -> Unit,
-	onCommentClick: (FeedContentItem) -> Unit = {}
+	onCommentClick: (FeedContentItem) -> Unit = {},
+	isActiveVideo: Boolean = false,
+	isVideoMuted: Boolean = false,
+	onToggleVideoMute: () -> Unit = {},
+	onVideoClick: (() -> Unit)? = null,
+	player: ExoPlayer? = null
 ) {
 	val likeScale by animateFloatAsState(
 		targetValue = if (item.liked) 1.12f else 1f,
@@ -75,7 +82,20 @@ fun FeedItemCard(
 	) {
 		Column {
 			FeedAuthorHeader(item = item)
-			FeedImage(imageUrl = item.imageUrl)
+		if (item.mediaType == MediaType.VIDEO) {
+			VideoFeedPlayer(
+				mediaUrl = item.mediaUrl,
+				thumbnailUrl = item.thumbnailUrl,
+				isActive = isActiveVideo,
+				player = player,
+				muted = isVideoMuted,
+				showMuteButton = true,
+				onToggleMute = onToggleVideoMute,
+				onVideoClick = onVideoClick
+			)
+		} else {
+				FeedImage(imageUrl = item.mediaUrl)
+			}
 			FeedActions(
 				item = item,
 				likeScale = likeScale,
@@ -226,7 +246,9 @@ private fun FeedItemCardPreview() {
 				likeCount = 124,
 				liked = true,
 				createdAt = "2026-10-05",
-				imageUrl = "https://dummy-url",
+				mediaUrl = "https://dummy-url",
+			mediaType = MediaType.IMAGE,
+			thumbnailUrl = null,
 				username = "John Doe"
 			),
 			onLikeClick = {}

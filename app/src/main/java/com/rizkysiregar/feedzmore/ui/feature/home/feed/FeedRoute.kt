@@ -8,6 +8,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavController
+import com.google.gson.Gson
+import com.rizkysiregar.feedzmore.ui.main.navigation.routes.HomePathRoute
 import kotlinx.coroutines.flow.collectLatest
 
 /**
@@ -20,7 +23,8 @@ import kotlinx.coroutines.flow.collectLatest
 fun FeedRoute(
     refreshVersion: Int = 0,
     viewModel: FeedViewModel = hiltViewModel(),
-	onCreateFeed: () -> Unit
+	onCreateFeed: () -> Unit,
+	navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
@@ -64,6 +68,18 @@ fun FeedRoute(
         },
         listState = listState,
 		onLikeClick = viewModel::toggleLike,
-		onCreateFeed = onCreateFeed
+		onCreateFeed = onCreateFeed,
+		player = viewModel.player,
+		onVideoClick = { post ->
+			navController.currentBackStackEntry?.savedStateHandle?.set(
+				KEY_POST_JSON,
+				Gson().toJson(post)
+			)
+			navController.currentBackStackEntry?.savedStateHandle?.set(
+				KEY_LIKE_HANDLER,
+				viewModel::toggleLike
+			)
+			navController.navigate(HomePathRoute.PostDetail.create(post.id))
+		}
     )
 }

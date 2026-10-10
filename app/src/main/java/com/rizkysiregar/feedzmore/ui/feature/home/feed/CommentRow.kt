@@ -73,7 +73,7 @@ private fun CommentRowPreview() {
 		CommentRow(
 			comment = CommentItem(
 				username = "John Doe",
-				imageUrl = "https://example.com/image.jpg",
+				profileImageUrl = "https://example.com/image.jpg",
 				commentContent = "This is a comment."
 			)
 		)

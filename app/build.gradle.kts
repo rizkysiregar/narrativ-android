@@ -36,7 +36,7 @@ android {
 			buildConfigField(
 				"String",
 				"BASE_URL",
-				"\"http://192.168.1.5:9091/api/v1/\""
+				"\"http://192.168.1.4:9091/api/v1/\""
 			)
 		}
 
@@ -130,6 +130,11 @@ dependencies {
 	implementation(libs.hilt.android)
 	ksp(libs.hilt.compiler)
 	implementation(libs.hilt.navigation.compose)
+	implementation(libs.androidx.hilt.work)
+	ksp(libs.androidx.hilt.compiler)
+
+	// --- Background work (upload) ---
+	implementation(libs.androidx.work.runtime.ktx)
 
 	// --- Networking (Retrofit + OkHttp) ---
 	implementation(libs.retrofit)
@@ -160,6 +165,14 @@ dependencies {
 	// image
 	implementation(libs.coil.compose)
 	implementation(libs.coil.network.okhttp)
+
+	// video playback
+	implementation(libs.media3.exoplayer)
+	implementation(libs.media3.ui)
+	implementation(libs.media3.datasource)
+
+	// video transcoding before upload
+	implementation(libs.media3.transformer)
 
 
 	// Credential Manager for Google Sign-In

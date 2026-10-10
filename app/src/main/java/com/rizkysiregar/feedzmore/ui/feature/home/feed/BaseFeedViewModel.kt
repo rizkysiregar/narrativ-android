@@ -98,16 +98,15 @@ abstract class BaseFeedViewModel(
 
         val currentItem = currentList[itemIndex]
         val isCurrentlyLiked = currentItem.liked
+        val updatedItem = currentItem.copy(
+            liked = !isCurrentlyLiked,
+            likeCount = if (isCurrentlyLiked) currentItem.likeCount - 1
+            else currentItem.likeCount + 1
+        )
 
         _uiState.value = _uiState.value.copy(
-            items = currentList.toMutableList().apply {
-                set(
-                    itemIndex, currentItem.copy(
-                        liked = !isCurrentlyLiked,
-                        likeCount = if (isCurrentlyLiked) currentItem.likeCount - 1
-                        else currentItem.likeCount + 1
-                    )
-                )
+            items = currentList.mapIndexed { index, item ->
+                if (index == itemIndex) updatedItem else item
             }
         )
 

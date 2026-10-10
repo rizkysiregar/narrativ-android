@@ -21,7 +21,7 @@
 
     <!--  Local IDE Via Real Device  -->
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">192.168.1.5</domain>
+        <domain includeSubdomains="false">192.168.1.4</domain>
     </domain-config>
 
 </network-security-config>

@@ -10,11 +10,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.collectAsState
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavController
+import com.google.gson.Gson
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.MediaType
+import com.rizkysiregar.feedzmore.ui.feature.home.feed.CommentSectionSheet
+import com.rizkysiregar.feedzmore.ui.feature.home.feed.KEY_LIKE_HANDLER
+import com.rizkysiregar.feedzmore.ui.feature.home.feed.KEY_POST_JSON
+import com.rizkysiregar.feedzmore.ui.main.navigation.routes.HomePathRoute
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun ExploreRoute(
-	viewModel: ExploreViewModel = hiltViewModel()
+	viewModel: ExploreViewModel = hiltViewModel(),
+	navController: NavController
 ) {
 	val uiState by viewModel.uiState.collectAsState()
 	val gridState = rememberLazyGridState()
@@ -49,14 +57,29 @@ fun ExploreRoute(
 		uiState = uiState,
 		gridState = gridState,
 		selectedPost = selectedPost,
-		onPostClick = { selectedPostId = it.id },
+		onPostClick = { post ->
+			if (post.mediaType == MediaType.VIDEO) {
+				navController.currentBackStackEntry?.savedStateHandle?.set(
+					KEY_POST_JSON,
+					Gson().toJson(post)
+				)
+				navController.currentBackStackEntry?.savedStateHandle?.set(
+					KEY_LIKE_HANDLER,
+					viewModel::toggleLike
+				)
+				navController.navigate(HomePathRoute.PostDetail.create(post.id))
+			} else {
+				selectedPostId = post.id
+			}
+		},
 		onDismissDetail = { selectedPostId = null },
 		onLikeClick = viewModel::toggleLike,
-		onCommentClick = { commentPostId = it.id }
+		onCommentClick = { commentPostId = it.id },
+		onRefresh = viewModel::refresh
 	)
 
 	if (commentPostId != null) {
-		com.rizkysiregar.feedzmore.ui.feature.home.feed.CommentSectionSheet(
+		CommentSectionSheet(
 			postId = commentPostId!!,
 			onDismiss = { commentPostId = null }
 		)

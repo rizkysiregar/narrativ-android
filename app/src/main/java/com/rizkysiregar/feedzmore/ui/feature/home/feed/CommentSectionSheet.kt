@@ -51,12 +51,34 @@ fun CommentSectionSheet(
 	viewModel: CommentViewModel = hiltViewModel(),
 	onDismiss: () -> Unit
 ) {
+	val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+
+	ModalBottomSheet(
+		onDismissRequest = onDismiss,
+		sheetState = sheetState,
+		dragHandle = { BottomSheetDefaults.DragHandle() },
+		containerColor = MaterialTheme.colorScheme.surface,
+		tonalElevation = 8.dp
+	) {
+		CommentSectionContent(
+			postId = postId,
+			viewModel = viewModel,
+			modifier = Modifier.fillMaxWidth().heightIn(max = 640.dp)
+		)
+	}
+}
+
+@Composable
+fun CommentSectionContent(
+	postId: String,
+	viewModel: CommentViewModel = hiltViewModel(),
+	modifier: Modifier = Modifier
+) {
 	val comments by viewModel.comments.collectAsState()
 	val isLoading by viewModel.isLoading.collectAsState()
 	val hasMore by viewModel.hasMore.collectAsState()
 	val errorMessage by viewModel.errorMessage.collectAsState()
 	val listState = rememberLazyListState()
-	val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
 	var commentText by remember { mutableStateOf("") }
 
 	LaunchedEffect(postId) {
@@ -72,28 +94,21 @@ fun CommentSectionSheet(
 			}
 	}
 
-	ModalBottomSheet(
-		onDismissRequest = onDismiss,
-		sheetState = sheetState,
-		dragHandle = { BottomSheetDefaults.DragHandle() },
-		containerColor = MaterialTheme.colorScheme.surface,
-		tonalElevation = 8.dp
-	) {
-		Column(modifier = Modifier.fillMaxWidth().heightIn(max = 640.dp)) {
-			// Header
-			Text(
-				text = "Comments",
-				style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(bottom = 8.dp),
-				textAlign = TextAlign.Center
-			)
+	Column(modifier = modifier) {
+		// Header
+		Text(
+			text = "Comments",
+			style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(bottom = 8.dp),
+			textAlign = TextAlign.Center
+		)
 
-			HorizontalDivider(thickness = 0.5.dp, color = Color.LightGray.copy(alpha = 0.5f))
+		HorizontalDivider(thickness = 0.5.dp, color = Color.LightGray.copy(alpha = 0.5f))
 
-			// Comments List
-			Box(modifier = Modifier.heightIn(min = 120.dp, max = 420.dp)) {
+		// Comments List
+		Box(modifier = Modifier.weight(1f, fill = true).heightIn(min = 120.dp)) {
 				if (errorMessage != null && comments.isEmpty() && !isLoading) {
 					Column(
 						modifier = Modifier.fillMaxSize(),
@@ -135,16 +150,15 @@ fun CommentSectionSheet(
 				}
 			}
 
-			// Sticky Bottom Input Area
-			CommentInputArea(
-				text = commentText,
-				onValueChange = { commentText = it },
-				onSend = {
-					viewModel.addComment(postId, commentText)
-					commentText = ""
-				}
-			)
-		}
+		// Sticky Bottom Input Area
+		CommentInputArea(
+			text = commentText,
+			onValueChange = { commentText = it },
+			onSend = {
+				viewModel.addComment(postId, commentText)
+				commentText = ""
+			}
+		)
 	}
 }
 

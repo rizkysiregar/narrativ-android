@@ -41,12 +41,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,14 +64,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.PlayerView
 import coil3.compose.AsyncImage
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 
 @Composable
 fun PostFeedScreen(
 	uiState: PostFeedUiState,
+	isPreparing: Boolean,
 	onCaptionChange: (String) -> Unit,
 	onPickImage: (Uri) -> Unit,
 	onLoadRecentImages: () -> Unit,
@@ -101,6 +109,18 @@ fun PostFeedScreen(
 		else permissionLauncher.launch(galleryPermission)
 	}
 
+	val notificationPermissionLauncher = rememberLauncherForActivityResult(
+		contract = ActivityResultContracts.RequestPermission()
+	) { }
+	LaunchedEffect(Unit) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+			ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+			!= PackageManager.PERMISSION_GRANTED
+		) {
+			notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+		}
+	}
+
 	Column(
 		modifier = Modifier
 			.fillMaxSize()
@@ -113,12 +133,20 @@ fun PostFeedScreen(
 		PostHeader()
 		SelectedPhotoPreview(
 			imageUri = uiState.selectedImage,
+			mimeType = uiState.selectedMimeType,
 			onChooseAnother = {
 				photoPickerLauncher.launch(
-					PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+					PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
 				)
 			}
 		)
+		if (uiState.validationError != null) {
+			Text(
+				text = uiState.validationError,
+				color = MaterialTheme.colorScheme.error,
+				style = MaterialTheme.typography.bodyMedium
+			)
+		}
 		RecentPhotosSection(
 			images = uiState.recentImages,
 			selectedImage = uiState.selectedImage,
@@ -127,22 +155,41 @@ fun PostFeedScreen(
 			onImageSelected = onPickImage,
 			onChooseAnother = {
 				photoPickerLauncher.launch(
-					PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+					PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
 				)
 			}
 		)
 		CaptionSection(caption = uiState.caption, onCaptionChange = onCaptionChange)
+		if (isPreparing) {
+			PreparingSection()
+		}
 		Button(
 			onClick = onNext,
-			enabled = uiState.selectedImage != null,
+			enabled = uiState.selectedImage != null && !isPreparing,
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(52.dp),
 			shape = RoundedCornerShape(16.dp),
 			colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
 		) {
-			Text("Bagikan feed", fontWeight = FontWeight.SemiBold)
+			if (isPreparing) {
+				CircularProgressIndicator(
+					modifier = Modifier.size(22.dp),
+					strokeWidth = 2.dp,
+					color = Color.White
+				)
+			} else {
+				Text("Bagikan feed", fontWeight = FontWeight.SemiBold)
+			}
 		}
+	}
+}
+
+@Composable
+private fun PreparingSection() {
+	Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+		Text("Menyiapkan media...", style = MaterialTheme.typography.bodyMedium)
+		LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
 	}
 }
 
@@ -155,7 +202,11 @@ private fun PostHeader() {
 }
 
 @Composable
-private fun SelectedPhotoPreview(imageUri: Uri?, onChooseAnother: () -> Unit) {
+private fun SelectedPhotoPreview(
+	imageUri: Uri?,
+	mimeType: String?,
+	onChooseAnother: () -> Unit
+) {
 	Surface(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -166,18 +217,24 @@ private fun SelectedPhotoPreview(imageUri: Uri?, onChooseAnother: () -> Unit) {
 	) {
 		Box(contentAlignment = Alignment.Center) {
 			AnimatedVisibility(visible = imageUri != null) {
-				AsyncImage(
-					model = imageUri,
-					contentDescription = "Foto yang dipilih",
-					modifier = Modifier.fillMaxSize(),
-					contentScale = ContentScale.Crop
-				)
+				imageUri?.let { uri ->
+					if (mimeType?.startsWith("video/") == true) {
+						InlineVideoPreview(uri = uri, active = true)
+					} else {
+						AsyncImage(
+							model = uri,
+							contentDescription = "Media yang dipilih",
+							modifier = Modifier.fillMaxSize(),
+							contentScale = ContentScale.Crop
+						)
+					}
+				}
 			}
 			if (imageUri == null) {
 				Column(horizontalAlignment = Alignment.CenterHorizontally) {
 					Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(36.dp))
 					Spacer(Modifier.height(8.dp))
-					Text("Pilih foto untuk memulai")
+					Text("Pilih foto atau video untuk memulai")
 				}
 			}
 			OutlinedButton(
@@ -193,6 +250,42 @@ private fun SelectedPhotoPreview(imageUri: Uri?, onChooseAnother: () -> Unit) {
 				Text(if (imageUri == null) "Pilih foto" else "Ganti")
 			}
 		}
+	}
+}
+
+@Composable
+private fun InlineVideoPreview(uri: Uri, active: Boolean) {
+	val context = LocalContext.current
+	val player = remember {
+		ExoPlayer.Builder(context).build().apply {
+			setMediaItem(MediaItem.fromUri(uri))
+			prepare()
+			playWhenReady = true
+		}
+	}
+	DisposableEffect(Unit) {
+		onDispose { player.release() }
+	}
+	LaunchedEffect(active) {
+		if (active) player.play()
+		else player.pause()
+	}
+	Box(
+		modifier = Modifier
+			.fillMaxSize()
+			.background(MaterialTheme.colorScheme.surfaceVariant),
+		contentAlignment = Alignment.Center
+	) {
+		AndroidView(
+			factory = { ctx ->
+				PlayerView(ctx).apply {
+					this.player = player
+					useController = true
+					resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+				}
+			},
+			modifier = Modifier.fillMaxSize()
+		)
 	}
 }
 
@@ -287,7 +380,7 @@ private fun CaptionSection(caption: String, onCaptionChange: (String) -> Unit) {
 		OutlinedTextField(
 			value = caption,
 			onValueChange = onCaptionChange,
-			placeholder = { Text("Ceritakan tentang foto ini...") },
+			placeholder = { Text("Ceritakan tentang post ini...") },
 			modifier = Modifier
 				.fillMaxWidth()
 				.heightIn(min = 120.dp),
@@ -309,6 +402,7 @@ private fun PostFeedScreenPreview() {
 	FeedzmoreTheme {
 		PostFeedScreen(
 			uiState = PostFeedUiState(selectedImage = "https://example.com/image.jpg".toUri()),
+			isPreparing = false,
 			onCaptionChange = {},
 			onPickImage = {},
 			onLoadRecentImages = {},

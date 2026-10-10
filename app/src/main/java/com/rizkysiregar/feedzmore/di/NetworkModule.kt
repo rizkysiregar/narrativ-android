@@ -40,7 +40,19 @@ object NetworkModule {
 			.addInterceptor(loggingInterceptor)
 			.addInterceptor(authInterceptor)
 			.connectTimeout(30, TimeUnit.SECONDS)
-			.readTimeout(30, TimeUnit.SECONDS)
+			.readTimeout(60, TimeUnit.SECONDS)
+			.writeTimeout(120, TimeUnit.SECONDS)
+			.build()
+	}
+
+	@Provides
+	@Singleton
+	@UploadClient
+	fun provideUploadOkHttpClient(): OkHttpClient {
+		return OkHttpClient.Builder()
+			.connectTimeout(30, TimeUnit.SECONDS)
+			.readTimeout(60, TimeUnit.SECONDS)
+			.writeTimeout(5, TimeUnit.MINUTES)
 			.build()
 	}
 
