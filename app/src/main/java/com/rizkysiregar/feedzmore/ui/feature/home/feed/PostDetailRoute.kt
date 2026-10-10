@@ -60,6 +60,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.media3.common.MediaItem
 import androidx.media3.ui.AspectRatioFrameLayout
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
@@ -70,6 +71,8 @@ import com.google.gson.Gson
 import com.rizkysiregar.feedzmore.R
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.MediaType
+import com.rizkysiregar.feedzmore.media.currentMediaUrlOrNull
+import com.rizkysiregar.feedzmore.media.rememberVideoPlayer
 import com.rizkysiregar.feedzmore.ui.components.InitialAvatar
 import com.rizkysiregar.feedzmore.ui.components.ShimmerEffect
 
@@ -122,6 +125,18 @@ fun PostDetailScreen(
 	var isSheetOpen by remember { mutableStateOf(false) }
 	var isMuted by remember { mutableStateOf(false) }
 
+	val videoPlayer = rememberVideoPlayer()
+
+	androidx.compose.runtime.LaunchedEffect(post.mediaUrl, isMuted) {
+		val currentUri = videoPlayer.currentMediaUrlOrNull()
+		videoPlayer.volume = if (isMuted) 0f else 1f
+		if (currentUri != post.mediaUrl) {
+			videoPlayer.setMediaItem(MediaItem.fromUri(post.mediaUrl))
+			videoPlayer.prepare()
+		}
+		videoPlayer.playWhenReady = true
+	}
+
 	val sheetProgress = remember { Animatable(0f) }
 	val scope = rememberCoroutineScope()
 	val screenHeightPx = with(LocalDensity.current) {
@@ -157,10 +172,13 @@ fun PostDetailScreen(
 				VideoFeedPlayer(
 					mediaUrl = post.mediaUrl,
 					thumbnailUrl = post.thumbnailUrl,
-					autoPlay = true,
-					loop = true,
+					isActive = true,
+					player = videoPlayer,
 					muted = isMuted,
 					showMuteButton = false,
+					// aspectRatio = null -> container fills the whole screen;
+					// the video letterboxes inside (RESIZE_MODE_FIT) so it is
+					// displayed as large and comfortable as possible.
 					aspectRatio = null,
 					playerResizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT,
 					modifier = Modifier.fillMaxSize()

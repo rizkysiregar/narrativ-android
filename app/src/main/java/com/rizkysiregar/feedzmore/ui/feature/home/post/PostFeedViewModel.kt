@@ -7,21 +7,20 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.rizkysiregar.feedzmore.data.remote.model.ResultState
-import com.rizkysiregar.feedzmore.data.remote.model.request.feed.PostingFeedRequest
-import com.rizkysiregar.feedzmore.data.remote.model.response.feed.PostingFeedResponse
-import com.rizkysiregar.feedzmore.data.repository.UserDataRepository
-import com.rizkysiregar.feedzmore.domain.feed.PostingFeedUseCase
-import com.rizkysiregar.feedzmore.util.uriToRequestBody
+import com.rizkysiregar.feedzmore.domain.post.MediaPreparationUseCase
+import com.rizkysiregar.feedzmore.domain.post.UploadManager
+import com.rizkysiregar.feedzmore.media.MediaValidationException
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import okhttp3.MultipartBody
 import javax.inject.Inject
 
 /**
@@ -33,27 +32,23 @@ import javax.inject.Inject
 @HiltViewModel
 class PostFeedViewModel @Inject constructor(
 	private val app: Application,
-	private val postingFeedUseCase: PostingFeedUseCase,
-	private val userDataRepository: UserDataRepository
+	private val mediaPreparationUseCase: MediaPreparationUseCase,
+	private val uploadManager: UploadManager
 ) : ViewModel() {
-
-
-//	private val _selectedImageUri = MutableStateFlow<Uri?>(null)
-//	val selectedImageUri = _selectedImageUri.asStateFlow()
-
 
 	// UI State for watching property changes
 	private val _uiState = MutableStateFlow(PostFeedUiState())
 	val uiState = _uiState.asStateFlow()
 
+	val isPreparing: StateFlow<Boolean> = mediaPreparationUseCase.isPreparing
 
-	// State of posting, whether is loading, success or failure
-	private val _postingState = MutableStateFlow<ResultState<PostingFeedResponse>?>(null)
-	val postingState: StateFlow<ResultState<PostingFeedResponse>?> = _postingState
+	private val _navigateHome = MutableSharedFlow<Unit>()
+	val navigateHome: SharedFlow<Unit> = _navigateHome.asSharedFlow()
+
 	fun onImageSelected(uri: Uri) {
 		Log.i("PostFeedViewModel", "## onImageSelected() called")
 		val mimeType = app.contentResolver.getType(uri)
-		val error = validateMedia(app, uri, mimeType)
+		val error = validateMedia(uri, mimeType)
 		_uiState.update {
 			if (error != null) {
 				it.copy(validationError = error, selectedImage = null, selectedMimeType = null)
@@ -67,21 +62,52 @@ class PostFeedViewModel @Inject constructor(
 		}
 	}
 
-	private fun validateMedia(context: Application, uri: Uri, mimeType: String?): String? {
+	/**
+	 * Prepares the media (compress/copy) on this screen, then hands the upload
+	 * off to the background worker and signals the UI to return home.
+	 */
+	fun submitPost() {
+		val state = _uiState.value
+		val mediaUri = state.selectedImage ?: return
+		if (state.validationError != null) return
+
+		viewModelScope.launch {
+			try {
+				val prepared = mediaPreparationUseCase.prepare(mediaUri, state.selectedMimeType)
+				uploadManager.enqueue(
+					filePath = prepared.filePath,
+					contentType = prepared.contentType,
+					caption = state.caption
+				)
+				_navigateHome.emit(Unit)
+			} catch (e: MediaValidationException) {
+				_uiState.update { it.copy(validationError = e.message ?: "Media tidak valid") }
+			} catch (e: CancellationException) {
+				throw e
+			} catch (e: Exception) {
+				_uiState.update { it.copy(validationError = "Gagal menyiapkan media, silakan coba lagi") }
+			}
+		}
+	}
+
+	private fun validateMedia(uri: Uri, mimeType: String?): String? {
 		if (mimeType == null) return "Tipe media tidak dikenali"
 		val sizeBytes = runCatching {
-			context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize }
+			app.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize }
 		}.getOrNull()
 		return when {
 			mimeType.startsWith("image/") -> {
-				if (sizeBytes != null && sizeBytes > 5L * 1024 * 1024) "Ukuran gambar maksimal 5MB"
-				else null
+				when {
+					mimeType !in ALLOWED_IMAGE_TYPES -> "Format gambar tidak didukung"
+					sizeBytes != null && sizeBytes > 5L * 1024 * 1024 -> "Ukuran gambar maksimal 5MB"
+					else -> null
+				}
 			}
-			mimeType == "video/mp4" || mimeType == "video/quicktime" || mimeType == "video/webm" -> {
+			mimeType in ALLOWED_VIDEO_TYPES -> {
 				if (sizeBytes != null && sizeBytes > 50L * 1024 * 1024) return "Ukuran video maksimal 50MB"
 				val durationMs = runCatching {
 					val retriever = android.media.MediaMetadataRetriever()
-					context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { afd ->
+					app.contentResolver.openAssetFileDescriptor(uri, "r")?.use { afd ->
 						retriever.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
 					}
 					val d = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)
@@ -134,6 +160,10 @@ class PostFeedViewModel @Inject constructor(
 		}
 	}
 
+	fun clearValidationError() {
+		_uiState.update { it.copy(validationError = null) }
+	}
+
 	fun onCaptionChanged(caption: String) {
 		Log.i("PostFeedViewModel", "## onCaptionChanged() called")
 		_uiState.update {
@@ -141,49 +171,9 @@ class PostFeedViewModel @Inject constructor(
 		}
 	}
 
-	fun postingFeed(postingFeedRequest: PostingFeedRequest) {
-		viewModelScope.launch {
-			val currentUsername = userDataRepository.username.first() { it.isNotEmpty() }
-
-		// -- Convert Media URI to MultipartBody.Part -- //
-		val mimeType = app.contentResolver.getType(postingFeedRequest.mediaUri)
-		val mediaRequestBody =
-			uriToRequestBody(app.applicationContext, postingFeedRequest.mediaUri, mimeType)
-
-		val extension = mimeToExtension(mimeType)
-		val mediaPart = MultipartBody.Part.createFormData(
-			name = "media",
-			filename = "upload_media.$extension",
-			body = mediaRequestBody
-		)
-
-		postingFeedRequest.mediaPart = mediaPart
-		postingFeedRequest.username = currentUsername
-
-			// -- Invoke UseCase -- //
-			postingFeedUseCase(postingFeedRequest).collect { result ->
-				println("## postingState: $result")
-				_postingState.value = result
-			}
-		}
-	}
-
-	fun resetPostingState() {
-		_postingState.value = ResultState.Idle
-	}
-
-	private fun mimeToExtension(mimeType: String?): String = when (mimeType) {
-		"video/mp4" -> "mp4"
-		"video/quicktime" -> "mov"
-		"video/webm" -> "webm"
-		"image/png" -> "png"
-		"image/webp" -> "webp"
-		"image/gif" -> "gif"
-		else -> if (mimeType?.startsWith("video/") == true) "mp4" else "jpg"
-	}
-
 	private companion object {
 		const val RECENT_IMAGE_LIMIT = 18
+		val ALLOWED_IMAGE_TYPES = setOf("image/jpeg", "image/png", "image/webp", "image/gif")
+		val ALLOWED_VIDEO_TYPES = setOf("video/mp4", "video/quicktime", "video/webm")
 	}
 }
-

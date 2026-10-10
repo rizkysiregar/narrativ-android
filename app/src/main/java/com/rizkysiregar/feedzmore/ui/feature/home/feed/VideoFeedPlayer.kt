@@ -14,13 +14,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,7 +29,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
@@ -40,6 +36,7 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
+import com.rizkysiregar.feedzmore.media.currentMediaUrlOrNull
 import com.rizkysiregar.feedzmore.ui.components.ShimmerEffect
 
 @OptIn(UnstableApi::class)
@@ -47,105 +44,85 @@ import com.rizkysiregar.feedzmore.ui.components.ShimmerEffect
 fun VideoFeedPlayer(
 	mediaUrl: String,
 	thumbnailUrl: String?,
-	autoPlay: Boolean = false,
-	loop: Boolean = false,
+	isActive: Boolean,
+	player: ExoPlayer?,
 	muted: Boolean = false,
 	showMuteButton: Boolean = false,
 	onToggleMute: (() -> Unit)? = null,
 	modifier: Modifier = Modifier,
 	aspectRatio: Float? = 1.08f,
-	enableTapTogglePause: Boolean = true,
+	playerResizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_ZOOM,
 	onVideoClick: (() -> Unit)? = null,
-	playerResizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
 ) {
-	var userStarted by remember { mutableStateOf(false) }
-	var userPaused by remember { mutableStateOf(false) }
+	// Poster stays on top until the very first video frame is rendered,
+	// so the user never sees the black PlayerView shutter while buffering.
+	var firstFrameRendered by remember(mediaUrl) { mutableStateOf(false) }
 
-	LaunchedEffect(autoPlay) {
-		if (!autoPlay) {
-			userStarted = false
-			userPaused = false
+	if (isActive && player != null) {
+		DisposableEffect(player, mediaUrl) {
+			val listener = object : Player.Listener {
+				override fun onRenderedFirstFrame() {
+					if (player.currentMediaUrlOrNull() == mediaUrl) {
+						firstFrameRendered = true
+					}
+				}
+			}
+			player.addListener(listener)
+			// Returning to an already-prepared item (e.g. back from detail):
+			// the frame is already on screen, drop the poster immediately.
+			if (player.playbackState == Player.STATE_READY &&
+				player.currentMediaUrlOrNull() == mediaUrl
+			) {
+				firstFrameRendered = true
+			}
+			onDispose { player.removeListener(listener) }
 		}
 	}
 
-	val active = autoPlay || userStarted
+	val boxModifier = if (aspectRatio != null) {
+		modifier.fillMaxWidth().aspectRatio(aspectRatio)
+	} else {
+		modifier.fillMaxSize()
+	}
 
 	Box(
-		modifier = if (aspectRatio != null) {
-			modifier.fillMaxWidth().aspectRatio(aspectRatio)
-		} else {
-			modifier.fillMaxSize()
+		modifier = boxModifier.clickable(enabled = onVideoClick != null) {
+			onVideoClick?.invoke()
 		},
 		contentAlignment = Alignment.Center
 	) {
-		if (active) {
-			val context = LocalContext.current
-			val player = remember {
-				ExoPlayer.Builder(context).build().apply {
-					setMediaItem(MediaItem.fromUri(mediaUrl))
-					repeatMode = if (loop) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
-					prepare()
-				}
-			}
-			DisposableEffect(player) {
-				onDispose { player.release() }
-			}
-			LaunchedEffect(userPaused, muted) {
-				player.playWhenReady = !userPaused
-				player.volume = if (muted) 0f else 1f
-			}
-			Box(
-				modifier = Modifier
-					.fillMaxSize()
-					.clickable {
-						if (onVideoClick != null) onVideoClick()
-						else if (enableTapTogglePause) userPaused = !userPaused
-					}
-			) {
-				AndroidView(
-					factory = { ctx ->
-						PlayerView(ctx).apply {
-							this.player = player
-							useController = false
+		if (isActive && player != null) {
+			AndroidView(
+				factory = { ctx ->
+					PlayerView(ctx).apply {
+						this.player = player
+						useController = false
 						resizeMode = playerResizeMode
-							layoutParams = ViewGroup.LayoutParams(
-								ViewGroup.LayoutParams.MATCH_PARENT,
-								ViewGroup.LayoutParams.MATCH_PARENT
-							)
-						}
-					},
-					modifier = Modifier.fillMaxSize()
+						// Transparent shutter: keeps the poster visible behind it
+						// instead of flashing a black surface.
+						setShutterBackgroundColor(android.graphics.Color.TRANSPARENT)
+						layoutParams = ViewGroup.LayoutParams(
+							ViewGroup.LayoutParams.MATCH_PARENT,
+							ViewGroup.LayoutParams.MATCH_PARENT
+						)
+					}
+				},
+				update = { view ->
+					if (view.player != player) view.player = player
+					if (view.resizeMode != playerResizeMode) view.resizeMode = playerResizeMode
+				},
+				onRelease = { view -> view.player = null },
+				modifier = Modifier.fillMaxSize()
+			)
+			if (!firstFrameRendered) {
+				VideoPoster(
+					mediaUrl = mediaUrl,
+					thumbnailUrl = thumbnailUrl,
+					showPlayIcon = false
 				)
-				if (userPaused) {
-					Icon(
-						imageVector = Icons.Filled.PlayCircle,
-						contentDescription = "Putar video",
-						tint = Color.White,
-						modifier = Modifier
-							.align(Alignment.Center)
-							.size(64.dp)
-					)
-				}
 			}
 		} else {
-			Box(
-				modifier = Modifier
-					.fillMaxSize()
-					.clickable {
-						if (onVideoClick != null) onVideoClick()
-						else userStarted = true
-					}
-			) {
-				PosterImage(mediaUrl = mediaUrl, thumbnailUrl = thumbnailUrl)
-				Icon(
-					imageVector = Icons.Filled.PlayCircle,
-					contentDescription = "Putar video",
-					tint = Color.White,
-					modifier = Modifier
-						.align(Alignment.Center)
-						.size(64.dp)
-				)
-			}
+			VideoPoster(mediaUrl = mediaUrl, thumbnailUrl = thumbnailUrl, showPlayIcon = true)
 		}
 
 		if (showMuteButton && onToggleMute != null) {
@@ -166,29 +143,44 @@ fun VideoFeedPlayer(
 }
 
 @Composable
-private fun PosterImage(mediaUrl: String, thumbnailUrl: String?) {
-	SubcomposeAsyncImage(
-		model = ImageRequest.Builder(LocalContext.current)
-			.data(thumbnailUrl ?: mediaUrl)
-			.build(),
-		contentDescription = "Thumbnail video",
-		modifier = Modifier.fillMaxSize(),
-		contentScale = ContentScale.Crop,
-		loading = { ShimmerEffect(modifier = Modifier.fillMaxSize()) },
-		error = {
-			Box(
-				modifier = Modifier
-					.fillMaxSize()
-					.background(MaterialTheme.colorScheme.surfaceVariant),
-				contentAlignment = Alignment.Center
-			) {
-				Icon(
-					imageVector = Icons.Outlined.Info,
-					contentDescription = "Thumbnail gagal dimuat",
-					tint = MaterialTheme.colorScheme.onSurfaceVariant,
-					modifier = Modifier.size(32.dp)
-				)
-			}
+private fun VideoPoster(
+	mediaUrl: String,
+	thumbnailUrl: String?,
+	showPlayIcon: Boolean
+) {
+	Box(
+		modifier = Modifier
+			.fillMaxSize()
+			.background(VideoPosterFallbackColor)
+	) {
+		if (thumbnailUrl != null) {
+			SubcomposeAsyncImage(
+				model = ImageRequest.Builder(LocalContext.current)
+					.data(thumbnailUrl)
+					.build(),
+				contentDescription = "Thumbnail video",
+				modifier = Modifier.fillMaxSize(),
+				contentScale = ContentScale.Crop,
+				loading = { ShimmerEffect(modifier = Modifier.fillMaxSize()) },
+				error = {
+					Box(modifier = Modifier.fillMaxSize().background(VideoPosterFallbackColor))
+				}
+			)
 		}
-	)
+		// Without a server thumbnail we intentionally show a plain placeholder.
+		// Loading the video URL as an image never works (Coil can't decode MP4)
+		// and previously caused wasted requests + flicker.
+		if (showPlayIcon) {
+			Icon(
+				imageVector = Icons.Filled.PlayCircle,
+				contentDescription = "Putar video",
+				tint = Color.White,
+				modifier = Modifier
+					.align(Alignment.Center)
+					.size(64.dp)
+			)
+		}
+	}
 }
+
+private val VideoPosterFallbackColor = Color(0xFF202124)

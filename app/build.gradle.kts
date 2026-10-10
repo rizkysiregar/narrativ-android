@@ -130,6 +130,11 @@ dependencies {
 	implementation(libs.hilt.android)
 	ksp(libs.hilt.compiler)
 	implementation(libs.hilt.navigation.compose)
+	implementation(libs.androidx.hilt.work)
+	ksp(libs.androidx.hilt.compiler)
+
+	// --- Background work (upload) ---
+	implementation(libs.androidx.work.runtime.ktx)
 
 	// --- Networking (Retrofit + OkHttp) ---
 	implementation(libs.retrofit)
@@ -164,6 +169,10 @@ dependencies {
 	// video playback
 	implementation(libs.media3.exoplayer)
 	implementation(libs.media3.ui)
+	implementation(libs.media3.datasource)
+
+	// video transcoding before upload
+	implementation(libs.media3.transformer)
 
 
 	// Credential Manager for Google Sign-In

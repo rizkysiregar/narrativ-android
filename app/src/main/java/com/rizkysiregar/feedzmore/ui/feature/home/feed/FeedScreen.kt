@@ -3,9 +3,9 @@ package com.rizkysiregar.feedzmore.ui.feature.home.feed
 import androidx.compose.foundation.background
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,10 +27,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -38,9 +40,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.MediaType
+import com.rizkysiregar.feedzmore.media.currentMediaUrlOrNull
+import com.rizkysiregar.feedzmore.media.rememberVideoPlayer
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 
 /**
@@ -49,8 +61,11 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
  * Description: Software Engineer
  */
 
+private const val PRELOAD_DEBOUNCE_MS = 300L
+private const val PRELOAD_AHEAD_COUNT = 3
 
-@OptIn(ExperimentalMaterialApi::class)
+
+@OptIn(ExperimentalMaterialApi::class, kotlinx.coroutines.FlowPreview::class)
 @Composable
 fun FeedScreen(
 	uiState: FeedUiState,
@@ -59,10 +74,10 @@ fun FeedScreen(
 	listState: LazyListState = rememberLazyListState(),
 	onLikeClick: (String) -> Unit,
 	onCreateFeed: () -> Unit,
+	player: ExoPlayer? = null,
 	onVideoClick: (FeedContentItem) -> Unit = {}
 ) {
-	// feed state
-	val currentOnLikeClick by androidx.compose.runtime.rememberUpdatedState(onLikeClick)
+	val currentOnLikeClick by rememberUpdatedState(onLikeClick)
 	val pullState =
 		rememberPullRefreshState(refreshing = uiState.isRefreshing, onRefresh = onRefresh)
 
@@ -70,18 +85,93 @@ fun FeedScreen(
 	var showCommentSheet by remember { mutableStateOf(false) }
 	var isVideoMuted by remember { mutableStateOf(false) }
 	var activeVideoPostId by remember { mutableStateOf<String?>(null) }
+	val currentActiveVideoId by rememberUpdatedState(activeVideoPostId)
+	val currentItems by rememberUpdatedState(uiState.items)
+
+	// Activate the centered video. If the player already has the same item
+	// prepared (scroll away & back, return from detail), just resume it —
+	// buffer and playback position are preserved.
+	LaunchedEffect(activeVideoPostId, isVideoMuted, uiState.items) {
+		if (player == null) return@LaunchedEffect
+		val activeItem = uiState.items.firstOrNull {
+			it.id == activeVideoPostId && it.mediaType == MediaType.VIDEO
+		}
+		if (activeItem != null) {
+			val currentUri = player.currentMediaUrlOrNull()
+			player.volume = if (isVideoMuted) 0f else 1f
+			if (currentUri != activeItem.mediaUrl) {
+				player.setMediaItem(MediaItem.fromUri(activeItem.mediaUrl))
+				player.prepare()
+			}
+			player.playWhenReady = true
+		} else {
+			// Non-video item centered: pause only, never clear the prepared
+			// item — clearing destroyed the buffer on every scroll crossing.
+			player.playWhenReady = false
+		}
+	}
+
+	// Pause on app background, resume when the app comes back with an active video.
+	val lifecycleOwner = LocalLifecycleOwner.current
+	DisposableEffect(lifecycleOwner, player) {
+		val observer = LifecycleEventObserver { _, event ->
+			when (event) {
+				Lifecycle.Event.ON_PAUSE -> player?.pause()
+				Lifecycle.Event.ON_RESUME -> if (currentActiveVideoId != null) player?.play()
+				else -> Unit
+			}
+		}
+		lifecycleOwner.lifecycle.addObserver(observer)
+		onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+	}
+
+	// The player is owned by the ViewModel — only pause when Feed leaves
+	// composition (e.g. navigating to PostDetail), so returning is seamless.
+	DisposableEffect(player) {
+		onDispose { player?.pause() }
+	}
+
+	// Warm the shared cache for the next upcoming video so switching to it
+	// starts instantly from the cache instead of a cold network download.
+	val preloadPlayer = rememberVideoPlayer(preload = true)
+	var preloadedUrl by remember { mutableStateOf<String?>(null) }
+	LaunchedEffect(preloadPlayer) {
+		snapshotFlow { currentActiveVideoId }
+			.debounce(PRELOAD_DEBOUNCE_MS)
+			.collect { activeId ->
+				val activeIndex = currentItems.indexOfFirst { it.id == activeId }
+				val upcoming = if (activeIndex >= 0) {
+					currentItems.drop(activeIndex + 1)
+				} else {
+					currentItems
+				}
+				val nextVideo = upcoming
+					.take(PRELOAD_AHEAD_COUNT)
+					.firstOrNull { it.mediaType == MediaType.VIDEO }
+				val url = nextVideo?.mediaUrl
+				val playingUri = player?.currentMediaUrlOrNull()
+				if (url != null && url != preloadedUrl && url != playingUri) {
+					preloadedUrl = url
+					preloadPlayer.setMediaItem(MediaItem.fromUri(url))
+					preloadPlayer.prepare()
+				}
+			}
+	}
 
 	LaunchedEffect(listState, uiState.items) {
-		snapshotFlow { listState.layoutInfo }.collect { layoutInfo ->
-			val center = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
-			val activeInfo = layoutInfo.visibleItemsInfo
-				.filter { it.contentType == "feed_item" }
-				.minByOrNull { info ->
-					kotlin.math.abs((info.offset + info.size / 2) - center)
-				}
-			val activeItem = activeInfo?.index?.let { idx -> uiState.items.getOrNull(idx - 1) }
-			activeVideoPostId = if (activeItem?.mediaType == MediaType.VIDEO) activeItem.id else null
-		}
+		snapshotFlow { listState.layoutInfo }
+			.map { layoutInfo ->
+				val center = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
+				val activeInfo = layoutInfo.visibleItemsInfo
+					.filter { it.contentType == "feed_item" }
+					.minByOrNull { info ->
+						kotlin.math.abs((info.offset + info.size / 2) - center)
+					}
+				val activeItem = activeInfo?.index?.let { idx -> uiState.items.getOrNull(idx - 1) }
+				if (activeItem?.mediaType == MediaType.VIDEO) activeItem.id else null
+			}
+			.distinctUntilChanged()
+			.collect { id -> activeVideoPostId = id }
 	}
 
 	Box(
@@ -122,36 +212,37 @@ fun FeedScreen(
 								selectedPostId = post.id
 								showCommentSheet = true
 							},
-							shouldPlayVideo = item.id == activeVideoPostId,
+							isActiveVideo = item.id == activeVideoPostId,
 							isVideoMuted = isVideoMuted,
 							onToggleVideoMute = { isVideoMuted = !isVideoMuted },
-							onVideoClick = { onVideoClick(item) }
+							onVideoClick = { onVideoClick(item) },
+							player = player
 						)
 					}
 
-						if (uiState.isLoadingMore) {
-							item {
-								Surface(
-									modifier = Modifier.fillMaxWidth(),
-									shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
-									color = MaterialTheme.colorScheme.surface
+					if (uiState.isLoadingMore) {
+						item {
+							Surface(
+								modifier = Modifier.fillMaxWidth(),
+								shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
+								color = MaterialTheme.colorScheme.surface
+							) {
+								Box(
+									modifier = Modifier.padding(18.dp),
+									contentAlignment = Alignment.Center
 								) {
-									Box(
-										modifier = Modifier.padding(18.dp),
-										contentAlignment = Alignment.Center
-									) {
-										CircularProgressIndicator(modifier = Modifier.height(28.dp))
-									}
-									}
-								}
-							}
-							if (uiState.isError && uiState.items.isNotEmpty()) {
-							item {
-								Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-									Button(onClick = onRetry) { Text("Retry") }
+									CircularProgressIndicator(modifier = Modifier.height(28.dp))
 								}
 							}
 						}
+					}
+					if (uiState.isError && uiState.items.isNotEmpty()) {
+						item {
+							Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+								Button(onClick = onRetry) { Text("Retry") }
+							}
+						}
+					}
 				}
 			}
 		}
@@ -240,7 +331,6 @@ private fun FeedErrorContent(message: String, onRetry: () -> Unit) {
 			.fillMaxSize()
 			.padding(24.dp)
 			.verticalScroll(rememberScrollState()),
-		verticalArrangement = Arrangement.Center,
 		horizontalAlignment = Alignment.CenterHorizontally
 	) {
 		Text(text = message)
@@ -249,8 +339,8 @@ private fun FeedErrorContent(message: String, onRetry: () -> Unit) {
 	}
 }
 
-@Composable
 @Preview(showBackground = true)
+@Composable
 fun FeedScreenPreview() {
 	FeedzmoreTheme {
 		FeedScreen(
@@ -264,8 +354,8 @@ fun FeedScreenPreview() {
 						liked = true,
 						createdAt = "2023-11-25",
 						mediaUrl = "https://dummy-url",
-					mediaType = MediaType.IMAGE,
-					thumbnailUrl = null,
+						mediaType = MediaType.IMAGE,
+						thumbnailUrl = null,
 						username = "John Doe"
 					)
 				}

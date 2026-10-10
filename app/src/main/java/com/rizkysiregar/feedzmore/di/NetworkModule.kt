@@ -47,6 +47,17 @@ object NetworkModule {
 
 	@Provides
 	@Singleton
+	@UploadClient
+	fun provideUploadOkHttpClient(): OkHttpClient {
+		return OkHttpClient.Builder()
+			.connectTimeout(30, TimeUnit.SECONDS)
+			.readTimeout(60, TimeUnit.SECONDS)
+			.writeTimeout(5, TimeUnit.MINUTES)
+			.build()
+	}
+
+	@Provides
+	@Singleton
 	fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
 		return Retrofit.Builder()
 //			.baseUrl(Constants.BASE_URL)

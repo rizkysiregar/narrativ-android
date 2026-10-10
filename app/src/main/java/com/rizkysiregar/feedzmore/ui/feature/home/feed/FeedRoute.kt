@@ -69,6 +69,7 @@ fun FeedRoute(
         listState = listState,
 		onLikeClick = viewModel::toggleLike,
 		onCreateFeed = onCreateFeed,
+		player = viewModel.player,
 		onVideoClick = { post ->
 			navController.currentBackStackEntry?.savedStateHandle?.set(
 				KEY_POST_JSON,

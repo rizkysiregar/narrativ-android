@@ -42,6 +42,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.media3.exoplayer.ExoPlayer
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import com.rizkysiregar.feedzmore.R
@@ -56,10 +57,11 @@ fun FeedItemCard(
 	item: FeedContentItem,
 	onLikeClick: (String) -> Unit,
 	onCommentClick: (FeedContentItem) -> Unit = {},
-	shouldPlayVideo: Boolean = false,
+	isActiveVideo: Boolean = false,
 	isVideoMuted: Boolean = false,
 	onToggleVideoMute: () -> Unit = {},
-	onVideoClick: (() -> Unit)? = null
+	onVideoClick: (() -> Unit)? = null,
+	player: ExoPlayer? = null
 ) {
 	val likeScale by animateFloatAsState(
 		targetValue = if (item.liked) 1.12f else 1f,
@@ -80,19 +82,18 @@ fun FeedItemCard(
 	) {
 		Column {
 			FeedAuthorHeader(item = item)
-			if (item.mediaType == MediaType.VIDEO) {
-				VideoFeedPlayer(
-					mediaUrl = item.mediaUrl,
-					thumbnailUrl = item.thumbnailUrl,
-					autoPlay = shouldPlayVideo,
-					loop = true,
-					muted = isVideoMuted,
-					showMuteButton = true,
-					onToggleMute = onToggleVideoMute,
-					enableTapTogglePause = onVideoClick == null,
-					onVideoClick = onVideoClick
-				)
-			} else {
+		if (item.mediaType == MediaType.VIDEO) {
+			VideoFeedPlayer(
+				mediaUrl = item.mediaUrl,
+				thumbnailUrl = item.thumbnailUrl,
+				isActive = isActiveVideo,
+				player = player,
+				muted = isVideoMuted,
+				showMuteButton = true,
+				onToggleMute = onToggleVideoMute,
+				onVideoClick = onVideoClick
+			)
+		} else {
 				FeedImage(imageUrl = item.mediaUrl)
 			}
 			FeedActions(

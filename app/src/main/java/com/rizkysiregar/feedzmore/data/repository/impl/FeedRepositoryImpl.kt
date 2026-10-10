@@ -7,16 +7,12 @@ import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetCommentReque
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetAllFeedRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetFeedByUsernameRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.LikeFeedRequest
-import com.rizkysiregar.feedzmore.data.remote.model.request.feed.PostingFeedRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.PaginationResponseWrapper
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.CommentItem
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedsPostPaginationResponse
-import com.rizkysiregar.feedzmore.data.remote.model.response.feed.PostingFeedResponse
 import com.rizkysiregar.feedzmore.data.repository.FeedRepository
 import com.rizkysiregar.feedzmore.util.flowFromApi
 import kotlinx.coroutines.flow.Flow
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Retrofit
 import java.util.UUID
 import javax.inject.Inject
@@ -49,16 +45,6 @@ class FeedRepositoryImpl @Inject constructor(
 				request.username,
 				request.page,
 				request.size
-			)
-		}
-
-	override fun postingFeed(postingFeedRequest: PostingFeedRequest): Flow<ResultState<PostingFeedResponse>> =
-		flowFromApi {
-			feedApi.postingFeed(
-			addPostRequest = com.google.gson.Gson()
-				.toJson(mapOf("caption" to postingFeedRequest.caption))
-				.toRequestBody("application/json".toMediaType()),
-			media = postingFeedRequest.mediaPart!!
 			)
 		}
 

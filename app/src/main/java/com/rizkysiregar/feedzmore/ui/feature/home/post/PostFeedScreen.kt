@@ -37,17 +37,18 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,14 +64,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.PlayerView
 import coil3.compose.AsyncImage
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 
 @Composable
 fun PostFeedScreen(
 	uiState: PostFeedUiState,
+	isPreparing: Boolean,
 	onCaptionChange: (String) -> Unit,
 	onPickImage: (Uri) -> Unit,
 	onLoadRecentImages: () -> Unit,
@@ -100,6 +107,18 @@ fun PostFeedScreen(
 	LaunchedEffect(hasGalleryAccess) {
 		if (hasGalleryAccess) onLoadRecentImages()
 		else permissionLauncher.launch(galleryPermission)
+	}
+
+	val notificationPermissionLauncher = rememberLauncherForActivityResult(
+		contract = ActivityResultContracts.RequestPermission()
+	) { }
+	LaunchedEffect(Unit) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+			ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+			!= PackageManager.PERMISSION_GRANTED
+		) {
+			notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+		}
 	}
 
 	Column(
@@ -141,17 +160,36 @@ fun PostFeedScreen(
 			}
 		)
 		CaptionSection(caption = uiState.caption, onCaptionChange = onCaptionChange)
+		if (isPreparing) {
+			PreparingSection()
+		}
 		Button(
 			onClick = onNext,
-			enabled = uiState.selectedImage != null,
+			enabled = uiState.selectedImage != null && !isPreparing,
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(52.dp),
 			shape = RoundedCornerShape(16.dp),
 			colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
 		) {
-			Text("Bagikan feed", fontWeight = FontWeight.SemiBold)
+			if (isPreparing) {
+				CircularProgressIndicator(
+					modifier = Modifier.size(22.dp),
+					strokeWidth = 2.dp,
+					color = Color.White
+				)
+			} else {
+				Text("Bagikan feed", fontWeight = FontWeight.SemiBold)
+			}
 		}
+	}
+}
+
+@Composable
+private fun PreparingSection() {
+	Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+		Text("Menyiapkan media...", style = MaterialTheme.typography.bodyMedium)
+		LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
 	}
 }
 
@@ -179,15 +217,17 @@ private fun SelectedPhotoPreview(
 	) {
 		Box(contentAlignment = Alignment.Center) {
 			AnimatedVisibility(visible = imageUri != null) {
-				if (mimeType?.startsWith("video/") == true) {
-					VideoPreviewPlaceholder()
-				} else {
-					AsyncImage(
-						model = imageUri,
-						contentDescription = "Media yang dipilih",
-						modifier = Modifier.fillMaxSize(),
-						contentScale = ContentScale.Crop
-					)
+				imageUri?.let { uri ->
+					if (mimeType?.startsWith("video/") == true) {
+						InlineVideoPreview(uri = uri, active = true)
+					} else {
+						AsyncImage(
+							model = uri,
+							contentDescription = "Media yang dipilih",
+							modifier = Modifier.fillMaxSize(),
+							contentScale = ContentScale.Crop
+						)
+					}
 				}
 			}
 			if (imageUri == null) {
@@ -214,18 +254,38 @@ private fun SelectedPhotoPreview(
 }
 
 @Composable
-private fun VideoPreviewPlaceholder() {
+private fun InlineVideoPreview(uri: Uri, active: Boolean) {
+	val context = LocalContext.current
+	val player = remember {
+		ExoPlayer.Builder(context).build().apply {
+			setMediaItem(MediaItem.fromUri(uri))
+			prepare()
+			playWhenReady = true
+		}
+	}
+	DisposableEffect(Unit) {
+		onDispose { player.release() }
+	}
+	LaunchedEffect(active) {
+		if (active) player.play()
+		else player.pause()
+	}
 	Box(
 		modifier = Modifier
 			.fillMaxSize()
 			.background(MaterialTheme.colorScheme.surfaceVariant),
 		contentAlignment = Alignment.Center
 	) {
-		Column(horizontalAlignment = Alignment.CenterHorizontally) {
-			Icon(Icons.Default.PlayCircle, contentDescription = null, modifier = Modifier.size(48.dp))
-			Spacer(Modifier.height(8.dp))
-			Text("Video dipilih")
-		}
+		AndroidView(
+			factory = { ctx ->
+				PlayerView(ctx).apply {
+					this.player = player
+					useController = true
+					resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+				}
+			},
+			modifier = Modifier.fillMaxSize()
+		)
 	}
 }
 
@@ -342,6 +402,7 @@ private fun PostFeedScreenPreview() {
 	FeedzmoreTheme {
 		PostFeedScreen(
 			uiState = PostFeedUiState(selectedImage = "https://example.com/image.jpg".toUri()),
+			isPreparing = false,
 			onCaptionChange = {},
 			onPickImage = {},
 			onLoadRecentImages = {},
