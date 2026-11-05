@@ -12,6 +12,7 @@ import com.rizkysiregar.feedzmore.data.remote.model.response.feed.CommentItem
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedsPostPaginationResponse
 import com.rizkysiregar.feedzmore.data.repository.FeedRepository
 import com.rizkysiregar.feedzmore.util.flowFromApi
+import com.rizkysiregar.feedzmore.util.flowFromMessageApi
 import kotlinx.coroutines.flow.Flow
 import retrofit2.Retrofit
 import java.util.UUID
@@ -49,17 +50,17 @@ class FeedRepositoryImpl @Inject constructor(
 		}
 
 	override fun likePost(postId: UUID): Flow<ResultState<String>> =
-		flowFromApi {
+		flowFromMessageApi {
 			feedApi.likePost(postId)
 		}
 
 	override fun dislikePost(postId: UUID): Flow<ResultState<String>> =
-		flowFromApi {
+		flowFromMessageApi {
 			feedApi.dislikePost(postId)
 		}
 
 	override fun addComment(request: AddCommentRequest): Flow<ResultState<String>> =
-		flowFromApi {
+		flowFromMessageApi {
 			feedApi.addComment(
 				postId = request.postId,
 				request = request

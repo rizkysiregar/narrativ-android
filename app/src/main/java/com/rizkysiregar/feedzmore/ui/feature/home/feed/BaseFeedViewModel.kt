@@ -1,8 +1,10 @@
 package com.rizkysiregar.feedzmore.ui.feature.home.feed
 
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.rizkysiregar.feedzmore.data.cache.DataStoreManager
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedsPostPaginationResponse
 import com.rizkysiregar.feedzmore.domain.feed.DislikePostUseCase
 import com.rizkysiregar.feedzmore.domain.feed.LikePostUseCase
@@ -27,6 +29,9 @@ abstract class BaseFeedViewModel(
 
     private var loadJob: Job? = null
     private var loadGeneration = 0
+
+    // Posts with a like/dislike request in flight; extra taps are ignored until it settles.
+    private val likeInFlight = mutableSetOf<String>()
 
     abstract suspend fun fetchPage(
         page: Int,
@@ -92,35 +97,45 @@ abstract class BaseFeedViewModel(
     }
 
     fun toggleLike(postId: String) {
-        val currentList = _uiState.value.items
-        val itemIndex = currentList.indexOfFirst { it.id == postId }
-        if (itemIndex == -1) return
+        if (postId in likeInFlight) return
+        val original = _uiState.value.items.firstOrNull { it.id == postId } ?: return
+        val wasLiked = original.liked
 
-        val currentItem = currentList[itemIndex]
-        val isCurrentlyLiked = currentItem.liked
-        val updatedItem = currentItem.copy(
-            liked = !isCurrentlyLiked,
-            likeCount = if (isCurrentlyLiked) currentItem.likeCount - 1
-            else currentItem.likeCount + 1
-        )
-
-        _uiState.value = _uiState.value.copy(
-            items = currentList.mapIndexed { index, item ->
-                if (index == itemIndex) updatedItem else item
-            }
-        )
+        likeInFlight += postId
+        updateItem(postId) {
+            it.copy(
+                liked = !wasLiked,
+                likeCount = if (wasLiked) it.likeCount - 1 else it.likeCount + 1
+            )
+        }
 
         viewModelScope.launch {
-            val response = if (isCurrentlyLiked) dislikePostUseCase(UUID.fromString(postId))
+            val response = if (wasLiked) dislikePostUseCase(UUID.fromString(postId))
             else likePostUseCase(UUID.fromString(postId))
 
-            response.collect { result ->
-                when (result) {
-                    is ResultState.Success -> println("toggle like success")
-                    is ResultState.Failure -> println("## toggle like failure: ${result.message}")
-                    else -> {}
+            try {
+                response.collect { result ->
+                    if (result is ResultState.Failure) {
+                        Log.w(TAG, "toggle like failed: ${result.message}")
+                        // Server rejected it: restore what the user saw before tapping.
+                        updateItem(postId) {
+                            it.copy(liked = original.liked, likeCount = original.likeCount)
+                        }
+                    }
                 }
+            } finally {
+                likeInFlight -= postId
             }
         }
+    }
+
+    private fun updateItem(postId: String, transform: (FeedContentItem) -> FeedContentItem) {
+        _uiState.update { state ->
+            state.copy(items = state.items.map { if (it.id == postId) transform(it) else it })
+        }
+    }
+
+    private companion object {
+        const val TAG = "BaseFeedViewModel"
     }
 }

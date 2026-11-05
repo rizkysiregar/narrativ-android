@@ -13,6 +13,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -42,9 +43,18 @@ class ProfileViewModel @Inject constructor(
 	private val _followStatus = MutableStateFlow<ResultState<com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowStatusResponse>?>(null)
 	val followStatus: StateFlow<ResultState<com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowStatusResponse>?> = _followStatus
 
+	private var fetchJob: Job? = null
+
+	/**
+	 * Loads profile and follow status in parallel. A newer call cancels the previous one so a
+	 * stale response can't overwrite fresh data. While refreshing, the already-loaded profile
+	 * stays on screen instead of falling back to a full-screen spinner.
+	 */
 	fun fetchUserProfile() {
-		viewModelScope.launch {
-			_profileState.value = ResultState.Loading
+		fetchJob?.cancel()
+		fetchJob = viewModelScope.launch {
+			val hasProfile = _profileState.value is ResultState.Success
+			if (!hasProfile) _profileState.value = ResultState.Loading
 
 			val userId = dataStore.get(PrefKeys.userId, "").first()
 
@@ -53,16 +63,20 @@ class ProfileViewModel @Inject constructor(
 				return@launch
 			}
 
-			fetchUserProfileUseCase(userId)
-				.collect { resultState ->
-					_profileState.value = resultState
+			launch {
+				fetchUserProfileUseCase(userId).collect { result ->
+					// Keep showing the old profile if a refresh fails.
+					if (hasProfile && result !is ResultState.Success) return@collect
+					_profileState.value = result
 				}
-
-			getFollowStatusUseCase(userId).collect { status ->
-				_followStatus.value = status
+			}
+			launch {
+				getFollowStatusUseCase(userId).collect { status ->
+					if (_followStatus.value is ResultState.Success && status !is ResultState.Success) return@collect
+					_followStatus.value = status
+				}
 			}
 		}
 	}
-
 
 }

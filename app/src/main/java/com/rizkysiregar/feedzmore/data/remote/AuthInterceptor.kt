@@ -5,6 +5,7 @@ import com.rizkysiregar.feedzmore.data.session.SessionManager
 import okhttp3.Interceptor
 import okhttp3.Response
 import org.json.JSONObject
+import java.io.IOException
 import javax.inject.Inject
 
 /**
@@ -15,7 +16,8 @@ import javax.inject.Inject
 
 class AuthInterceptor @Inject constructor(
 	private val tokenHolder: JwtTokenHolder,
-	private val sessionManager: SessionManager
+	private val sessionManager: SessionManager,
+	private val apiErrorManager: ApiErrorManager
 ) : Interceptor {
 
 	override fun intercept(chain: Interceptor.Chain): Response {
@@ -28,10 +30,28 @@ class AuthInterceptor @Inject constructor(
 		}
 
 		val protectedRequest = !isPublicAuthEndpoint(request.url.encodedPath)
-		val response = chain.proceed(requestBuilder.build())
+		val response = try {
+			chain.proceed(requestBuilder.build())
+		} catch (e: IOException) {
+			// A cancelled call (e.g. leaving a screen) is not a user-facing failure.
+			if (!chain.call().isCanceled()) {
+				apiErrorManager.report(ApiErrorEvent(null, ApiMessages.NETWORK_ERROR))
+			}
+			throw e
+		}
 
-		if (protectedRequest && response.code == HTTP_UNAUTHORIZED) {
-			sessionManager.expireSession(extractErrorMessage(response))
+		when {
+			protectedRequest && response.code == HTTP_UNAUTHORIZED ->
+				sessionManager.expireSession(extractErrorMessage(response))
+
+			// 401 on auth endpoints (wrong password) is already shown inline by the auth
+			// screens, and 404 is handled by callers on purpose (e.g. empty states).
+			!response.isSuccessful &&
+				response.code != HTTP_UNAUTHORIZED &&
+				response.code != HTTP_NOT_FOUND ->
+				apiErrorManager.report(
+					ApiErrorEvent(response.code, extractErrorMessage(response, ApiMessages.GENERIC_ERROR))
+				)
 		}
 
 		return response
@@ -48,15 +68,19 @@ class AuthInterceptor @Inject constructor(
 	/**
 	 * peekBody reads a copy, so Retrofit can still read the original error body.
 	 */
-	private fun extractErrorMessage(response: Response): String =
+	private fun extractErrorMessage(
+		response: Response,
+		fallback: String = DEFAULT_SESSION_EXPIRED_MESSAGE
+	): String =
 		runCatching {
 			JSONObject(response.peekBody(MAX_ERROR_BODY_BYTES).string())
 				.optString("message")
 				.takeIf { it.isNotBlank() }
-		}.getOrNull() ?: DEFAULT_SESSION_EXPIRED_MESSAGE
+		}.getOrNull() ?: fallback
 
 	private companion object {
 		const val HTTP_UNAUTHORIZED = 401
+		const val HTTP_NOT_FOUND = 404
 		const val MAX_ERROR_BODY_BYTES = 64L * 1024L
 		const val DEFAULT_SESSION_EXPIRED_MESSAGE =
 			"Sesi Anda telah berakhir. Silakan masuk kembali."

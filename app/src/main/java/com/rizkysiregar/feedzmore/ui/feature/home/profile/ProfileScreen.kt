@@ -10,8 +10,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,7 +43,7 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
  * Description: Software Engineer
  */
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun ProfileScreen(
 	profileState: ResultState<UserSearchItemResponse>,
@@ -71,10 +75,16 @@ fun ProfileScreen(
 			)
 		},
 	) { innerPadding ->
+		val pullState = rememberPullRefreshState(
+			refreshing = feedState.isRefreshing,
+			onRefresh = onRefresh
+		)
+
 		Box(
 			modifier = modifier
 				.fillMaxSize()
-				.padding(innerPadding),
+				.padding(innerPadding)
+				.pullRefresh(pullState),
 			contentAlignment = Alignment.Center
 		) {
 			when (profileState) {
@@ -137,6 +147,12 @@ fun ProfileScreen(
 								}
 						}
 					}
+
+					PullRefreshIndicator(
+						refreshing = feedState.isRefreshing,
+						state = pullState,
+						modifier = Modifier.align(Alignment.TopCenter)
+					)
 				}
 
 				is ResultState.Failure -> {

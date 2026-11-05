@@ -73,7 +73,10 @@ fun ProfileRoute(
                 if (feedState.hasLoadedInitialPage) profileFeedVm.loadNextPage()
                 else profileFeedVm.refresh()
             },
-            onRefresh = { profileFeedVm.refresh() },
+            onRefresh = {
+                profileVm.fetchUserProfile()
+                profileFeedVm.refresh()
+            },
             onLikeClick = profileFeedVm::toggleLike,
             onExitClick = {
                 profileVm.clearDataStore()
