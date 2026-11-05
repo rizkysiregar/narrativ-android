@@ -13,6 +13,7 @@ import com.rizkysiregar.feedzmore.data.remote.model.response.auth.LoginResponse
 import com.rizkysiregar.feedzmore.data.remote.model.response.auth.ResetPassVerifyOtpResponse
 import com.rizkysiregar.feedzmore.data.repository.AuthRepository
 import com.rizkysiregar.feedzmore.util.flowFromApi
+import com.rizkysiregar.feedzmore.util.flowFromMessageApi
 import kotlinx.coroutines.flow.Flow
 import retrofit2.Retrofit
 import javax.inject.Inject
@@ -41,7 +42,7 @@ class AuthRepositoryImpl @Inject constructor(
 		}
 
 	override fun register(registerRequest: RegisterRequest): Flow<ResultState<String>> =
-		flowFromApi {
+		flowFromMessageApi {
 			authApi.register(registerRequest)
 		}
 
@@ -56,7 +57,7 @@ class AuthRepositoryImpl @Inject constructor(
 		}
 
 	override fun resetNewPassword(request: ResetNewPasswordRequest): Flow<ResultState<String>> =
-		flowFromApi {
+		flowFromMessageApi {
 			authApi.resetNewPassword(request)
 		}
 

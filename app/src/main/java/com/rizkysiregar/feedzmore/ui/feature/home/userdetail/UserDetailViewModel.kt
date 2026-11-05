@@ -9,6 +9,7 @@ import com.rizkysiregar.feedzmore.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -35,8 +36,12 @@ class UserDetailViewModel @Inject constructor(
 	private val _isFollowActionLoading = MutableStateFlow(false)
 	val isFollowActionLoading: StateFlow<Boolean> = _isFollowActionLoading
 
+	private var followStatusJob: Job? = null
+	private var profileJob: Job? = null
+
 	fun loadFollowStatus(userId: String) {
-		viewModelScope.launch {
+		followStatusJob?.cancel()
+		followStatusJob = viewModelScope.launch {
 			getFollowStatusUseCase(userId).collect { _followStatus.value = it }
 		}
 	}
@@ -64,7 +69,8 @@ class UserDetailViewModel @Inject constructor(
 	}
 
 	fun loadUser(userId: String) {
-		viewModelScope.launch {
+		profileJob?.cancel()
+		profileJob = viewModelScope.launch {
 			_profileState.value = ResultState.Loading
 
 			fetchUserProfileUseCase(userId).collect { resultState ->

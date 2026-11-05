@@ -9,6 +9,7 @@ import com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowUserResp
 import com.rizkysiregar.feedzmore.data.remote.model.response.user.UserSearchItemResponse
 import com.rizkysiregar.feedzmore.data.repository.UserRepository
 import com.rizkysiregar.feedzmore.util.flowFromApi
+import com.rizkysiregar.feedzmore.util.flowFromMessageApi
 import com.rizkysiregar.feedzmore.util.flowFromApiOrEmptyOn404
 import kotlinx.coroutines.flow.Flow
 import retrofit2.Retrofit
@@ -28,10 +29,10 @@ class UserRepositoryImpl @Inject constructor(
 		}
 
 	override fun follow(userId: String): Flow<ResultState<String>> =
-		flowFromApi { userApi.follow(userId) }
+		flowFromMessageApi { userApi.follow(userId) }
 
 	override fun unfollow(userId: String): Flow<ResultState<String>> =
-		flowFromApi { userApi.unfollow(userId) }
+		flowFromMessageApi { userApi.unfollow(userId) }
 
 	override fun getFollowStatus(userId: String): Flow<ResultState<FollowStatusResponse>> =
 		flowFromApi { userApi.getFollowStatus(userId) }

@@ -2,6 +2,10 @@ package com.rizkysiregar.feedzmore.ui.main
 
 import android.widget.Toast
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -9,6 +13,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.rizkysiregar.feedzmore.constants.Constants
+import com.rizkysiregar.feedzmore.data.remote.ApiErrorEvent
+import com.rizkysiregar.feedzmore.ui.feature.common.ErrorDialog
 import com.rizkysiregar.feedzmore.ui.main.navigation.routes.MainPathRoute
 import com.rizkysiregar.feedzmore.ui.main.navigation.authGraph
 import com.rizkysiregar.feedzmore.ui.main.navigation.homeGraph
@@ -38,6 +44,16 @@ fun MainRoot(
 				launchSingleTop = true
 			}
 		}
+	}
+
+	var apiError by remember { mutableStateOf<ApiErrorEvent?>(null) }
+	LaunchedEffect(Unit) {
+		// Ignore events while a dialog is showing so parallel failures don't stack dialogs.
+		viewModel.apiErrors.collect { if (apiError == null) apiError = it }
+	}
+
+	apiError?.let { error ->
+		ErrorDialog(message = error.message, onDismiss = { apiError = null })
 	}
 
 	NavHost(
