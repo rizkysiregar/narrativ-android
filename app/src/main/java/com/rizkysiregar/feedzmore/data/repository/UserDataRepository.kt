@@ -27,15 +27,18 @@ class UserDataRepository @Inject constructor(
 	 * Using `dataStore.edit` ensures that all writes are completed before the function returns.
 	 *
 	 * @param token The authentication token received from the server.
+	 * @param refreshToken The single-use refresh token received from the server.
 	 * @param userId The unique ID of the user.
 	 * @param username The username of the user.
 	 */
 	suspend fun saveUserSession(
 		token: String,
+		refreshToken: String,
 		userId: String,
 		username: String
 	) {
 		dataStoreManager.put(PrefKeys.token, token)
+		dataStoreManager.put(PrefKeys.refreshToken, refreshToken)
 		dataStoreManager.put(PrefKeys.userId, userId)
 		dataStoreManager.put(PrefKeys.username, username)
 		dataStoreManager.put(PrefKeys.isLoggedIn, true)

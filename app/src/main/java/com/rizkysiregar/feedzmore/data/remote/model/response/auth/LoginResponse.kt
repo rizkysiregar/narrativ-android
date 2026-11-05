@@ -8,6 +8,8 @@ package com.rizkysiregar.feedzmore.data.remote.model.response.auth
 
 data class LoginResponse(
 	val token: String,
+	val refreshToken: String,
 	val username: String,
-	val userId: String
+	val userId: String,
+	val role: String? = null
 )
