@@ -13,6 +13,7 @@ plugins {
 	alias(libs.plugins.kotlin.compose)
 	alias(libs.plugins.hilt.plugin)
 	alias(libs.plugins.ksp)
+	alias(libs.plugins.google.services)
 }
 
 android {
@@ -103,9 +104,14 @@ android {
 
 dependencies {
 
+	// --- Firebase Cloud Messaging ---
+	implementation(platform(libs.firebase.bom))
+	implementation(libs.firebase.messaging)
+
 	// --- Core + Compose ---
 	implementation(libs.androidx.core.ktx)
 	implementation(libs.androidx.lifecycle.runtime.ktx)
+	implementation(libs.androidx.lifecycle.process)
 	implementation(libs.androidx.activity.compose)
 	implementation(platform(libs.androidx.compose.bom))
 	implementation(libs.androidx.ui)

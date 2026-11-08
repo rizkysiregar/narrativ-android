@@ -15,6 +15,7 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.rizkysiregar.feedzmore.constants.OAuthConfig
 import com.rizkysiregar.feedzmore.constants.PrefKeys
 import com.rizkysiregar.feedzmore.data.cache.DataStoreManager
+import com.rizkysiregar.feedzmore.data.remote.DeviceSyncScheduler
 import com.rizkysiregar.feedzmore.data.cache.JwtTokenHolder
 import com.rizkysiregar.feedzmore.data.session.SessionManager
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
@@ -45,6 +46,7 @@ class AuthViewModel @Inject constructor(
     private val dataStore: DataStoreManager,
     private val tokenHolder: JwtTokenHolder,
     private val sessionManager: SessionManager,
+    private val deviceSyncScheduler: DeviceSyncScheduler,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -163,6 +165,7 @@ class AuthViewModel @Inject constructor(
         dataStore.put(PrefKeys.isLoggedIn, true)
         tokenHolder.setToken(data.token)
         sessionManager.markAuthenticated()
+        deviceSyncScheduler.schedule(force = true)
     }
 
 }
