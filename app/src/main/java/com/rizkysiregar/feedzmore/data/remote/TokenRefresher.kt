@@ -1,5 +1,6 @@
 package com.rizkysiregar.feedzmore.data.remote
 
+import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.rizkysiregar.feedzmore.BuildConfig
@@ -30,11 +31,13 @@ import javax.inject.Singleton
 @Singleton
 class TokenRefresher @Inject constructor(
 	private val dataStore: DataStoreManager,
-	private val tokenHolder: JwtTokenHolder
+	private val tokenHolder: JwtTokenHolder,
+	chuckerInterceptor: ChuckerInterceptor
 ) {
 	enum class Result { REFRESHED, REJECTED, FAILED }
 
 	private val client = OkHttpClient.Builder()
+		.addInterceptor(chuckerInterceptor)
 		.connectTimeout(30, TimeUnit.SECONDS)
 		.readTimeout(30, TimeUnit.SECONDS)
 		.build()

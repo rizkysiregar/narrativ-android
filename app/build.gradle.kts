@@ -142,6 +142,9 @@ dependencies {
 	implementation(libs.retrofit.gson)
 	implementation(libs.okhttp)
 	implementation(libs.okhttp.logging)
+	// In-app network inspector (debug only, no-op in release)
+	debugImplementation(libs.chucker)
+	releaseImplementation(libs.chucker.no.op)
 
 	// --- DataStore (JWT persistence) ---
 	implementation(libs.datastore.preferences)

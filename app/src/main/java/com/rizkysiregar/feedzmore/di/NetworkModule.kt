@@ -1,10 +1,15 @@
 package com.rizkysiregar.feedzmore.di
 
+import android.content.Context
+import com.chuckerteam.chucker.api.ChuckerCollector
+import com.chuckerteam.chucker.api.ChuckerInterceptor
+import com.chuckerteam.chucker.api.RetentionManager
 import com.rizkysiregar.feedzmore.BuildConfig
 import com.rizkysiregar.feedzmore.data.remote.AuthInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -23,11 +28,27 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
+	@Provides
+	@Singleton
+	fun provideChuckerInterceptor(
+		@ApplicationContext context: Context
+	): ChuckerInterceptor {
+		val collector = ChuckerCollector(
+			context = context,
+			showNotification = true,
+			retentionPeriod = RetentionManager.Period.ONE_DAY
+		)
+		return ChuckerInterceptor.Builder(context)
+			.collector(collector)
+			.redactHeaders("Authorization")
+			.build()
+	}
 
 	@Provides
 	@Singleton
 	fun provideOkHttpClient(
-		authInterceptor: AuthInterceptor
+		authInterceptor: AuthInterceptor,
+		chuckerInterceptor: ChuckerInterceptor
 	): OkHttpClient {
 		val loggingInterceptor = HttpLoggingInterceptor().apply {
 			level = if (BuildConfig.DEBUG)
@@ -39,6 +60,7 @@ object NetworkModule {
 		return OkHttpClient.Builder()
 			.addInterceptor(loggingInterceptor)
 			.addInterceptor(authInterceptor)
+			.addInterceptor(chuckerInterceptor)
 			.connectTimeout(30, TimeUnit.SECONDS)
 			.readTimeout(60, TimeUnit.SECONDS)
 			.writeTimeout(120, TimeUnit.SECONDS)
@@ -48,8 +70,9 @@ object NetworkModule {
 	@Provides
 	@Singleton
 	@UploadClient
-	fun provideUploadOkHttpClient(): OkHttpClient {
+	fun provideUploadOkHttpClient(chuckerInterceptor: ChuckerInterceptor): OkHttpClient {
 		return OkHttpClient.Builder()
+			.addInterceptor(chuckerInterceptor)
 			.connectTimeout(30, TimeUnit.SECONDS)
 			.readTimeout(60, TimeUnit.SECONDS)
 			.writeTimeout(5, TimeUnit.MINUTES)
