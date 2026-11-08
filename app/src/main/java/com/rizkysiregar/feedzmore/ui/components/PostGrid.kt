@@ -56,7 +56,13 @@ fun LazyListScope.PostGrid(
 							.aspectRatio(1f),
 						shape = RectangleShape
 					) {
-						if (post.mediaType == MediaType.VIDEO && post.thumbnailUrl == null) {
+						if (post.isTakenDown) {
+							TakenDownPlaceholder(
+								message = post.takedownMessage,
+								modifier = Modifier.fillMaxSize(),
+								compact = true
+							)
+						} else if (post.mediaType == MediaType.VIDEO && post.thumbnailUrl == null) {
 							// Coil cannot decode a video URL as an image — show a
 							// placeholder instead of a doomed network request.
 							Box(
@@ -77,7 +83,7 @@ fun LazyListScope.PostGrid(
 								model = ImageRequest.Builder(LocalContext.current)
 									.data(
 										if (post.mediaType == MediaType.VIDEO) post.thumbnailUrl
-										else post.mediaUrl
+										else post.mediaUrl.orEmpty()
 									).build(),
 								contentDescription = "Feed Image",
 								modifier = Modifier.fillMaxSize(),

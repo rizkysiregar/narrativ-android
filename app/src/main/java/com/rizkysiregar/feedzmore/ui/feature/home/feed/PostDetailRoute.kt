@@ -131,8 +131,8 @@ fun PostDetailScreen(
 	androidx.compose.runtime.LaunchedEffect(post.mediaUrl, isMuted) {
 		val currentUri = videoPlayer.currentMediaUrlOrNull()
 		videoPlayer.volume = if (isMuted) 0f else 1f
-		if (currentUri != post.mediaUrl) {
-			videoPlayer.setMediaItem(MediaItem.fromUri(post.mediaUrl))
+		if (currentUri != post.mediaUrl.orEmpty()) {
+			videoPlayer.setMediaItem(MediaItem.fromUri(post.mediaUrl.orEmpty()))
 			videoPlayer.prepare()
 		}
 		videoPlayer.playWhenReady = true
@@ -171,7 +171,7 @@ fun PostDetailScreen(
 		) {
 			if (post.mediaType == MediaType.VIDEO) {
 				VideoFeedPlayer(
-					mediaUrl = post.mediaUrl,
+					mediaUrl = post.mediaUrl.orEmpty(),
 					thumbnailUrl = post.thumbnailUrl,
 					isActive = true,
 					player = videoPlayer,
@@ -187,7 +187,7 @@ fun PostDetailScreen(
 			} else {
 				SubcomposeAsyncImage(
 					model = ImageRequest.Builder(LocalContext.current)
-						.data(post.mediaUrl)
+						.data(post.mediaUrl.orEmpty())
 						.build(),
 					contentDescription = "Foto post",
 					modifier = Modifier.fillMaxSize(),
@@ -234,14 +234,14 @@ fun PostDetailScreen(
 				)
 			}
 
-			if (post.caption.isNotBlank() && showCaptionOverlay) {
+			if (!post.caption.isNullOrBlank() && showCaptionOverlay) {
 				Text(
 					text = buildAnnotatedString {
 						withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
 							append(post.username)
 						}
 						append("  ")
-						append(post.caption)
+						append(post.caption.orEmpty())
 					},
 					color = MaterialTheme.colorScheme.onBackground,
 					style = MaterialTheme.typography.bodyMedium,
@@ -282,14 +282,14 @@ fun PostDetailScreen(
 						.padding(top = 10.dp)
 				)
 
-				if (post.caption.isNotBlank()) {
+				if (!post.caption.isNullOrBlank()) {
 					Text(
 						text = buildAnnotatedString {
 							withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
 								append(post.username)
 							}
 							append("  ")
-							append(post.caption)
+							append(post.caption.orEmpty())
 						},
 						style = MaterialTheme.typography.bodyMedium,
 						modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)

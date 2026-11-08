@@ -1,7 +1,6 @@
 package com.rizkysiregar.feedzmore.data.remote.model.response.feed
 
 import com.google.gson.annotations.SerializedName
-import com.rizkysiregar.feedzmore.data.remote.model.response.BaseResponse
 
 enum class MediaType { IMAGE, VIDEO }
 
@@ -32,7 +31,7 @@ data class FeedContentItem(
 	val createdAt: String,
 
 	@field:SerializedName("mediaUrl")
-	val mediaUrl: String,
+	val mediaUrl: String?,
 
 	@field:SerializedName("mediaType")
 	val mediaType: MediaType,
@@ -41,7 +40,7 @@ data class FeedContentItem(
 	val thumbnailUrl: String?,
 
 	@field:SerializedName("caption")
-	val caption: String,
+	val caption: String?,
 
 	@field:SerializedName("likeCount")
 	val likeCount: Int,
@@ -59,20 +58,21 @@ data class FeedContentItem(
 	val commentCount: Int,
 
 	@field:SerializedName("moderationStatus")
-	val moderationStatus: String? = null
+	val moderationStatus: String? = null,
+
+	@field:SerializedName("takedownReason")
+	val takedownReason: String? = null,
+
+	@field:SerializedName("takenDownAt")
+	val takenDownAt: String? = null
 ) {
 	val isTakenDown: Boolean
 		get() = moderationStatus == MODERATION_TAKEN_DOWN
+
+	/** Shown in place of the media when the post is taken down. */
+	val takedownMessage: String
+		get() = takedownReason?.takeIf { it.isNotBlank() } ?: DEFAULT_TAKEDOWN_MESSAGE
 }
 
 const val MODERATION_TAKEN_DOWN = "TAKEN_DOWN"
-
-/**
- * Taken-down posts come back with null media/caption, which the UI cannot render,
- * so they are dropped here before reaching the presentation layer.
- */
-fun FeedsPostPaginationResponse.withoutTakenDown(): FeedsPostPaginationResponse =
-	copy(content = content.filterNot { it.isTakenDown })
-
-fun BaseResponse<FeedsPostPaginationResponse>.withoutTakenDown(): BaseResponse<FeedsPostPaginationResponse> =
-	copy(data = data?.withoutTakenDown())
+const val DEFAULT_TAKEDOWN_MESSAGE = "This post was taken down for violating our community rules."

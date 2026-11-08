@@ -10,7 +10,6 @@ import com.rizkysiregar.feedzmore.data.remote.model.request.feed.LikeFeedRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.PaginationResponseWrapper
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.CommentItem
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedsPostPaginationResponse
-import com.rizkysiregar.feedzmore.data.remote.model.response.feed.withoutTakenDown
 import com.rizkysiregar.feedzmore.data.repository.FeedRepository
 import com.rizkysiregar.feedzmore.util.flowFromApi
 import com.rizkysiregar.feedzmore.util.flowFromMessageApi
@@ -33,12 +32,12 @@ class FeedRepositoryImpl @Inject constructor(
 
 	override fun getAllFeed(request: GetAllFeedRequest): Flow<ResultState<FeedsPostPaginationResponse>> =
 		flowFromApi {
-			feedApi.getFeed(request.page, request.size).withoutTakenDown()
+			feedApi.getFeed(request.page, request.size)
 		}
 
 	override fun getExplorePosts(request: GetAllFeedRequest): Flow<ResultState<FeedsPostPaginationResponse>> =
 		flowFromApi {
-			feedApi.getExplorePosts(request.page, request.size).withoutTakenDown()
+			feedApi.getExplorePosts(request.page, request.size)
 		}
 
 	override fun getFeedByUsername(request: GetFeedByUsernameRequest): Flow<ResultState<FeedsPostPaginationResponse>> =
@@ -47,7 +46,7 @@ class FeedRepositoryImpl @Inject constructor(
 				request.username,
 				request.page,
 				request.size
-			).withoutTakenDown()
+			)
 		}
 
 	override fun likePost(postId: UUID): Flow<ResultState<String>> =
