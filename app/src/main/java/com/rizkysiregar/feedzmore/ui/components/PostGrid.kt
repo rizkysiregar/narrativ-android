@@ -2,6 +2,7 @@ package com.rizkysiregar.feedzmore.ui.components
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -40,7 +41,8 @@ import com.rizkysiregar.feedzmore.data.remote.model.response.feed.MediaType
 
 fun LazyListScope.PostGrid(
 	posts: List<FeedContentItem>,
-	itemsPerRow: Int = 3
+	itemsPerRow: Int = 3,
+	onPostClick: (FeedContentItem) -> Unit = {}
 ) {
 	items(posts.chunked(itemsPerRow)) { rowItems ->
 		Row(
@@ -53,7 +55,14 @@ fun LazyListScope.PostGrid(
 					Surface(
 						modifier = Modifier
 							.weight(1f)
-							.aspectRatio(1f),
+							.aspectRatio(1f)
+							.then(
+								if (!post.isTakenDown) {
+									Modifier.clickable { onPostClick(post) }
+								} else {
+									Modifier
+								}
+							),
 						shape = RectangleShape
 					) {
 						if (post.isTakenDown) {

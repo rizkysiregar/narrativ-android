@@ -129,6 +129,7 @@ fun PostDetailScreen(
 	val videoPlayer = rememberVideoPlayer()
 
 	androidx.compose.runtime.LaunchedEffect(post.mediaUrl, isMuted) {
+		if (post.mediaType != MediaType.VIDEO) return@LaunchedEffect
 		val currentUri = videoPlayer.currentMediaUrlOrNull()
 		videoPlayer.volume = if (isMuted) 0f else 1f
 		if (currentUri != post.mediaUrl.orEmpty()) {
@@ -196,17 +197,19 @@ fun PostDetailScreen(
 				)
 			}
 
-			IconButton(
-				onClick = { isMuted = !isMuted },
-				modifier = Modifier
-					.align(Alignment.TopEnd)
-					.padding(8.dp)
-			) {
-				Icon(
-					imageVector = if (isMuted) Icons.Filled.VolumeOff else Icons.Filled.VolumeUp,
-					contentDescription = if (isMuted) "Suarakan" else "Bisukan",
-					tint = MaterialTheme.colorScheme.onBackground
-				)
+			if (post.mediaType == MediaType.VIDEO) {
+				IconButton(
+					onClick = { isMuted = !isMuted },
+					modifier = Modifier
+						.align(Alignment.TopEnd)
+						.padding(8.dp)
+				) {
+					Icon(
+						imageVector = if (isMuted) Icons.Filled.VolumeOff else Icons.Filled.VolumeUp,
+						contentDescription = if (isMuted) "Suarakan" else "Bisukan",
+						tint = MaterialTheme.colorScheme.onBackground
+					)
+				}
 			}
 
 			Column(

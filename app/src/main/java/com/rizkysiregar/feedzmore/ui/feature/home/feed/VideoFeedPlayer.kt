@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -31,6 +32,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
@@ -59,6 +61,10 @@ fun VideoFeedPlayer(
 	// Poster stays on top until the very first video frame is rendered,
 	// so the user never sees the black PlayerView shutter while buffering.
 	var firstFrameRendered by remember(mediaUrl) { mutableStateOf(false) }
+	// True while ExoPlayer is rebuffering mid-playback; combined with
+	// !firstFrameRendered it drives the loading indicator.
+	var isBuffering by remember(mediaUrl) { mutableStateOf(false) }
+	var hasError by remember(mediaUrl) { mutableStateOf(false) }
 
 	if (isActive && player != null) {
 		DisposableEffect(player, mediaUrl) {
@@ -68,8 +74,20 @@ fun VideoFeedPlayer(
 						firstFrameRendered = true
 					}
 				}
+
+				override fun onPlaybackStateChanged(playbackState: Int) {
+					if (player.currentMediaUrlOrNull() == mediaUrl) {
+						isBuffering = playbackState == Player.STATE_BUFFERING
+					}
+				}
+
+				override fun onPlayerError(error: PlaybackException) {
+					hasError = true
+				}
 			}
 			player.addListener(listener)
+			isBuffering = player.playbackState == Player.STATE_BUFFERING &&
+				player.currentMediaUrlOrNull() == mediaUrl
 			// Returning to an already-prepared item (e.g. back from detail):
 			// the frame is already on screen, drop the poster immediately.
 			if (player.playbackState == Player.STATE_READY &&
@@ -88,8 +106,12 @@ fun VideoFeedPlayer(
 	}
 
 	Box(
-		modifier = boxModifier.clickable(enabled = onVideoClick != null) {
-			onVideoClick?.invoke()
+		// Only attach clickable when a handler exists: a disabled clickable still
+		// consumes the tap and would block a parent's clickable (e.g. Explore grid).
+		modifier = if (onVideoClick != null) {
+			boxModifier.clickable { onVideoClick() }
+		} else {
+			boxModifier
 		},
 		contentAlignment = Alignment.Center
 	) {
@@ -121,6 +143,13 @@ fun VideoFeedPlayer(
 					mediaUrl = mediaUrl,
 					thumbnailUrl = thumbnailUrl,
 					showPlayIcon = false
+				)
+			}
+			if (!hasError && (!firstFrameRendered || isBuffering)) {
+				CircularProgressIndicator(
+					modifier = Modifier.size(40.dp),
+					color = MaterialTheme.colorScheme.onBackground,
+					strokeWidth = 3.dp
 				)
 			}
 		} else {

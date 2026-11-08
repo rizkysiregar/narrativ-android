@@ -20,7 +20,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.google.gson.Gson
 import com.rizkysiregar.feedzmore.constants.Constants
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
+import com.rizkysiregar.feedzmore.ui.feature.home.feed.KEY_LIKE_HANDLER
+import com.rizkysiregar.feedzmore.ui.feature.home.feed.KEY_POST_JSON
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.post.PostFeedRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.profile.ProfileRoute
@@ -48,6 +52,13 @@ fun HomeRoot(
 	val uploadBannerViewModel: UploadBannerViewModel = hiltViewModel()
 	var feedRefreshVersion by remember { mutableIntStateOf(0) }
 	val currentRoute = homeNavController.currentBackStackEntryAsState().value?.destination?.route
+	val openPostDetail: (FeedContentItem, (String) -> Unit) -> Unit = { post, likeHandler ->
+		homeNavController.currentBackStackEntry?.savedStateHandle?.apply {
+			set(KEY_POST_JSON, Gson().toJson(post))
+			set(KEY_LIKE_HANDLER, likeHandler)
+		}
+		homeNavController.navigate(HomePathRoute.PostDetail.create(post.id))
+	}
 	val isDetailRoute = currentRoute?.startsWith("post_detail/") == true
 
 	LaunchedEffect(Unit) {
@@ -119,7 +130,8 @@ fun HomeRoot(
 				},
 				onFollowingClick = { userId ->
 					homeNavController.navigate(HomePathRoute.FollowList.create(userId, "following"))
-				}
+				},
+				onPostClick = openPostDetail
 			)
 		}
 				composable(
@@ -154,7 +166,8 @@ fun HomeRoot(
 			},
 			onFollowingClick = { id ->
 				homeNavController.navigate(HomePathRoute.FollowList.create(id, "following"))
-			}
+			},
+			onPostClick = openPostDetail
 		)
 		}
 			composable(

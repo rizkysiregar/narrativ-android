@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.feedzmore.data.remote.model.response.user.UserSearchItemResponse
 import com.rizkysiregar.feedzmore.ui.components.InitialAvatar
 import com.rizkysiregar.feedzmore.ui.components.PostGrid
@@ -57,6 +58,7 @@ fun ProfileScreen(
 	followStatus: ResultState<com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowStatusResponse>?,
 	onFollowersClick: (String) -> Unit,
 	onFollowingClick: (String) -> Unit,
+	onPostClick: (FeedContentItem) -> Unit = {},
 	modifier: Modifier = Modifier,
 ) {
 	Scaffold(
@@ -129,7 +131,7 @@ fun ProfileScreen(
 									}
 							}
 						} else {
-							PostGrid(posts = feedState.items)
+							PostGrid(posts = feedState.items, onPostClick = onPostClick)
 						}
 
 							// Footer displays progress or a retry action for the current page.

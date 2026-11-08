@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
 import kotlinx.coroutines.flow.collectLatest
 
 /**
@@ -28,6 +29,7 @@ fun UserDetailRoute(
 	onBackClick: () -> Unit,
 	onFollowersClick: (String) -> Unit = {},
 	onFollowingClick: (String) -> Unit = {},
+	onPostClick: (FeedContentItem, (String) -> Unit) -> Unit = { _, _ -> },
 	detailViewModel: UserDetailViewModel = hiltViewModel(),
 	feedViewModel: UserDetailFeedViewModel = hiltViewModel()
 ) {
@@ -93,7 +95,8 @@ fun UserDetailRoute(
 			isFollowActionLoading = isFollowActionLoading,
 			onFollowClick = { detailViewModel.toggleFollow(userId) },
 			onFollowersClick = { onFollowersClick(userId) },
-			onFollowingClick = { onFollowingClick(userId) }
+			onFollowingClick = { onFollowingClick(userId) },
+			onPostClick = { post -> onPostClick(post, feedViewModel::toggleLike) }
 		)
 	}
 }
