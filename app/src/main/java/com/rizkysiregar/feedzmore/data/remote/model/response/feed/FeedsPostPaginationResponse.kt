@@ -1,6 +1,7 @@
 package com.rizkysiregar.feedzmore.data.remote.model.response.feed
 
 import com.google.gson.annotations.SerializedName
+import com.rizkysiregar.feedzmore.data.remote.model.response.BaseResponse
 
 enum class MediaType { IMAGE, VIDEO }
 
@@ -55,5 +56,23 @@ data class FeedContentItem(
 	val username: String,
 
 	@field:SerializedName("commentCount")
-	val commentCount: Int
-)
+	val commentCount: Int,
+
+	@field:SerializedName("moderationStatus")
+	val moderationStatus: String? = null
+) {
+	val isTakenDown: Boolean
+		get() = moderationStatus == MODERATION_TAKEN_DOWN
+}
+
+const val MODERATION_TAKEN_DOWN = "TAKEN_DOWN"
+
+/**
+ * Taken-down posts come back with null media/caption, which the UI cannot render,
+ * so they are dropped here before reaching the presentation layer.
+ */
+fun FeedsPostPaginationResponse.withoutTakenDown(): FeedsPostPaginationResponse =
+	copy(content = content.filterNot { it.isTakenDown })
+
+fun BaseResponse<FeedsPostPaginationResponse>.withoutTakenDown(): BaseResponse<FeedsPostPaginationResponse> =
+	copy(data = data?.withoutTakenDown())
