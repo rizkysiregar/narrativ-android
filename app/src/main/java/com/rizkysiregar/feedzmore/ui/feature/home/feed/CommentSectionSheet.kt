@@ -173,12 +173,12 @@ fun EmptyCommentsView() {
 		Text(
 			text = "No comments yet",
 			style = MaterialTheme.typography.bodyLarge,
-			color = Color.Gray
+			color = MaterialTheme.colorScheme.onSurfaceVariant
 		)
 		Text(
 			text = "Be the first to start the conversation!",
 			style = MaterialTheme.typography.bodySmall,
-			color = Color.Gray
+			color = MaterialTheme.colorScheme.onSurfaceVariant
 		)
 	}
 }

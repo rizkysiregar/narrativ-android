@@ -58,6 +58,7 @@ fun ExploreRoute(
 		gridState = gridState,
 		selectedPost = selectedPost,
 		onPostClick = { post ->
+			if (post.isTakenDown) return@ExploreScreenContent
 			if (post.mediaType == MediaType.VIDEO) {
 				navController.currentBackStackEntry?.savedStateHandle?.set(
 					KEY_POST_JSON,

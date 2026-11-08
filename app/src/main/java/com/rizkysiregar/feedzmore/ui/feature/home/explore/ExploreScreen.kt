@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.MediaItem
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
+import com.rizkysiregar.feedzmore.ui.components.TakenDownPlaceholder
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.MediaType
 import com.rizkysiregar.feedzmore.media.currentMediaUrlOrNull
@@ -74,7 +75,7 @@ fun ExploreScreenContent(
 			val currentUri = detailPlayer.currentMediaUrlOrNull()
 			detailPlayer.volume = if (isDetailVideoMuted) 0f else 1f
 			if (currentUri != post.mediaUrl) {
-				detailPlayer.setMediaItem(MediaItem.fromUri(post.mediaUrl))
+				detailPlayer.setMediaItem(MediaItem.fromUri(post.mediaUrl.orEmpty()))
 				detailPlayer.prepare()
 			}
 			detailPlayer.playWhenReady = true
@@ -113,9 +114,15 @@ fun ExploreScreenContent(
 						.aspectRatio(1f)
 						.clickable { onPostClick(post) }
 				) {
-				if (post.mediaType == MediaType.VIDEO) {
+				if (post.isTakenDown) {
+					TakenDownPlaceholder(
+						message = post.takedownMessage,
+						modifier = Modifier.fillMaxSize(),
+						compact = true
+					)
+				} else if (post.mediaType == MediaType.VIDEO) {
 					VideoFeedPlayer(
-						mediaUrl = post.mediaUrl,
+						mediaUrl = post.mediaUrl.orEmpty(),
 						thumbnailUrl = post.thumbnailUrl,
 						isActive = false,
 						player = null,
@@ -126,7 +133,7 @@ fun ExploreScreenContent(
 				} else {
 						SubcomposeAsyncImage(
 							model = ImageRequest.Builder(LocalContext.current)
-								.data(post.mediaUrl).build(),
+								.data(post.mediaUrl.orEmpty()).build(),
 							contentDescription = "Post image",
 							contentScale = ContentScale.Crop,
 							modifier = Modifier.fillMaxSize(),

@@ -1,5 +1,6 @@
 package com.rizkysiregar.feedzmore.ui.base
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -54,7 +55,7 @@ fun BaseScreen(
 				Box(
 					Modifier
 						.fillMaxSize()
-						.background(Color.Black.copy(alpha = 0.5f)),
+						.background(MaterialTheme.colorScheme.scrim),
 					contentAlignment = Alignment.Center
 				) {
 					CircularProgressIndicator()

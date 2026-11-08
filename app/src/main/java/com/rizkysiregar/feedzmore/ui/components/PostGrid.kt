@@ -1,5 +1,6 @@
 package com.rizkysiregar.feedzmore.ui.components
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -55,19 +56,25 @@ fun LazyListScope.PostGrid(
 							.aspectRatio(1f),
 						shape = RectangleShape
 					) {
-						if (post.mediaType == MediaType.VIDEO && post.thumbnailUrl == null) {
+						if (post.isTakenDown) {
+							TakenDownPlaceholder(
+								message = post.takedownMessage,
+								modifier = Modifier.fillMaxSize(),
+								compact = true
+							)
+						} else if (post.mediaType == MediaType.VIDEO && post.thumbnailUrl == null) {
 							// Coil cannot decode a video URL as an image — show a
 							// placeholder instead of a doomed network request.
 							Box(
 								modifier = Modifier
 									.fillMaxSize()
-									.background(Color(0xFF202124)),
+									.background(MaterialTheme.colorScheme.surfaceVariant),
 								contentAlignment = Alignment.Center
 							) {
 								Icon(
 									imageVector = Icons.Filled.PlayCircle,
 									contentDescription = "Video",
-									tint = Color.White.copy(alpha = 0.85f),
+									tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
 									modifier = Modifier.size(32.dp)
 								)
 							}
@@ -76,7 +83,7 @@ fun LazyListScope.PostGrid(
 								model = ImageRequest.Builder(LocalContext.current)
 									.data(
 										if (post.mediaType == MediaType.VIDEO) post.thumbnailUrl
-										else post.mediaUrl
+										else post.mediaUrl.orEmpty()
 									).build(),
 								contentDescription = "Feed Image",
 								modifier = Modifier.fillMaxSize(),

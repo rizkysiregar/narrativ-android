@@ -1,5 +1,6 @@
 package com.rizkysiregar.feedzmore.ui.feature.home.feed
 
+import com.rizkysiregar.feedzmore.ui.theme.Like
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -50,6 +51,7 @@ import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentIte
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.MediaType
 import com.rizkysiregar.feedzmore.ui.components.InitialAvatar
 import com.rizkysiregar.feedzmore.ui.components.ShimmerEffect
+import com.rizkysiregar.feedzmore.ui.components.TakenDownPlaceholder
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 
 @Composable
@@ -69,7 +71,7 @@ fun FeedItemCard(
 		label = "feed-like-scale"
 	)
 	val likeColor by animateColorAsState(
-		targetValue = if (item.liked) Color(0xFFE53935) else MaterialTheme.colorScheme.onSurface,
+		targetValue = if (item.liked) Like else MaterialTheme.colorScheme.onSurface,
 		animationSpec = tween(durationMillis = 180),
 		label = "feed-like-color"
 	)
@@ -82,9 +84,17 @@ fun FeedItemCard(
 	) {
 		Column {
 			FeedAuthorHeader(item = item)
+		if (item.isTakenDown) {
+			TakenDownPlaceholder(
+				message = item.takedownMessage,
+				modifier = Modifier
+					.fillMaxWidth()
+					.aspectRatio(1.08f)
+			)
+		} else {
 		if (item.mediaType == MediaType.VIDEO) {
 			VideoFeedPlayer(
-				mediaUrl = item.mediaUrl,
+				mediaUrl = item.mediaUrl.orEmpty(),
 				thumbnailUrl = item.thumbnailUrl,
 				isActive = isActiveVideo,
 				player = player,
@@ -94,7 +104,7 @@ fun FeedItemCard(
 				onVideoClick = onVideoClick
 			)
 		} else {
-				FeedImage(imageUrl = item.mediaUrl)
+				FeedImage(imageUrl = item.mediaUrl.orEmpty())
 			}
 			FeedActions(
 				item = item,
@@ -103,14 +113,14 @@ fun FeedItemCard(
 				onLikeClick = { onLikeClick(item.id) },
 				onCommentClick = { onCommentClick(item) }
 			)
-			AnimatedVisibility(visible = item.caption.isNotBlank()) {
+			AnimatedVisibility(visible = !item.caption.isNullOrBlank()) {
 				Text(
 					text = buildAnnotatedString {
 						withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
 							append(item.username)
 						}
 						append("  ")
-						append(item.caption)
+						append(item.caption.orEmpty())
 					},
 					style = MaterialTheme.typography.bodyMedium,
 					modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
@@ -118,6 +128,7 @@ fun FeedItemCard(
 					overflow = TextOverflow.Ellipsis
 				)
 			}
+		}
 		}
 	}
 }

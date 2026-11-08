@@ -1,5 +1,7 @@
 package com.rizkysiregar.feedzmore.ui.feature.home.feed
 
+import androidx.compose.material3.MaterialTheme
+import com.rizkysiregar.feedzmore.ui.theme.Surface2
 import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
@@ -135,7 +137,7 @@ fun VideoFeedPlayer(
 				Icon(
 					imageVector = if (muted) Icons.Filled.VolumeOff else Icons.Filled.VolumeUp,
 					contentDescription = if (muted) "Suarakan" else "Bisukan",
-					tint = Color.White
+					tint = MaterialTheme.colorScheme.onBackground
 				)
 			}
 		}
@@ -174,7 +176,7 @@ private fun VideoPoster(
 			Icon(
 				imageVector = Icons.Filled.PlayCircle,
 				contentDescription = "Putar video",
-				tint = Color.White,
+				tint = MaterialTheme.colorScheme.onBackground,
 				modifier = Modifier
 					.align(Alignment.Center)
 					.size(64.dp)
@@ -183,4 +185,4 @@ private fun VideoPoster(
 	}
 }
 
-private val VideoPosterFallbackColor = Color(0xFF202124)
+private val VideoPosterFallbackColor = Surface2

@@ -1,5 +1,6 @@
 package com.rizkysiregar.feedzmore.ui.components
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -59,7 +60,7 @@ fun OtpInputField(
 				modifier = Modifier
 					.size(45.dp)
 					.focusRequester(focusRequesters[index])
-					.border(1.dp, Color.Gray, RoundedCornerShape(8.dp)),
+					.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp)),
 				keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
 				singleLine = true,
 				textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),

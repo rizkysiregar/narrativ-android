@@ -94,13 +94,13 @@ fun FeedScreen(
 	LaunchedEffect(activeVideoPostId, isVideoMuted, uiState.items) {
 		if (player == null) return@LaunchedEffect
 		val activeItem = uiState.items.firstOrNull {
-			it.id == activeVideoPostId && it.mediaType == MediaType.VIDEO
+			it.id == activeVideoPostId && it.mediaType == MediaType.VIDEO && !it.isTakenDown
 		}
 		if (activeItem != null) {
 			val currentUri = player.currentMediaUrlOrNull()
 			player.volume = if (isVideoMuted) 0f else 1f
-			if (currentUri != activeItem.mediaUrl) {
-				player.setMediaItem(MediaItem.fromUri(activeItem.mediaUrl))
+			if (currentUri != activeItem.mediaUrl.orEmpty()) {
+				player.setMediaItem(MediaItem.fromUri(activeItem.mediaUrl.orEmpty()))
 				player.prepare()
 			}
 			player.playWhenReady = true
@@ -147,7 +147,7 @@ fun FeedScreen(
 				}
 				val nextVideo = upcoming
 					.take(PRELOAD_AHEAD_COUNT)
-					.firstOrNull { it.mediaType == MediaType.VIDEO }
+					.firstOrNull { it.mediaType == MediaType.VIDEO && !it.isTakenDown }
 				val url = nextVideo?.mediaUrl
 				val playingUri = player?.currentMediaUrlOrNull()
 				if (url != null && url != preloadedUrl && url != playingUri) {
@@ -168,7 +168,7 @@ fun FeedScreen(
 						kotlin.math.abs((info.offset + info.size / 2) - center)
 					}
 				val activeItem = activeInfo?.index?.let { idx -> uiState.items.getOrNull(idx - 1) }
-				if (activeItem?.mediaType == MediaType.VIDEO) activeItem.id else null
+				if (activeItem?.mediaType == MediaType.VIDEO && !activeItem.isTakenDown) activeItem.id else null
 			}
 			.distinctUntilChanged()
 			.collect { id -> activeVideoPostId = id }
