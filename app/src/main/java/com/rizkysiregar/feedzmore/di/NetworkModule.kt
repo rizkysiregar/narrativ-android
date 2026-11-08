@@ -28,6 +28,9 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
+	// Keeps large bodies (e.g. media uploads) from bloating the inspector database.
+	private const val MAX_INSPECTED_BODY_BYTES = 100_000L
+
 	@Provides
 	@Singleton
 	fun provideChuckerInterceptor(
@@ -40,7 +43,8 @@ object NetworkModule {
 		)
 		return ChuckerInterceptor.Builder(context)
 			.collector(collector)
-			.redactHeaders("Authorization")
+			.redactHeaders("Authorization", "Cookie", "Set-Cookie")
+			.maxContentLength(MAX_INSPECTED_BODY_BYTES)
 			.build()
 	}
 
