@@ -223,8 +223,8 @@ fun MiddleSection(onRegisterClick: () -> Unit) {
 				.height(52.dp),
 			shape = RoundedCornerShape(12.dp),
 			colors = ButtonDefaults.buttonColors(
-				containerColor = Color.Black,
-				contentColor = Color.White
+				containerColor = MaterialTheme.colorScheme.primary,
+				contentColor = MaterialTheme.colorScheme.onPrimary
 			)
 		) {
 			Text(
@@ -256,7 +256,7 @@ fun BottomSection(onNavigateToLogin: () -> Unit) {
 		Spacer(modifier = Modifier.width(4.dp))
 		Text(
 			text = "Login here",
-			color = Color.Black,
+			color = MaterialTheme.colorScheme.onBackground,
 			style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
 			modifier = Modifier.clickable(
 				interactionSource = remember { MutableInteractionSource() },
@@ -385,7 +385,7 @@ fun ForgotPasswordText() {
 		Text(
 			text = "Forgot Password?",
 			style = MaterialTheme.typography.bodySmall,
-			color = Color.Black,
+			color = MaterialTheme.colorScheme.onBackground,
 		)
 	}
 }

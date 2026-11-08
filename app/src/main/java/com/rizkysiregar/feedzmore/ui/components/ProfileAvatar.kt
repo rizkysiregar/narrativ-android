@@ -106,7 +106,7 @@ fun InitialAvatar(
 	) {
 		Text(
 			text = initial.ifEmpty { "?" },
-			color = Color.White,
+			color = MaterialTheme.colorScheme.onBackground,
 			style = MaterialTheme.typography.titleMedium,
 			fontWeight = FontWeight.Bold
 		)

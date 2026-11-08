@@ -1,5 +1,6 @@
 package com.rizkysiregar.feedzmore.ui.components
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,13 +62,13 @@ fun LazyListScope.PostGrid(
 							Box(
 								modifier = Modifier
 									.fillMaxSize()
-									.background(Color(0xFF202124)),
+									.background(MaterialTheme.colorScheme.surfaceVariant),
 								contentAlignment = Alignment.Center
 							) {
 								Icon(
 									imageVector = Icons.Filled.PlayCircle,
 									contentDescription = "Video",
-									tint = Color.White.copy(alpha = 0.85f),
+									tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
 									modifier = Modifier.size(32.dp)
 								)
 							}

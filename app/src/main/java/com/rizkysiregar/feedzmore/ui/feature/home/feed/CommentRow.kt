@@ -54,7 +54,7 @@ fun CommentRow(comment: CommentItem) {
 				Text(
 					text = "2h", // You can format comment.createdAt here
 					style = MaterialTheme.typography.bodySmall,
-					color = Color.Gray
+					color = MaterialTheme.colorScheme.onSurfaceVariant
 				)
 			}
 			Text(

@@ -1,5 +1,6 @@
 package com.rizkysiregar.feedzmore.ui.feature.home.feed
 
+import com.rizkysiregar.feedzmore.ui.theme.Like
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -69,7 +70,7 @@ fun FeedItemCard(
 		label = "feed-like-scale"
 	)
 	val likeColor by animateColorAsState(
-		targetValue = if (item.liked) Color(0xFFE53935) else MaterialTheme.colorScheme.onSurface,
+		targetValue = if (item.liked) Like else MaterialTheme.colorScheme.onSurface,
 		animationSpec = tween(durationMillis = 180),
 		label = "feed-like-color"
 	)

@@ -1,5 +1,6 @@
 package com.rizkysiregar.feedzmore.ui.feature.home.feed
 
+import com.rizkysiregar.feedzmore.ui.theme.Like
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -98,10 +99,10 @@ fun PostDetailDestination(
 		Box(
 			modifier = Modifier
 				.fillMaxSize()
-				.background(Color.Black),
+				.background(MaterialTheme.colorScheme.background),
 			contentAlignment = Alignment.Center
 		) {
-			Text("Post tidak ditemukan", color = Color.White)
+			Text("Post tidak ditemukan", color = MaterialTheme.colorScheme.onBackground)
 		}
 		return
 	}
@@ -161,7 +162,7 @@ fun PostDetailScreen(
 	Box(
 		modifier = Modifier
 			.fillMaxSize()
-			.background(Color.Black)
+			.background(MaterialTheme.colorScheme.background)
 	) {
 		Box(
 			modifier = Modifier
@@ -204,7 +205,7 @@ fun PostDetailScreen(
 				Icon(
 					imageVector = if (isMuted) Icons.Filled.VolumeOff else Icons.Filled.VolumeUp,
 					contentDescription = if (isMuted) "Suarakan" else "Bisukan",
-					tint = Color.White
+					tint = MaterialTheme.colorScheme.onBackground
 				)
 			}
 
@@ -218,7 +219,7 @@ fun PostDetailScreen(
 				ActionRailItem(
 					icon = if (liked) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
 					count = likeCount,
-					tint = if (liked) Color(0xFFE53935) else Color.White,
+					tint = if (liked) Like else MaterialTheme.colorScheme.onBackground,
 					onClick = {
 						liked = !liked
 						likeCount = if (liked) likeCount + 1 else likeCount - 1
@@ -228,7 +229,7 @@ fun PostDetailScreen(
 				ActionRailItem(
 					painter = painterResource(R.drawable.comment_regular_full),
 					count = post.commentCount,
-					tint = Color.White,
+					tint = MaterialTheme.colorScheme.onBackground,
 					onClick = { setSheet(true) }
 				)
 			}
@@ -242,7 +243,7 @@ fun PostDetailScreen(
 						append("  ")
 						append(post.caption)
 					},
-					color = Color.White,
+					color = MaterialTheme.colorScheme.onBackground,
 					style = MaterialTheme.typography.bodyMedium,
 					maxLines = 2,
 					overflow = TextOverflow.Ellipsis,
@@ -323,7 +324,7 @@ private fun ActionRailItem(
 		}
 		Text(
 			text = count.toString(),
-			color = Color.White,
+			color = MaterialTheme.colorScheme.onBackground,
 			style = MaterialTheme.typography.labelMedium
 		)
 	}
@@ -337,7 +338,7 @@ private fun PostDetailHeader(
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
-			.background(Color.Black)
+			.background(MaterialTheme.colorScheme.background)
 			.padding(horizontal = 8.dp, vertical = 10.dp),
 		verticalAlignment = Alignment.CenterVertically
 	) {
@@ -345,7 +346,7 @@ private fun PostDetailHeader(
 			Icon(
 				imageVector = Icons.AutoMirrored.Filled.ArrowBack,
 				contentDescription = "Kembali",
-				tint = Color.White
+				tint = MaterialTheme.colorScheme.onBackground
 			)
 		}
 		Spacer(Modifier.width(6.dp))
@@ -356,14 +357,14 @@ private fun PostDetailHeader(
 				text = post.username,
 				style = MaterialTheme.typography.titleSmall,
 				fontWeight = FontWeight.SemiBold,
-				color = Color.White,
+				color = MaterialTheme.colorScheme.onBackground,
 				maxLines = 1
 			)
 			if (post.createdAt.isNotBlank()) {
 				Text(
 					text = post.createdAt.take(10).replace('-', '·'),
 					style = MaterialTheme.typography.labelSmall,
-					color = Color.White.copy(alpha = 0.7f)
+					color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
 				)
 			}
 		}

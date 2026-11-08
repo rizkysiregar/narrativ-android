@@ -170,13 +170,13 @@ fun PostFeedScreen(
 				.fillMaxWidth()
 				.height(52.dp),
 			shape = RoundedCornerShape(16.dp),
-			colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
+			colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
 		) {
 			if (isPreparing) {
 				CircularProgressIndicator(
 					modifier = Modifier.size(22.dp),
 					strokeWidth = 2.dp,
-					color = Color.White
+					color = MaterialTheme.colorScheme.onBackground
 				)
 			} else {
 				Text("Bagikan feed", fontWeight = FontWeight.SemiBold)
@@ -243,7 +243,7 @@ private fun SelectedPhotoPreview(
 					.align(Alignment.BottomEnd)
 					.padding(12.dp),
 				shape = RoundedCornerShape(14.dp),
-				colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White.copy(alpha = 0.92f))
+				colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.92f))
 			) {
 				Icon(Icons.Default.Add, contentDescription = null)
 				Spacer(Modifier.width(6.dp))
@@ -360,12 +360,12 @@ private fun RecentPhotoTile(uri: Uri, isSelected: Boolean, onClick: () -> Unit) 
 					.align(Alignment.TopEnd)
 					.padding(6.dp),
 				shape = CircleShape,
-				color = Color.Black
+				color = MaterialTheme.colorScheme.background
 			) {
 				Icon(
 					Icons.Default.Check,
 					contentDescription = "Foto terpilih",
-					tint = Color.White,
+					tint = MaterialTheme.colorScheme.onBackground,
 					modifier = Modifier.padding(4.dp).size(14.dp)
 				)
 			}

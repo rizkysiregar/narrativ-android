@@ -66,7 +66,7 @@ fun OtpVerificationView(
 
 	Column(
 		modifier = Modifier
-			.background(color = Color.White)
+			.background(color = MaterialTheme.colorScheme.background)
 			.fillMaxSize()
 			.padding(16.dp),
 		horizontalAlignment = Alignment.CenterHorizontally
@@ -143,8 +143,8 @@ fun OtpVerificationView(
 				.height(52.dp),
 			shape = RoundedCornerShape(12.dp),
 			colors = ButtonDefaults.buttonColors(
-				containerColor = Color.Black,
-				contentColor = Color.White
+				containerColor = MaterialTheme.colorScheme.primary,
+				contentColor = MaterialTheme.colorScheme.onPrimary
 			)
 		) {
 			Text(
