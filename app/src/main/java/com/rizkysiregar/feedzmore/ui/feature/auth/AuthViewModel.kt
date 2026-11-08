@@ -157,6 +157,7 @@ class AuthViewModel @Inject constructor(
 
     private suspend fun saveSession(data: LoginResponse) {
         dataStore.put(PrefKeys.token, data.token)
+        dataStore.put(PrefKeys.refreshToken, data.refreshToken)
         dataStore.put(PrefKeys.username, data.username)
         dataStore.put(PrefKeys.userId, data.userId)
         dataStore.put(PrefKeys.isLoggedIn, true)

@@ -3,6 +3,7 @@ package com.rizkysiregar.feedzmore.data.remote.api
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.EmailRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.GoogleLoginRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.LoginRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.RefreshTokenRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.RegisterRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.ResetNewPasswordRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.ResetPassVerifyOtpRequest
@@ -24,6 +25,11 @@ interface AuthApi {
 	@POST("auth/login")
 	suspend fun login(
 		@Body request: LoginRequest
+	): BaseResponse<LoginResponse>
+
+	@POST("auth/refresh")
+	suspend fun refreshToken(
+		@Body request: RefreshTokenRequest
 	): BaseResponse<LoginResponse>
 
 	@POST("auth/google")

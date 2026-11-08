@@ -17,7 +17,8 @@ import javax.inject.Inject
 class AuthInterceptor @Inject constructor(
 	private val tokenHolder: JwtTokenHolder,
 	private val sessionManager: SessionManager,
-	private val apiErrorManager: ApiErrorManager
+	private val apiErrorManager: ApiErrorManager,
+	private val tokenRefresher: TokenRefresher
 ) : Interceptor {
 
 	override fun intercept(chain: Interceptor.Chain): Response {
@@ -30,7 +31,7 @@ class AuthInterceptor @Inject constructor(
 		}
 
 		val protectedRequest = !isPublicAuthEndpoint(request.url.encodedPath)
-		val response = try {
+		var response = try {
 			chain.proceed(requestBuilder.build())
 		} catch (e: IOException) {
 			// A cancelled call (e.g. leaving a screen) is not a user-facing failure.
@@ -40,9 +41,27 @@ class AuthInterceptor @Inject constructor(
 			throw e
 		}
 
+		if (protectedRequest && response.code == HTTP_UNAUTHORIZED) {
+			val message = extractErrorMessage(response)
+			when (tokenRefresher.refresh(token)) {
+				TokenRefresher.Result.REFRESHED -> {
+					response.close()
+					response = chain.proceed(
+						request.newBuilder()
+							.header("Authorization", "Bearer ${tokenHolder.getToken()}")
+							.build()
+					)
+					if (response.code == HTTP_UNAUTHORIZED) {
+						sessionManager.expireSession(extractErrorMessage(response))
+					}
+				}
+				TokenRefresher.Result.REJECTED -> sessionManager.expireSession(message)
+				// Network/server trouble while refreshing: keep the session, surface the 401.
+				TokenRefresher.Result.FAILED -> Unit
+			}
+		}
+
 		when {
-			protectedRequest && response.code == HTTP_UNAUTHORIZED ->
-				sessionManager.expireSession(extractErrorMessage(response))
 
 			// 401 on auth endpoints (wrong password) is already shown inline by the auth
 			// screens, and 404 is handled by callers on purpose (e.g. empty states).
