@@ -65,7 +65,8 @@ fun UserDetailScreen(
 	isFollowActionLoading: Boolean = false,
 	onFollowClick: () -> Unit = {},
 	onFollowersClick: () -> Unit = {},
-	onFollowingClick: () -> Unit = {}
+	onFollowingClick: () -> Unit = {},
+	onPostClick: (FeedContentItem) -> Unit = {}
 ) {
 	Scaffold(
 		topBar = {
@@ -152,7 +153,7 @@ fun UserDetailScreen(
 									)
 								}
 							}
-							PostGrid(posts = feedState.items)
+							PostGrid(posts = feedState.items, onPostClick = onPostClick)
 						}
 
 						if (feedState.isLoadingMore || (feedState.isError && feedState.items.isNotEmpty())) {

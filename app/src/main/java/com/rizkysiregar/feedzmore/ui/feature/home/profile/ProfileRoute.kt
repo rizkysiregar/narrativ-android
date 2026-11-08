@@ -9,6 +9,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedViewModel
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 import kotlinx.coroutines.flow.collectLatest
@@ -25,7 +26,8 @@ fun ProfileRoute(
     profileFeedVm: ProfileFeedViewModel = hiltViewModel(),
 	onLogoutClick: () -> Unit,
 	onFollowersClick: (String) -> Unit = {},
-	onFollowingClick: (String) -> Unit = {}
+	onFollowingClick: (String) -> Unit = {},
+	onPostClick: (FeedContentItem, (String) -> Unit) -> Unit = { _, _ -> }
 ) {
     val profileState by profileVm.profileState.collectAsState()
     val followStatus by profileVm.followStatus.collectAsState()
@@ -84,7 +86,8 @@ fun ProfileRoute(
             },
             followStatus = followStatus,
             onFollowersClick = { userId -> onFollowersClick(userId) },
-            onFollowingClick = { userId -> onFollowingClick(userId) }
+            onFollowingClick = { userId -> onFollowingClick(userId) },
+            onPostClick = { post -> onPostClick(post, profileFeedVm::toggleLike) }
         )
     }
 
