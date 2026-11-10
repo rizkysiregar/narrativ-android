@@ -37,7 +37,7 @@ class FeedRepositoryImpl @Inject constructor(
 
 	override fun getExplorePosts(request: GetAllFeedRequest): Flow<ResultState<FeedsPostPaginationResponse>> =
 		flowFromApi {
-			feedApi.getExplorePosts(request.page, request.size)
+			feedApi.getExplorePosts(request.page, request.size, request.mediaOnly)
 		}
 
 	override fun getFeedByUsername(request: GetFeedByUsernameRequest): Flow<ResultState<FeedsPostPaginationResponse>> =
@@ -45,7 +45,8 @@ class FeedRepositoryImpl @Inject constructor(
 			feedApi.getFeedByUsername(
 				request.username,
 				request.page,
-				request.size
+				request.size,
+				request.mediaOnly
 			)
 		}
 

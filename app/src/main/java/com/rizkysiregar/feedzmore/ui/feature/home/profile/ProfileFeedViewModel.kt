@@ -26,21 +26,23 @@ class ProfileFeedViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             // suspend until a real username is available from datastore
-            val username = usernameDataStore.first { it.isNotBlank() }
-            refresh()
+            usernameDataStore.first { it.isNotBlank() }
+            refreshAll()
         }
     }
 
     override suspend fun fetchPage(
         page: Int,
-        size: Int
+        size: Int,
+        mediaOnly: Boolean
     ): Flow<ResultState<FeedsPostPaginationResponse>> {
         val username = usernameDataStore.value
         return getFeedByUsernameUseCase(
             GetFeedByUsernameRequest(
                 page = page,
                 size = size,
-                username = username
+                username = username,
+                mediaOnly = mediaOnly
             )
         )
     }

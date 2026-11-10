@@ -3,16 +3,11 @@ package com.rizkysiregar.feedzmore.ui.feature.home.explore
 import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyGridState
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
@@ -21,51 +16,47 @@ import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.unit.dp
-import com.rizkysiregar.feedzmore.ui.components.PostTileContent
-import com.rizkysiregar.feedzmore.ui.components.TakenDownPlaceholder
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedItemCard
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedUiState
+import com.rizkysiregar.feedzmore.ui.feature.home.feed.PostViewMode
+import com.rizkysiregar.feedzmore.ui.feature.home.feed.PostViewPager
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ExploreScreenContent(
-	uiState: FeedUiState,
-	gridState: LazyGridState,
+	pagerState: PagerState,
+	gridFeed: FeedUiState,
+	listFeed: FeedUiState,
 	selectedPost: FeedContentItem?,
-	onPostClick: (FeedContentItem) -> Unit,
+	onGridPostClick: (FeedContentItem) -> Unit,
 	onDismissDetail: () -> Unit,
 	onLikeClick: (String) -> Unit,
 	onCommentClick: (FeedContentItem) -> Unit,
+	onVideoClick: (FeedContentItem) -> Unit,
+	onLoadMoreGrid: () -> Unit,
+	onLoadMoreList: () -> Unit,
+	onRetryGrid: () -> Unit,
+	onRetryList: () -> Unit,
 	onRefresh: () -> Unit = {}
 ) {
-	val gridModifier = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && selectedPost != null) {
+	val pagerModifier = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && selectedPost != null) {
 		Modifier.fillMaxSize().blur(14.dp)
 	} else {
 		Modifier.fillMaxSize()
 	}
 
-	var visibleItemIds by remember { mutableStateOf<Set<String>>(emptySet()) }
-
-	LaunchedEffect(gridState, uiState.items) {
-		snapshotFlow { gridState.layoutInfo }.collect { layoutInfo ->
-			visibleItemIds = layoutInfo.visibleItemsInfo
-				.mapNotNull { info -> uiState.items.getOrNull(info.index)?.id }
-				.toSet()
-		}
+	// the indicator follows the page on screen; a pull refreshes both
+	val isRefreshing = if (pagerState.currentPage == PostViewMode.GRID.ordinal) {
+		gridFeed.isRefreshing
+	} else {
+		listFeed.isRefreshing
 	}
-
-	val pullState = rememberPullRefreshState(refreshing = uiState.isRefreshing, onRefresh = onRefresh)
+	val pullState = rememberPullRefreshState(refreshing = isRefreshing, onRefresh = onRefresh)
 
 	Box(
 		modifier = Modifier
@@ -73,32 +64,19 @@ fun ExploreScreenContent(
 			.background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.22f))
 			.pullRefresh(pullState)
 	) {
-		LazyVerticalGrid(
-			state = gridState,
-			columns = GridCells.Fixed(3),
-			horizontalArrangement = Arrangement.spacedBy(2.dp),
-			verticalArrangement = Arrangement.spacedBy(2.dp),
-			modifier = gridModifier
-		) {
-			items(uiState.items, key = { it.id }) { post ->
-				Surface(
-					modifier = Modifier
-						.fillMaxWidth()
-						.aspectRatio(1f)
-						.clickable { onPostClick(post) }
-				) {
-				if (post.isTakenDown) {
-					TakenDownPlaceholder(
-						message = post.takedownMessage,
-						modifier = Modifier.fillMaxSize(),
-						compact = true
-					)
-				} else {
-					PostTileContent(post = post)
-				}
-				}
-			}
-		}
+		PostViewPager(
+			pagerState = pagerState,
+			gridFeed = gridFeed,
+			listFeed = listFeed,
+			onGridPostClick = onGridPostClick,
+			onLikeClick = onLikeClick,
+			onVideoClick = onVideoClick,
+			onLoadMoreGrid = onLoadMoreGrid,
+			onLoadMoreList = onLoadMoreList,
+			onRetryGrid = onRetryGrid,
+			onRetryList = onRetryList,
+			modifier = pagerModifier
+		)
 
 		if (selectedPost != null) {
 			Box(
@@ -118,19 +96,19 @@ fun ExploreScreenContent(
 					tonalElevation = 6.dp,
 					shadowElevation = 8.dp
 				) {
-				FeedItemCard(
-					item = selectedPost,
-					onLikeClick = onLikeClick,
-					onCommentClick = onCommentClick,
-					// posts with a video open the full screen detail instead, so this card holds images or text only
-					isActiveVideo = false
-				)
+					FeedItemCard(
+						item = selectedPost,
+						onLikeClick = onLikeClick,
+						onCommentClick = onCommentClick,
+						// posts with a video open the full screen detail instead, so this card holds images only
+						isActiveVideo = false
+					)
 				}
 			}
 		}
 
 		PullRefreshIndicator(
-			refreshing = uiState.isRefreshing,
+			refreshing = isRefreshing,
 			state = pullState,
 			modifier = Modifier.align(Alignment.TopCenter)
 		)

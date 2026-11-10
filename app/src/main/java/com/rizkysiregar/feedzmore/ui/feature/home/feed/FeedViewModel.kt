@@ -51,8 +51,10 @@ class FeedViewModel @Inject constructor(
 
     override suspend fun fetchPage(
         page: Int,
-        size: Int
+        size: Int,
+        mediaOnly: Boolean
     ): Flow<ResultState<FeedsPostPaginationResponse>> =
+        // home is list only: the grid stream is never requested here
         getAllFeedUseCase(GetAllFeedRequest(page, size))
 
 }

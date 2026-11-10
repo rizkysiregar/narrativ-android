@@ -8,8 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
@@ -34,8 +33,9 @@ import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.feedzmore.data.remote.model.response.user.UserSearchItemResponse
 import com.rizkysiregar.feedzmore.ui.components.InitialAvatar
-import com.rizkysiregar.feedzmore.ui.components.PostGrid
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedUiState
+import com.rizkysiregar.feedzmore.ui.feature.home.feed.PostViewMode
+import com.rizkysiregar.feedzmore.ui.feature.home.feed.PostViewPager
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 
 /**
@@ -48,11 +48,15 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 @Composable
 fun ProfileScreen(
 	profileState: ResultState<UserSearchItemResponse>,
-	feedState: FeedUiState,
-	listState: LazyListState,
+	pagerState: PagerState,
+	gridFeed: FeedUiState,
+	listFeed: FeedUiState,
 	onSettingsClick: () -> Unit,
 	onRetry: () -> Unit,
-	onRetryFeed: () -> Unit,
+	onRetryGrid: () -> Unit,
+	onRetryList: () -> Unit,
+	onLoadMoreGrid: () -> Unit,
+	onLoadMoreList: () -> Unit,
 	onRefresh: () -> Unit,
 	onLikeClick: (String) -> Unit,
 	followStatus: ResultState<com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowStatusResponse>?,
@@ -77,8 +81,14 @@ fun ProfileScreen(
 			)
 		},
 	) { innerPadding ->
+		// the indicator follows the page on screen; a pull refreshes everything
+		val isRefreshing = if (pagerState.currentPage == PostViewMode.GRID.ordinal) {
+			gridFeed.isRefreshing
+		} else {
+			listFeed.isRefreshing
+		}
 		val pullState = rememberPullRefreshState(
-			refreshing = feedState.isRefreshing,
+			refreshing = isRefreshing,
 			onRefresh = onRefresh
 		)
 
@@ -96,13 +106,19 @@ fun ProfileScreen(
 
 				is ResultState.Success -> {
 					val user = profileState.data
-					LazyColumn(
-						state = listState,
-						modifier = Modifier
-							.fillMaxSize()
-					) {
-						// item 1: User Profile information section
-						item {
+					PostViewPager(
+						pagerState = pagerState,
+						gridFeed = gridFeed,
+						listFeed = listFeed,
+						onGridPostClick = onPostClick,
+						onLikeClick = onLikeClick,
+						onVideoClick = onPostClick,
+						onLoadMoreGrid = onLoadMoreGrid,
+						onLoadMoreList = onLoadMoreList,
+						onRetryGrid = onRetryGrid,
+						onRetryList = onRetryList,
+						modifier = Modifier.fillMaxSize(),
+						header = {
 							UserProfileInfo(
 								user = user,
 								followStatus = followStatus,
@@ -110,48 +126,10 @@ fun ProfileScreen(
 								onFollowingClick = { onFollowingClick(user.id) }
 							)
 						}
-
-						// item 2: Post collection section
-						item {
-							Text(
-								text = "My Posts",
-								style = MaterialTheme.typography.titleMedium,
-								modifier = Modifier
-									.fillMaxWidth()
-									.padding(horizontal = 16.dp, vertical = 8.dp)
-							)
-						}
-
-						// User post section
-						if (feedState.isError && feedState.items.isEmpty()) {
-								item {
-									Column(modifier = Modifier.padding(16.dp)) {
-										Text("Could not load post.", color = MaterialTheme.colorScheme.error)
-										Button(onClick = onRetryFeed) { Text("Retry") }
-									}
-							}
-						} else {
-							PostGrid(posts = feedState.items, onPostClick = onPostClick)
-						}
-
-							// Footer displays progress or a retry action for the current page.
-							if (feedState.isLoadingMore || (feedState.isError && feedState.items.isNotEmpty())) {
-								item {
-									Box(
-									modifier = Modifier
-										.fillMaxWidth()
-										.padding(16.dp),
-									contentAlignment = Alignment.Center
-								) {
-										if (feedState.isLoadingMore) CircularProgressIndicator()
-										else Button(onClick = onRetryFeed) { Text("Retry") }
-									}
-								}
-						}
-					}
+					)
 
 					PullRefreshIndicator(
-						refreshing = feedState.isRefreshing,
+						refreshing = isRefreshing,
 						state = pullState,
 						modifier = Modifier.align(Alignment.TopCenter)
 					)

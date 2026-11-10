@@ -1,18 +1,20 @@
 package com.rizkysiregar.feedzmore.ui.feature.home.feed
 
 import com.rizkysiregar.feedzmore.ui.theme.Like
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,41 +22,44 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.media3.exoplayer.ExoPlayer
-import coil3.compose.SubcomposeAsyncImage
-import coil3.request.ImageRequest
 import com.rizkysiregar.feedzmore.R
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.MediaType
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.PostMediaItem
 import com.rizkysiregar.feedzmore.ui.components.InitialAvatar
-import com.rizkysiregar.feedzmore.ui.components.ShimmerEffect
 import com.rizkysiregar.feedzmore.ui.components.TakenDownPlaceholder
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 
+private const val CAPTION_ONLY_MAX_LINES = 10
+private const val CAPTION_WITH_MEDIA_MAX_LINES = 4
+private val MediaShape = RoundedCornerShape(16.dp)
+
+/**
+ * A post, caption first: author, then the caption, then the media below it as an attachment, and
+ * the like/comment actions at the bottom. A caption-only post is just the text, like a thread.
+ */
 @Composable
 fun FeedItemCard(
 	item: FeedContentItem,
@@ -74,48 +79,55 @@ fun FeedItemCard(
 		label = "feed-like-scale"
 	)
 	val likeColor by animateColorAsState(
-		targetValue = if (item.liked) Like else MaterialTheme.colorScheme.onSurface,
+		targetValue = if (item.liked) Like else MaterialTheme.colorScheme.onSurfaceVariant,
 		animationSpec = tween(durationMillis = 180),
 		label = "feed-like-color"
 	)
 
 	Card(
 		modifier = Modifier.fillMaxWidth(),
-		shape = RoundedCornerShape(22.dp),
+		shape = RoundedCornerShape(20.dp),
 		colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-		elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+		border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+		elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
 	) {
-		Column {
+		Column(modifier = Modifier.padding(start = 16.dp, top = 14.dp, end = 16.dp, bottom = 6.dp)) {
 			FeedAuthorHeader(item = item)
-		if (item.isTakenDown) {
-			TakenDownPlaceholder(
-				message = item.takedownMessage,
-				modifier = Modifier
-					.fillMaxWidth()
-					.aspectRatio(1.08f)
-			)
-		} else {
-		if (item.hasMedia) {
-			PostMediaPager(
-				media = item.mediaItems,
-				isActive = isActiveVideo,
-				player = player,
-				muted = isVideoMuted,
-				initialPage = initialPage,
-				onPageChange = onPageChange,
-				onToggleMute = onToggleVideoMute,
-				onVideoClick = onVideoClick
-			)
-		} else if (!item.caption.isNullOrBlank()) {
-			// caption-only post: the text is the content, so it comes before the actions
-			Text(
-				text = item.caption,
-				style = MaterialTheme.typography.bodyLarge,
-				modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
-				maxLines = 12,
-				overflow = TextOverflow.Ellipsis
-			)
-		}
+
+			if (item.isTakenDown) {
+				Spacer(Modifier.height(12.dp))
+				TakenDownPlaceholder(
+					message = item.takedownMessage,
+					modifier = Modifier
+						.fillMaxWidth()
+						.aspectRatio(1.6f)
+						.clip(MediaShape)
+				)
+			} else {
+				if (!item.caption.isNullOrBlank()) {
+					Spacer(Modifier.height(10.dp))
+					ExpandableCaption(
+						caption = item.caption,
+						captionOnly = !item.hasMedia
+					)
+				}
+				if (item.hasMedia) {
+					Spacer(Modifier.height(12.dp))
+					PostMediaPager(
+						media = item.mediaItems,
+						isActive = isActiveVideo,
+						player = player,
+						muted = isVideoMuted,
+						initialPage = initialPage,
+						onPageChange = onPageChange,
+						onToggleMute = onToggleVideoMute,
+						onVideoClick = onVideoClick,
+						aspectRatio = 1f,
+						modifier = Modifier.clip(MediaShape)
+					)
+				}
+			}
+
 			FeedActions(
 				item = item,
 				likeScale = likeScale,
@@ -123,22 +135,6 @@ fun FeedItemCard(
 				onLikeClick = { onLikeClick(item.id) },
 				onCommentClick = { onCommentClick(item) }
 			)
-			AnimatedVisibility(visible = item.hasMedia && !item.caption.isNullOrBlank()) {
-				Text(
-					text = buildAnnotatedString {
-						withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-							append(item.username)
-						}
-						append("  ")
-						append(item.caption.orEmpty())
-					},
-					style = MaterialTheme.typography.bodyMedium,
-					modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-					maxLines = 3,
-					overflow = TextOverflow.Ellipsis
-				)
-			}
-		}
 		}
 	}
 }
@@ -146,28 +142,64 @@ fun FeedItemCard(
 @Composable
 private fun FeedAuthorHeader(item: FeedContentItem) {
 	Row(
-		modifier = Modifier
-			.fillMaxWidth()
-			.padding(horizontal = 16.dp, vertical = 13.dp),
+		modifier = Modifier.fillMaxWidth(),
 		verticalAlignment = Alignment.CenterVertically
 	) {
-		InitialAvatar(name = item.username, size = 42.dp)
-		Spacer(Modifier.width(11.dp))
-		Column(modifier = Modifier.weight(1f)) {
+		InitialAvatar(name = item.username, size = 38.dp)
+		Spacer(Modifier.width(10.dp))
+		Text(
+			text = item.username,
+			style = MaterialTheme.typography.titleSmall,
+			fontWeight = FontWeight.SemiBold,
+			maxLines = 1,
+			overflow = TextOverflow.Ellipsis,
+			modifier = Modifier.weight(1f, fill = false)
+		)
+		if (item.createdAt.isNotBlank()) {
 			Text(
-				text = item.username,
-				style = MaterialTheme.typography.titleSmall,
-				fontWeight = FontWeight.SemiBold,
-				maxLines = 1,
-				overflow = TextOverflow.Ellipsis
+				text = "  ·  ${item.createdAt.toReadableDate()}",
+				style = MaterialTheme.typography.labelMedium,
+				color = MaterialTheme.colorScheme.onSurfaceVariant,
+				maxLines = 1
 			)
-			if (item.createdAt.isNotBlank()) {
-				Text(
-					text = item.createdAt.toReadableDate(),
-					style = MaterialTheme.typography.labelSmall,
-					color = MaterialTheme.colorScheme.onSurfaceVariant
-				)
-			}
+		}
+	}
+}
+
+/**
+ * The caption, cut after a few lines with a "see more" toggle. A caption-only post gets a larger
+ * type and more lines since the text is the whole post.
+ */
+@Composable
+private fun ExpandableCaption(caption: String, captionOnly: Boolean) {
+	var expanded by rememberSaveable(caption) { mutableStateOf(false) }
+	var overflows by remember(caption) { mutableStateOf(false) }
+	val maxLines = if (captionOnly) CAPTION_ONLY_MAX_LINES else CAPTION_WITH_MEDIA_MAX_LINES
+
+	Column(
+		modifier = Modifier
+			.animateContentSize()
+			.clickable(
+				enabled = overflows || expanded,
+				interactionSource = remember { MutableInteractionSource() },
+				indication = null
+			) { expanded = !expanded }
+	) {
+		Text(
+			text = caption,
+			style = if (captionOnly) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium,
+			color = MaterialTheme.colorScheme.onSurface,
+			maxLines = if (expanded) Int.MAX_VALUE else maxLines,
+			overflow = TextOverflow.Ellipsis,
+			onTextLayout = { result -> if (!expanded) overflows = result.hasVisualOverflow }
+		)
+		if (overflows || expanded) {
+			Text(
+				text = if (expanded) "Sembunyikan" else "Lihat selengkapnya",
+				style = MaterialTheme.typography.labelMedium,
+				color = MaterialTheme.colorScheme.onSurfaceVariant,
+				modifier = Modifier.padding(top = 4.dp)
+			)
 		}
 	}
 }
@@ -183,45 +215,51 @@ private fun FeedActions(
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
-			.padding(horizontal = 14.dp, vertical = 12.dp),
-		horizontalArrangement = Arrangement.spacedBy(10.dp),
+			.padding(top = 6.dp),
+		horizontalArrangement = Arrangement.spacedBy(4.dp),
 		verticalAlignment = Alignment.CenterVertically
 	) {
-		ActionChip(onClick = onLikeClick) {
+		ActionButton(onClick = onLikeClick) {
 			Icon(
 				imageVector = if (item.liked) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
 				contentDescription = if (item.liked) "Batalkan suka" else "Suka",
 				tint = likeColor,
 				modifier = Modifier.size(20.dp).scale(likeScale)
 			)
-			Text(item.likeCount.toString(), style = MaterialTheme.typography.labelLarge)
+			Text(
+				text = item.likeCount.toString(),
+				style = MaterialTheme.typography.labelLarge,
+				color = MaterialTheme.colorScheme.onSurfaceVariant
+			)
 		}
 
-		ActionChip(onClick = onCommentClick) {
+		ActionButton(onClick = onCommentClick) {
 			Icon(
 				painter = painterResource(R.drawable.comment_regular_full),
 				contentDescription = "Komentar",
-				modifier = Modifier.size(19.dp)
+				tint = MaterialTheme.colorScheme.onSurfaceVariant,
+				modifier = Modifier.size(18.dp)
 			)
-			Text(item.commentCount.toString(), style = MaterialTheme.typography.labelLarge)
+			Text(
+				text = item.commentCount.toString(),
+				style = MaterialTheme.typography.labelLarge,
+				color = MaterialTheme.colorScheme.onSurfaceVariant
+			)
 		}
 	}
 }
 
 @Composable
-private fun ActionChip(onClick: () -> Unit, content: @Composable () -> Unit) {
-	Surface(
-		onClick = onClick,
-		shape = RoundedCornerShape(50),
-		color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)
+private fun ActionButton(onClick: () -> Unit, content: @Composable () -> Unit) {
+	Row(
+		modifier = Modifier
+			.clip(RoundedCornerShape(50))
+			.clickable(onClick = onClick)
+			.padding(horizontal = 8.dp, vertical = 8.dp),
+		horizontalArrangement = Arrangement.spacedBy(6.dp),
+		verticalAlignment = Alignment.CenterVertically
 	) {
-		Row(
-			modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-			horizontalArrangement = Arrangement.spacedBy(7.dp),
-			verticalAlignment = Alignment.CenterVertically
-		) {
-			content()
-		}
+		content()
 	}
 }
 
@@ -242,6 +280,25 @@ private fun FeedItemCardPreview() {
 				createdAt = "2026-10-05",
 				media = listOf(PostMediaItem("m1", MediaType.IMAGE, "https://dummy-url", null)),
 				username = "John Doe"
+			),
+			onLikeClick = {}
+		)
+	}
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun FeedItemCardCaptionOnlyPreview() {
+	FeedzmoreTheme {
+		FeedItemCard(
+			item = FeedContentItem(
+				id = "2",
+				caption = "Kadang yang paling dibutuhkan cuma secangkir kopi dan waktu sendiri.",
+				commentCount = 2,
+				likeCount = 31,
+				liked = false,
+				createdAt = "2026-11-02",
+				username = "Jane Doe"
 			),
 			onLikeClick = {}
 		)
