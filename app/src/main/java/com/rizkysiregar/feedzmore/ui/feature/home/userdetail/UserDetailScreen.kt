@@ -13,9 +13,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -41,9 +40,9 @@ import androidx.compose.ui.unit.dp
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.feedzmore.data.remote.model.response.user.UserSearchItemResponse
-import com.rizkysiregar.feedzmore.ui.components.PostGrid
 import com.rizkysiregar.feedzmore.ui.components.ProfileAvatar
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedUiState
+import com.rizkysiregar.feedzmore.ui.feature.home.feed.PostViewPager
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 
 /**
@@ -56,11 +55,16 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 @Composable
 fun UserDetailScreen(
 	profileState: ResultState<UserSearchItemResponse>,
-	feedState: FeedUiState,
-	listState: LazyListState = rememberLazyListState(),
+	pagerState: PagerState,
+	gridFeed: FeedUiState,
+	listFeed: FeedUiState,
 	onBackClick: () -> Unit,
 	onRetry: () -> Unit,
-	onRetryFeed: () -> Unit,
+	onRetryGrid: () -> Unit,
+	onRetryList: () -> Unit,
+	onLoadMoreGrid: () -> Unit,
+	onLoadMoreList: () -> Unit,
+	onLikeClick: (String) -> Unit,
 	followStatus: ResultState<com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowStatusResponse>? = null,
 	isFollowActionLoading: Boolean = false,
 	onFollowClick: () -> Unit = {},
@@ -98,78 +102,32 @@ fun UserDetailScreen(
 
 				is ResultState.Success -> {
 					val user = profileState.data
-					LazyColumn(
-						state = listState,
-						modifier = Modifier.fillMaxSize()
-					) {
-					item { UserDetailHeader(user = user) }
-					item {
-						FollowStatusSection(
-							followStatus = followStatus,
-							isFollowActionLoading = isFollowActionLoading,
-							onFollowClick = onFollowClick,
-							onFollowersClick = onFollowersClick,
-							onFollowingClick = onFollowingClick
-						)
-					}
-					item { UserInfoCard(user = user) }
-						item {
-							Text(
-								text = "Posts",
-								style = MaterialTheme.typography.titleMedium,
-								modifier = Modifier
-									.fillMaxWidth()
-									.padding(horizontal = 16.dp, vertical = 8.dp)
-							)
-						}
-
-						if (feedState.isError && feedState.items.isEmpty()) {
-							item {
-								Column(modifier = Modifier.padding(16.dp)) {
-									Text("Could not load post.", color = MaterialTheme.colorScheme.error)
-									Button(onClick = onRetryFeed) { Text("Retry") }
-								}
-							}
-						} else {
-							if (!feedState.hasLoadedInitialPage) {
-								item {
-									Box(
-										modifier = Modifier
-											.fillMaxWidth()
-											.padding(16.dp),
-										contentAlignment = Alignment.Center
-									) {
-										CircularProgressIndicator()
-									}
-								}
-							} else if (feedState.items.isEmpty()) {
-								item {
-									Text(
-										text = "Belum ada posts",
-										color = MaterialTheme.colorScheme.onSurfaceVariant,
-										modifier = Modifier
-											.fillMaxWidth()
-											.padding(horizontal = 16.dp, vertical = 8.dp)
-									)
-								}
-							}
-							PostGrid(posts = feedState.items, onPostClick = onPostClick)
-						}
-
-						if (feedState.isLoadingMore || (feedState.isError && feedState.items.isNotEmpty())) {
-							item {
-								Box(
-									modifier = Modifier
-										.fillMaxWidth()
-										.padding(16.dp),
-									contentAlignment = Alignment.Center
-								) {
-									if (feedState.isLoadingMore) CircularProgressIndicator()
-									else Button(onClick = onRetryFeed) { Text("Retry") }
-								}
+					PostViewPager(
+						pagerState = pagerState,
+						gridFeed = gridFeed,
+						listFeed = listFeed,
+						onGridPostClick = onPostClick,
+						onLikeClick = onLikeClick,
+						onVideoClick = onPostClick,
+						onLoadMoreGrid = onLoadMoreGrid,
+						onLoadMoreList = onLoadMoreList,
+						onRetryGrid = onRetryGrid,
+						onRetryList = onRetryList,
+						modifier = Modifier.fillMaxSize(),
+						header = {
+							Column {
+								UserDetailHeader(user = user)
+								FollowStatusSection(
+									followStatus = followStatus,
+									isFollowActionLoading = isFollowActionLoading,
+									onFollowClick = onFollowClick,
+									onFollowersClick = onFollowersClick,
+									onFollowingClick = onFollowingClick
+								)
+								UserInfoCard(user = user)
 							}
 						}
-					}
+					)
 				}
 
 				is ResultState.Failure -> {
@@ -337,6 +295,28 @@ private fun UserInfoRow(
 @Preview(showBackground = true)
 @Composable
 fun UserDetailScreenPreview() {
+	val previewFeed = FeedUiState(
+		items = List(6) { index ->
+			FeedContentItem(
+				id = index.toString(),
+				createdAt = "2026-10-07",
+				media = listOf(
+					com.rizkysiregar.feedzmore.data.remote.model.response.feed.PostMediaItem(
+						"m$index",
+						com.rizkysiregar.feedzmore.data.remote.model.response.feed.MediaType.IMAGE,
+						"https://dummy-url",
+						null
+					)
+				),
+				caption = "caption $index",
+				likeCount = 1,
+				commentCount = 1,
+				liked = false,
+				username = "rizkysiregar"
+			)
+		},
+		hasLoadedInitialPage = true
+	)
 	FeedzmoreTheme {
 		UserDetailScreen(
 			profileState = ResultState.Success(
@@ -349,31 +329,16 @@ fun UserDetailScreenPreview() {
 					phoneNumber = "081234567890"
 				)
 			),
-			feedState = FeedUiState(
-				items = List(6) { index ->
-					FeedContentItem(
-						id = index.toString(),
-						createdAt = "2026-10-07",
-						media = listOf(
-							com.rizkysiregar.feedzmore.data.remote.model.response.feed.PostMediaItem(
-								"m$index",
-								com.rizkysiregar.feedzmore.data.remote.model.response.feed.MediaType.IMAGE,
-								"https://dummy-url",
-								null
-							)
-						),
-						caption = "caption $index",
-						likeCount = 1,
-						commentCount = 1,
-						liked = false,
-						username = "rizkysiregar"
-					)
-				},
-				hasLoadedInitialPage = true
-			),
+			pagerState = rememberPagerState { 2 },
+			gridFeed = previewFeed,
+			listFeed = previewFeed,
 			onBackClick = {},
 			onRetry = {},
-			onRetryFeed = {}
+			onRetryGrid = {},
+			onRetryList = {},
+			onLoadMoreGrid = {},
+			onLoadMoreList = {},
+			onLikeClick = {}
 		)
 	}
 }

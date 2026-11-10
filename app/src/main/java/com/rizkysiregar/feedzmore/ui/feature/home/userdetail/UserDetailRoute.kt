@@ -2,19 +2,18 @@ package com.rizkysiregar.feedzmore.ui.feature.home.userdetail
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
-import kotlinx.coroutines.flow.collectLatest
+import com.rizkysiregar.feedzmore.ui.feature.home.feed.PostViewMode
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -34,10 +33,11 @@ fun UserDetailRoute(
 	feedViewModel: UserDetailFeedViewModel = hiltViewModel()
 ) {
 	val profileState by detailViewModel.profileState.collectAsState()
-	val feedState by feedViewModel.uiState.collectAsStateWithLifecycle()
+	val listFeed by feedViewModel.uiState.collectAsStateWithLifecycle()
+	val gridFeed by feedViewModel.gridState.collectAsStateWithLifecycle()
 	val followStatus by detailViewModel.followStatus.collectAsState()
 	val isFollowActionLoading by detailViewModel.isFollowActionLoading.collectAsState()
-	val listState = rememberLazyListState()
+	val pagerState = rememberPagerState(initialPage = PostViewMode.GRID.ordinal) { PostViewMode.entries.size }
 
 	LaunchedEffect(userId) {
 		detailViewModel.loadUser(userId)
@@ -46,30 +46,6 @@ fun UserDetailRoute(
 
 	LaunchedEffect(username) {
 		feedViewModel.startFor(username)
-	}
-
-	// Load another page when the visible rows approach the end.
-	LaunchedEffect(
-		listState,
-		feedState.hasMore,
-		feedState.isLoadingMore,
-		feedState.isRefreshing,
-		feedState.isError
-	) {
-		snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-			.collectLatest { last ->
-				val total = listState.layoutInfo.totalItemsCount
-				if (last != null &&
-					last >= total - 3 &&
-					feedState.hasLoadedInitialPage &&
-					!feedState.isLoadingMore &&
-					feedState.hasMore &&
-					!feedState.isRefreshing &&
-					!feedState.isError
-				) {
-					feedViewModel.loadNextPage()
-				}
-			}
 	}
 
 	val state = profileState
@@ -83,14 +59,22 @@ fun UserDetailRoute(
 	} else {
 		UserDetailScreen(
 			profileState = state,
-			feedState = feedState,
-			listState = listState,
+			pagerState = pagerState,
+			gridFeed = gridFeed,
+			listFeed = listFeed,
 			onBackClick = onBackClick,
 			onRetry = { detailViewModel.loadUser(userId) },
-			onRetryFeed = {
-				if (feedState.hasLoadedInitialPage) feedViewModel.loadNextPage()
+			onRetryGrid = {
+				if (gridFeed.hasLoadedInitialPage) feedViewModel.loadNextGridPage()
+				else feedViewModel.refreshGrid()
+			},
+			onRetryList = {
+				if (listFeed.hasLoadedInitialPage) feedViewModel.loadNextPage()
 				else feedViewModel.refresh()
 			},
+			onLoadMoreGrid = feedViewModel::loadNextGridPage,
+			onLoadMoreList = feedViewModel::loadNextPage,
+			onLikeClick = feedViewModel::toggleLike,
 			followStatus = followStatus,
 			isFollowActionLoading = isFollowActionLoading,
 			onFollowClick = { detailViewModel.toggleFollow(userId) },

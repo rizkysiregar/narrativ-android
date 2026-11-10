@@ -18,87 +18,50 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
 
+/**
+ * Pages posts in two independent streams: [uiState] holds every post (the list view and the home
+ * feed), [gridState] only posts holding media (the grid view). The grid stays empty until
+ * [refreshGrid] is called, and a like toggled in one stream shows up in the other too.
+ */
 abstract class BaseFeedViewModel(
     dataStore: DataStoreManager,
     private val dislikePostUseCase: DislikePostUseCase,
     private val likePostUseCase: LikePostUseCase,
 ) : BaseViewModel(dataStore) {
 
-    private val _uiState = MutableStateFlow(FeedUiState())
-    val uiState: StateFlow<FeedUiState> = _uiState.asStateFlow()
+    private val listPaging = FeedPaging(mediaOnly = false)
+    private val gridPaging = FeedPaging(mediaOnly = true)
 
-    private var loadJob: Job? = null
-    private var loadGeneration = 0
+    val uiState: StateFlow<FeedUiState> = listPaging.state
+    val gridState: StateFlow<FeedUiState> = gridPaging.state
 
     // Posts with a like/dislike request in flight; extra taps are ignored until it settles.
     private val likeInFlight = mutableSetOf<String>()
 
     abstract suspend fun fetchPage(
         page: Int,
-        size: Int
+        size: Int,
+        mediaOnly: Boolean
     ): Flow<ResultState<FeedsPostPaginationResponse>>
 
-    fun refresh() {
-        loadGeneration++
-        loadJob?.cancel()
-        val generation = loadGeneration
-        _uiState.value = FeedUiState(isRefreshing = true)
-        loadJob = viewModelScope.launch {
-            loadPage(page = 0, size = _uiState.value.pageSize, generation = generation)
-        }
-    }
+    fun refresh() = listPaging.refresh()
 
-    fun loadNextPage() {
-        val state = _uiState.value
-        if (!state.hasLoadedInitialPage || !state.hasMore ||
-            state.isLoadingMore || state.isRefreshing
-        ) return
+    fun loadNextPage() = listPaging.loadNextPage()
 
-        _uiState.update { it.copy(isLoadingMore = true, errorMessage = null, isError = false) }
-        val generation = loadGeneration
-        loadJob = viewModelScope.launch {
-            loadPage(page = state.page, size = state.pageSize, generation = generation)
-        }
-    }
+    fun refreshGrid() = gridPaging.refresh()
 
-    private suspend fun loadPage(page: Int, size: Int, generation: Int) {
-        fetchPage(page, size).collect { result ->
-            if (generation != loadGeneration) return@collect
-            when (result) {
-                is ResultState.Loading -> Unit
-                is ResultState.Success -> {
-                    val response = result.data
-                    _uiState.update {
-                        it.copy(
-                            items = if (page == 0) response.content else it.items + response.content,
-                            page = page + 1,
-                            hasLoadedInitialPage = true,
-                            isLoadingMore = false,
-                            isRefreshing = false,
-                            hasMore = !response.last && response.content.isNotEmpty(),
-                            errorMessage = null,
-                            isError = false
-                        )
-                    }
-                }
-                is ResultState.Failure -> {
-                    _uiState.update {
-                        it.copy(
-                            isLoadingMore = false,
-                            isRefreshing = false,
-                            errorMessage = result.message,
-                            isError = true
-                        )
-                    }
-                }
-                is ResultState.Idle -> Unit
-            }
-        }
+    fun loadNextGridPage() = gridPaging.loadNextPage()
+
+    fun refreshAll() {
+        refresh()
+        refreshGrid()
     }
 
     fun toggleLike(postId: String) {
         if (postId in likeInFlight) return
-        val original = _uiState.value.items.firstOrNull { it.id == postId } ?: return
+        val original = uiState.value.items.firstOrNull { it.id == postId }
+            ?: gridState.value.items.firstOrNull { it.id == postId }
+            ?: return
         val wasLiked = original.liked
 
         likeInFlight += postId
@@ -130,8 +93,79 @@ abstract class BaseFeedViewModel(
     }
 
     private fun updateItem(postId: String, transform: (FeedContentItem) -> FeedContentItem) {
-        _uiState.update { state ->
-            state.copy(items = state.items.map { if (it.id == postId) transform(it) else it })
+        listPaging.updateItem(postId, transform)
+        gridPaging.updateItem(postId, transform)
+    }
+
+    private inner class FeedPaging(private val mediaOnly: Boolean) {
+        private val _state = MutableStateFlow(FeedUiState())
+        val state: StateFlow<FeedUiState> = _state.asStateFlow()
+
+        private var loadJob: Job? = null
+        private var loadGeneration = 0
+
+        fun refresh() {
+            loadGeneration++
+            loadJob?.cancel()
+            val generation = loadGeneration
+            _state.value = FeedUiState(isRefreshing = true)
+            loadJob = viewModelScope.launch {
+                loadPage(page = 0, size = _state.value.pageSize, generation = generation)
+            }
+        }
+
+        fun loadNextPage() {
+            val state = _state.value
+            if (!state.hasLoadedInitialPage || !state.hasMore ||
+                state.isLoadingMore || state.isRefreshing
+            ) return
+
+            _state.update { it.copy(isLoadingMore = true, errorMessage = null, isError = false) }
+            val generation = loadGeneration
+            loadJob = viewModelScope.launch {
+                loadPage(page = state.page, size = state.pageSize, generation = generation)
+            }
+        }
+
+        fun updateItem(postId: String, transform: (FeedContentItem) -> FeedContentItem) {
+            _state.update { state ->
+                state.copy(items = state.items.map { if (it.id == postId) transform(it) else it })
+            }
+        }
+
+        private suspend fun loadPage(page: Int, size: Int, generation: Int) {
+            fetchPage(page, size, mediaOnly).collect { result ->
+                if (generation != loadGeneration) return@collect
+                when (result) {
+                    is ResultState.Loading -> Unit
+                    is ResultState.Success -> {
+                        val response = result.data
+                        _state.update {
+                            it.copy(
+                                items = if (page == 0) response.content else it.items + response.content,
+                                page = page + 1,
+                                hasLoadedInitialPage = true,
+                                isLoadingMore = false,
+                                isRefreshing = false,
+                                hasMore = !response.last && response.content.isNotEmpty(),
+                                errorMessage = null,
+                                isError = false
+                            )
+                        }
+                    }
+                    is ResultState.Failure -> {
+                        _state.update {
+                            it.copy(
+                                isLoadingMore = false,
+                                isRefreshing = false,
+                                errorMessage = result.message,
+                                isError = true
+                            )
+                        }
+                    }
+                    is ResultState.Idle -> Unit
+                }
+            }
         }
     }
 

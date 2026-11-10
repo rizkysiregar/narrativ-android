@@ -1,18 +1,16 @@
 package com.rizkysiregar.feedzmore.ui.feature.home.profile
 
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
-import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedViewModel
+import com.rizkysiregar.feedzmore.ui.feature.home.feed.PostViewMode
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
-import kotlinx.coroutines.flow.collectLatest
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -31,53 +29,35 @@ fun ProfileRoute(
 ) {
     val profileState by profileVm.profileState.collectAsState()
     val followStatus by profileVm.followStatus.collectAsState()
-    val feedState by profileFeedVm.uiState.collectAsStateWithLifecycle()
-    val listState = rememberLazyListState()
+    val listFeed by profileFeedVm.uiState.collectAsStateWithLifecycle()
+    val gridFeed by profileFeedVm.gridState.collectAsStateWithLifecycle()
+    val pagerState = rememberPagerState(initialPage = PostViewMode.GRID.ordinal) { PostViewMode.entries.size }
 
     // only fetch profile info, ProfileFeedViewModel handles its own init load
     LaunchedEffect(Unit) {
         profileVm.fetchUserProfile()
     }
 
-    // Load another page when the visible rows approach the end.
-    LaunchedEffect(
-        listState,
-        feedState.hasMore,
-        feedState.isLoadingMore,
-        feedState.isRefreshing,
-        feedState.isError
-    ) {
-        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .collectLatest { last ->
-                val total = listState.layoutInfo.totalItemsCount
-                if (last != null &&
-                    last >= total - 3 &&
-                    feedState.hasLoadedInitialPage &&
-                    !feedState.isLoadingMore &&
-                    feedState.hasMore &&
-                    !feedState.isRefreshing &&
-                    !feedState.isError
-                ) {
-                    profileFeedVm.loadNextPage()
-                }
-            }
-    }
-
-
-
     profileState?.let {
         ProfileScreen(
             profileState = it,
-            feedState = feedState,
-            listState = listState,
+            pagerState = pagerState,
+            gridFeed = gridFeed,
+            listFeed = listFeed,
             onRetry = { profileVm.fetchUserProfile() },
-            onRetryFeed = {
-                if (feedState.hasLoadedInitialPage) profileFeedVm.loadNextPage()
+            onRetryGrid = {
+                if (gridFeed.hasLoadedInitialPage) profileFeedVm.loadNextGridPage()
+                else profileFeedVm.refreshGrid()
+            },
+            onRetryList = {
+                if (listFeed.hasLoadedInitialPage) profileFeedVm.loadNextPage()
                 else profileFeedVm.refresh()
             },
+            onLoadMoreGrid = profileFeedVm::loadNextGridPage,
+            onLoadMoreList = profileFeedVm::loadNextPage,
             onRefresh = {
                 profileVm.fetchUserProfile()
-                profileFeedVm.refresh()
+                profileFeedVm.refreshAll()
             },
             onLikeClick = profileFeedVm::toggleLike,
             onSettingsClick = onSettingsClick,
@@ -87,8 +67,6 @@ fun ProfileRoute(
             onPostClick = { post -> onPostClick(post, profileFeedVm::toggleLike) }
         )
     }
-
-
 }
 
 

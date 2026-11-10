@@ -9,4 +9,6 @@ package com.rizkysiregar.feedzmore.data.remote.model.request.feed
 data class GetAllFeedRequest(
 	val page: Int,
 	val size: Int,
+	// explore only: leave out caption only posts (grid view)
+	val mediaOnly: Boolean = false,
 )

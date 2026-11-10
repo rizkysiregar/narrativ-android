@@ -30,18 +30,20 @@ class UserDetailFeedViewModel @Inject constructor(
 	fun startFor(username: String) {
 		if (targetUsername == username) return
 		targetUsername = username
-		refresh()
+		refreshAll()
 	}
 
 	override suspend fun fetchPage(
 		page: Int,
-		size: Int
+		size: Int,
+		mediaOnly: Boolean
 	): Flow<ResultState<FeedsPostPaginationResponse>> =
 		getFeedByUsernameUseCase(
 			GetFeedByUsernameRequest(
 				page = page,
 				size = size,
-				username = targetUsername
+				username = targetUsername,
+				mediaOnly = mediaOnly
 			)
 		)
 }

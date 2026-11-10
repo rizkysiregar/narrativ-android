@@ -2,6 +2,7 @@ package com.rizkysiregar.feedzmore.ui.feature.home.feed
 
 import androidx.compose.material3.MaterialTheme
 import com.rizkysiregar.feedzmore.ui.theme.Surface2
+import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
@@ -40,6 +41,7 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
+import com.rizkysiregar.feedzmore.R
 import com.rizkysiregar.feedzmore.media.currentMediaUrlOrNull
 import com.rizkysiregar.feedzmore.ui.components.ShimmerEffect
 
@@ -118,9 +120,8 @@ fun VideoFeedPlayer(
 		if (isActive && player != null) {
 			AndroidView(
 				factory = { ctx ->
-					PlayerView(ctx).apply {
+					(LayoutInflater.from(ctx).inflate(R.layout.view_feed_player, null) as PlayerView).apply {
 						this.player = player
-						useController = false
 						resizeMode = playerResizeMode
 						// Transparent shutter: keeps the poster visible behind it
 						// instead of flashing a black surface.

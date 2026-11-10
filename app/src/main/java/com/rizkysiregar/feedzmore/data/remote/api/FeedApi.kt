@@ -30,14 +30,16 @@ interface FeedApi {
 	@GET("posts/explore")
 	suspend fun getExplorePosts(
 		@Query("page") page: Int,
-		@Query("size") size: Int
+		@Query("size") size: Int,
+		@Query("mediaOnly") mediaOnly: Boolean = false
 	): BaseResponse<FeedsPostPaginationResponse>
 
 	@GET("posts/users/{username}/posts")
 	suspend fun getFeedByUsername(
 		@Path("username") username: String,
 		@Query("page") page: Int,
-		@Query("size") size: Int
+		@Query("size") size: Int,
+		@Query("mediaOnly") mediaOnly: Boolean = false
 	): BaseResponse<FeedsPostPaginationResponse>
 
 	@POST("posts/{postId}/like")

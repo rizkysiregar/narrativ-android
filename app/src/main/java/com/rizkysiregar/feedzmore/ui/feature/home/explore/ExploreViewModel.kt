@@ -21,12 +21,13 @@ class ExploreViewModel @Inject constructor(
 ) : BaseFeedViewModel(dataStore, dislikePostUseCase, likePostUseCase) {
 
 	init {
-		refresh()
+		refreshAll()
 	}
 
 	override suspend fun fetchPage(
 		page: Int,
-		size: Int
+		size: Int,
+		mediaOnly: Boolean
 	): Flow<ResultState<FeedsPostPaginationResponse>> =
-		getExplorePostsUseCase(GetAllFeedRequest(page, size))
+		getExplorePostsUseCase(GetAllFeedRequest(page, size, mediaOnly))
 }
