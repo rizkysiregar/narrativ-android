@@ -27,8 +27,10 @@ class PostRepositoryImpl @Inject constructor(
 		return response.data ?: throw IllegalStateException(response.message)
 	}
 
-	override suspend fun createPost(caption: String, objectKey: String): CreatePostResponse {
-		val response = postApi.createPost(AddPostRequest(caption = caption, objectKey = objectKey))
+	override suspend fun createPost(caption: String, mediaKeys: List<String>): CreatePostResponse {
+		val response = postApi.createPost(
+			AddPostRequest(caption = caption.takeIf { it.isNotBlank() }, mediaKeys = mediaKeys)
+		)
 		return response.data ?: throw IllegalStateException(response.message)
 	}
 }

@@ -12,7 +12,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.google.gson.Gson
-import com.rizkysiregar.feedzmore.data.remote.model.response.feed.MediaType
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.CommentSectionSheet
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.KEY_LIKE_HANDLER
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.KEY_POST_JSON
@@ -59,7 +58,7 @@ fun ExploreRoute(
 		selectedPost = selectedPost,
 		onPostClick = { post ->
 			if (post.isTakenDown) return@ExploreScreenContent
-			if (post.mediaType == MediaType.VIDEO) {
+			if (post.hasVideo) {
 				navController.currentBackStackEntry?.savedStateHandle?.set(
 					KEY_POST_JSON,
 					Gson().toJson(post)

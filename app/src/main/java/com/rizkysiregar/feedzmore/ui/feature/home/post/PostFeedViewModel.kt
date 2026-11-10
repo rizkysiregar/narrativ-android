@@ -8,6 +8,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rizkysiregar.feedzmore.domain.post.MediaPreparationUseCase
+import com.rizkysiregar.feedzmore.domain.post.PickedMedia
 import com.rizkysiregar.feedzmore.domain.post.UploadManager
 import com.rizkysiregar.feedzmore.media.MediaValidationException
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -45,20 +46,56 @@ class PostFeedViewModel @Inject constructor(
 	private val _navigateHome = MutableSharedFlow<Unit>()
 	val navigateHome: SharedFlow<Unit> = _navigateHome.asSharedFlow()
 
-	fun onImageSelected(uri: Uri) {
-		Log.i("PostFeedViewModel", "## onImageSelected() called")
-		val mimeType = app.contentResolver.getType(uri)
-		val error = validateMedia(uri, mimeType)
-		_uiState.update {
-			if (error != null) {
-				it.copy(validationError = error, selectedImage = null, selectedMimeType = null)
-			} else {
-				it.copy(
-					selectedImage = uri,
-					selectedMimeType = mimeType,
-					validationError = null
-				)
+	/** Adds the picked media (up to [MAX_POST_MEDIA] in total); the ones that do not fit or are invalid are skipped. */
+	fun onMediaPicked(uris: List<Uri>) {
+		Log.i("PostFeedViewModel", "## onMediaPicked() called with ${uris.size} media")
+		var error: String? = null
+		val added = mutableListOf<PickedMedia>()
+		for (uri in uris) {
+			val current = _uiState.value.selectedMedia + added
+			if (current.any { it.uri == uri }) continue
+			if (current.size >= MAX_POST_MEDIA) {
+				error = "Maksimal $MAX_POST_MEDIA foto atau video per post"
+				break
 			}
+			val mimeType = app.contentResolver.getType(uri)
+			val invalid = validateMedia(uri, mimeType)
+			if (invalid != null) {
+				error = invalid
+			} else {
+				added += PickedMedia(uri, mimeType)
+			}
+		}
+		_uiState.update {
+			it.copy(
+				selectedMedia = it.selectedMedia + added,
+				previewIndex = if (added.isNotEmpty()) it.selectedMedia.size else it.previewIndex,
+				validationError = error
+			)
+		}
+	}
+
+	/** Tapping a recent photo selects it, tapping it again takes it out of the post. */
+	fun onRecentImageToggled(uri: Uri) {
+		val index = _uiState.value.selectedMedia.indexOfFirst { it.uri == uri }
+		if (index >= 0) onMediaRemoved(index) else onMediaPicked(listOf(uri))
+	}
+
+	fun onMediaRemoved(index: Int) {
+		_uiState.update { state ->
+			if (index !in state.selectedMedia.indices) return@update state
+			val remaining = state.selectedMedia.filterIndexed { i, _ -> i != index }
+			state.copy(
+				selectedMedia = remaining,
+				previewIndex = state.previewIndex.coerceAtMost((remaining.size - 1).coerceAtLeast(0)),
+				validationError = null
+			)
+		}
+	}
+
+	fun onPreviewSelected(index: Int) {
+		_uiState.update { state ->
+			if (index in state.selectedMedia.indices) state.copy(previewIndex = index) else state
 		}
 	}
 
@@ -68,23 +105,22 @@ class PostFeedViewModel @Inject constructor(
 	 */
 	fun submitPost() {
 		val state = _uiState.value
-		val mediaUri = state.selectedImage ?: return
-		if (state.validationError != null) return
+		Log.i("PostFlow", "submitPost: canSubmit=${state.canSubmit} media=${state.selectedMedia.size} captionLength=${state.caption.length}")
+		if (!state.canSubmit) return
 
 		viewModelScope.launch {
 			try {
-				val prepared = mediaPreparationUseCase.prepare(mediaUri, state.selectedMimeType)
-				uploadManager.enqueue(
-					filePath = prepared.filePath,
-					contentType = prepared.contentType,
-					caption = state.caption
-				)
+				val prepared = mediaPreparationUseCase.prepareAll(state.selectedMedia)
+				uploadManager.enqueue(media = prepared, caption = state.caption)
+				Log.i("PostFlow", "submitPost: enqueued, going home")
 				_navigateHome.emit(Unit)
 			} catch (e: MediaValidationException) {
+				Log.w("PostFlow", "submitPost: media rejected: ${e.message}")
 				_uiState.update { it.copy(validationError = e.message ?: "Media tidak valid") }
 			} catch (e: CancellationException) {
 				throw e
 			} catch (e: Exception) {
+				Log.e("PostFlow", "submitPost failed", e)
 				_uiState.update { it.copy(validationError = "Gagal menyiapkan media, silakan coba lagi") }
 			}
 		}
@@ -153,11 +189,8 @@ class PostFeedViewModel @Inject constructor(
 			}.getOrDefault(emptyList())
 
 			_uiState.update { state ->
-				state.copy(
-					recentImages = images,
-					selectedImage = state.selectedImage ?: images.firstOrNull(),
-					isLoadingGallery = false
-				)
+				// nothing is pre-selected: a post may be caption only
+				state.copy(recentImages = images, isLoadingGallery = false)
 			}
 		}
 	}
@@ -169,7 +202,7 @@ class PostFeedViewModel @Inject constructor(
 	fun onCaptionChanged(caption: String) {
 		Log.i("PostFeedViewModel", "## onCaptionChanged() called")
 		_uiState.update {
-			it.copy(caption = caption)
+			it.copy(caption = caption.take(MAX_CAPTION_LENGTH))
 		}
 	}
 

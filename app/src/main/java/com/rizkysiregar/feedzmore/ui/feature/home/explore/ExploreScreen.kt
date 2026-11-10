@@ -30,21 +30,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.media3.common.MediaItem
-import coil3.compose.SubcomposeAsyncImage
-import coil3.request.ImageRequest
+import com.rizkysiregar.feedzmore.ui.components.PostTileContent
 import com.rizkysiregar.feedzmore.ui.components.TakenDownPlaceholder
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
-import com.rizkysiregar.feedzmore.data.remote.model.response.feed.MediaType
-import com.rizkysiregar.feedzmore.media.currentMediaUrlOrNull
-import com.rizkysiregar.feedzmore.media.rememberVideoPlayer
-import com.rizkysiregar.feedzmore.ui.components.ShimmerEffect
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedItemCard
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedUiState
-import com.rizkysiregar.feedzmore.ui.feature.home.feed.VideoFeedPlayer
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -65,24 +56,6 @@ fun ExploreScreenContent(
 	}
 
 	var visibleItemIds by remember { mutableStateOf<Set<String>>(emptySet()) }
-	var isDetailVideoMuted by remember { mutableStateOf(false) }
-
-	val detailPlayer = rememberVideoPlayer()
-
-	LaunchedEffect(selectedPost?.mediaUrl, isDetailVideoMuted) {
-		val post = selectedPost
-		if (post?.mediaType == MediaType.VIDEO) {
-			val currentUri = detailPlayer.currentMediaUrlOrNull()
-			detailPlayer.volume = if (isDetailVideoMuted) 0f else 1f
-			if (currentUri != post.mediaUrl) {
-				detailPlayer.setMediaItem(MediaItem.fromUri(post.mediaUrl.orEmpty()))
-				detailPlayer.prepare()
-			}
-			detailPlayer.playWhenReady = true
-		} else {
-			detailPlayer.playWhenReady = false
-		}
-	}
 
 	LaunchedEffect(gridState, uiState.items) {
 		snapshotFlow { gridState.layoutInfo }.collect { layoutInfo ->
@@ -120,26 +93,9 @@ fun ExploreScreenContent(
 						modifier = Modifier.fillMaxSize(),
 						compact = true
 					)
-				} else if (post.mediaType == MediaType.VIDEO) {
-					VideoFeedPlayer(
-						mediaUrl = post.mediaUrl.orEmpty(),
-						thumbnailUrl = post.thumbnailUrl,
-						isActive = false,
-						player = null,
-						muted = true,
-						showMuteButton = false,
-						aspectRatio = 1f
-					)
 				} else {
-						SubcomposeAsyncImage(
-							model = ImageRequest.Builder(LocalContext.current)
-								.data(post.mediaUrl.orEmpty()).build(),
-							contentDescription = "Post image",
-							contentScale = ContentScale.Crop,
-							modifier = Modifier.fillMaxSize(),
-							loading = { ShimmerEffect(modifier = Modifier.fillMaxSize()) }
-						)
-					}
+					PostTileContent(post = post)
+				}
 				}
 			}
 		}
@@ -166,10 +122,8 @@ fun ExploreScreenContent(
 					item = selectedPost,
 					onLikeClick = onLikeClick,
 					onCommentClick = onCommentClick,
-					isActiveVideo = true,
-					isVideoMuted = isDetailVideoMuted,
-					onToggleVideoMute = { isDetailVideoMuted = !isDetailVideoMuted },
-					player = detailPlayer
+					// posts with a video open the full screen detail instead, so this card holds images or text only
+					isActiveVideo = false
 				)
 				}
 			}

@@ -11,14 +11,14 @@ import com.rizkysiregar.feedzmore.data.remote.model.response.post.CreatePostUplo
 interface PostRepository {
 
 	/**
-	 * Step 1: request a presigned URL + objectKey for the given content type.
+	 * Step 1: request a presigned URL + objectKey for the given content type (once per media).
 	 * Throws [retrofit2.HttpException] on non-2xx responses.
 	 */
 	suspend fun createUploadUrl(contentType: String): CreatePostUploadUrlResponse
 
 	/**
-	 * Step 3: persist the post once the media has been uploaded to storage.
-	 * Throws [retrofit2.HttpException] on non-2xx responses.
+	 * Step 3: persist the post once its media (zero or more) has been uploaded to storage.
+	 * A blank caption is sent as null. Throws [retrofit2.HttpException] on non-2xx responses.
 	 */
-	suspend fun createPost(caption: String, objectKey: String): CreatePostResponse
+	suspend fun createPost(caption: String, mediaKeys: List<String>): CreatePostResponse
 }

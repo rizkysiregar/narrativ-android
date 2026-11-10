@@ -49,6 +49,7 @@ import coil3.request.ImageRequest
 import com.rizkysiregar.feedzmore.R
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.MediaType
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.PostMediaItem
 import com.rizkysiregar.feedzmore.ui.components.InitialAvatar
 import com.rizkysiregar.feedzmore.ui.components.ShimmerEffect
 import com.rizkysiregar.feedzmore.ui.components.TakenDownPlaceholder
@@ -63,7 +64,9 @@ fun FeedItemCard(
 	isVideoMuted: Boolean = false,
 	onToggleVideoMute: () -> Unit = {},
 	onVideoClick: (() -> Unit)? = null,
-	player: ExoPlayer? = null
+	player: ExoPlayer? = null,
+	initialPage: Int = 0,
+	onPageChange: (Int) -> Unit = {}
 ) {
 	val likeScale by animateFloatAsState(
 		targetValue = if (item.liked) 1.12f else 1f,
@@ -92,20 +95,27 @@ fun FeedItemCard(
 					.aspectRatio(1.08f)
 			)
 		} else {
-		if (item.mediaType == MediaType.VIDEO) {
-			VideoFeedPlayer(
-				mediaUrl = item.mediaUrl.orEmpty(),
-				thumbnailUrl = item.thumbnailUrl,
+		if (item.hasMedia) {
+			PostMediaPager(
+				media = item.mediaItems,
 				isActive = isActiveVideo,
 				player = player,
 				muted = isVideoMuted,
-				showMuteButton = true,
+				initialPage = initialPage,
+				onPageChange = onPageChange,
 				onToggleMute = onToggleVideoMute,
 				onVideoClick = onVideoClick
 			)
-		} else {
-				FeedImage(imageUrl = item.mediaUrl.orEmpty())
-			}
+		} else if (!item.caption.isNullOrBlank()) {
+			// caption-only post: the text is the content, so it comes before the actions
+			Text(
+				text = item.caption,
+				style = MaterialTheme.typography.bodyLarge,
+				modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
+				maxLines = 12,
+				overflow = TextOverflow.Ellipsis
+			)
+		}
 			FeedActions(
 				item = item,
 				likeScale = likeScale,
@@ -113,7 +123,7 @@ fun FeedItemCard(
 				onLikeClick = { onLikeClick(item.id) },
 				onCommentClick = { onCommentClick(item) }
 			)
-			AnimatedVisibility(visible = !item.caption.isNullOrBlank()) {
+			AnimatedVisibility(visible = item.hasMedia && !item.caption.isNullOrBlank()) {
 				Text(
 					text = buildAnnotatedString {
 						withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
@@ -160,33 +170,6 @@ private fun FeedAuthorHeader(item: FeedContentItem) {
 			}
 		}
 	}
-}
-
-@Composable
-private fun FeedImage(imageUrl: String) {
-	SubcomposeAsyncImage(
-		model = ImageRequest.Builder(LocalContext.current).data(imageUrl).build(),
-		contentDescription = "Foto feed",
-		modifier = Modifier
-			.fillMaxWidth()
-			.aspectRatio(1.08f),
-		contentScale = ContentScale.Crop,
-		loading = { ShimmerEffect(modifier = Modifier.fillMaxSize()) },
-		error = {
-			Box(
-				modifier = Modifier
-					.fillMaxSize(),
-				contentAlignment = Alignment.Center
-			) {
-				Icon(
-					imageVector = Icons.Outlined.Info,
-					contentDescription = "Gambar gagal dimuat",
-					tint = MaterialTheme.colorScheme.onSurfaceVariant,
-					modifier = Modifier.size(32.dp)
-				)
-			}
-		}
-	)
 }
 
 @Composable
@@ -257,9 +240,7 @@ private fun FeedItemCardPreview() {
 				likeCount = 124,
 				liked = true,
 				createdAt = "2026-10-05",
-				mediaUrl = "https://dummy-url",
-			mediaType = MediaType.IMAGE,
-			thumbnailUrl = null,
+				media = listOf(PostMediaItem("m1", MediaType.IMAGE, "https://dummy-url", null)),
 				username = "John Doe"
 			),
 			onLikeClick = {}

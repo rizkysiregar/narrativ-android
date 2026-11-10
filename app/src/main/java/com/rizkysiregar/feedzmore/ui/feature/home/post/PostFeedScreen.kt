@@ -13,6 +13,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +31,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,6 +39,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -51,6 +55,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -72,6 +77,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil3.compose.AsyncImage
+import com.rizkysiregar.feedzmore.domain.post.PickedMedia
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 
 @Composable
@@ -79,7 +85,10 @@ fun PostFeedScreen(
 	uiState: PostFeedUiState,
 	isPreparing: Boolean,
 	onCaptionChange: (String) -> Unit,
-	onPickImage: (Uri) -> Unit,
+	onPickMedia: (List<Uri>) -> Unit,
+	onToggleRecentImage: (Uri) -> Unit,
+	onRemoveMedia: (Int) -> Unit,
+	onPreviewSelected: (Int) -> Unit,
 	onLoadRecentImages: () -> Unit,
 	onNext: () -> Unit
 ) {
@@ -98,8 +107,8 @@ fun PostFeedScreen(
 	}
 
 	val photoPickerLauncher = rememberLauncherForActivityResult(
-		contract = ActivityResultContracts.PickVisualMedia()
-	) { uri -> uri?.let(onPickImage) }
+		contract = ActivityResultContracts.PickMultipleVisualMedia(MAX_POST_MEDIA)
+	) { uris -> if (uris.isNotEmpty()) onPickMedia(uris) }
 	val permissionLauncher = rememberLauncherForActivityResult(
 		contract = ActivityResultContracts.RequestPermission()
 	) { granted -> hasGalleryAccess = granted }
@@ -131,15 +140,24 @@ fun PostFeedScreen(
 		verticalArrangement = Arrangement.spacedBy(20.dp)
 	) {
 		PostHeader()
-		SelectedPhotoPreview(
-			imageUri = uiState.selectedImage,
-			mimeType = uiState.selectedMimeType,
-			onChooseAnother = {
-				photoPickerLauncher.launch(
-					PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
-				)
-			}
+		val launchPicker = {
+			photoPickerLauncher.launch(
+				PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
+			)
+		}
+		SelectedMediaPreview(
+			media = uiState.selectedMedia.getOrNull(uiState.previewIndex),
+			selectedCount = uiState.selectedMedia.size,
+			onChooseAnother = launchPicker
 		)
+		if (uiState.selectedMedia.isNotEmpty()) {
+			SelectedMediaStrip(
+				media = uiState.selectedMedia,
+				previewIndex = uiState.previewIndex,
+				onPreviewSelected = onPreviewSelected,
+				onRemove = onRemoveMedia
+			)
+		}
 		if (uiState.validationError != null) {
 			Text(
 				text = uiState.validationError,
@@ -149,15 +167,11 @@ fun PostFeedScreen(
 		}
 		RecentPhotosSection(
 			images = uiState.recentImages,
-			selectedImage = uiState.selectedImage,
+			selectedImages = uiState.selectedMedia.map { it.uri }.toSet(),
 			isLoading = uiState.isLoadingGallery,
 			hasGalleryAccess = hasGalleryAccess,
-			onImageSelected = onPickImage,
-			onChooseAnother = {
-				photoPickerLauncher.launch(
-					PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
-				)
-			}
+			onImageToggled = onToggleRecentImage,
+			onChooseAnother = launchPicker
 		)
 		CaptionSection(caption = uiState.caption, onCaptionChange = onCaptionChange)
 		if (isPreparing) {
@@ -165,7 +179,7 @@ fun PostFeedScreen(
 		}
 		Button(
 			onClick = onNext,
-			enabled = uiState.selectedImage != null && !isPreparing,
+			enabled = uiState.canSubmit && !isPreparing,
 			modifier = Modifier
 				.fillMaxWidth()
 				.height(52.dp),
@@ -197,14 +211,14 @@ private fun PreparingSection() {
 private fun PostHeader() {
 	Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
 		Text("Buat feed baru", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-		Text("Pilih momen terbaikmu, lalu tambahkan cerita singkat.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+		Text("Tulis sesuatu, atau tambahkan hingga $MAX_POST_MEDIA foto dan video.", color = MaterialTheme.colorScheme.onSurfaceVariant)
 	}
 }
 
 @Composable
-private fun SelectedPhotoPreview(
-	imageUri: Uri?,
-	mimeType: String?,
+private fun SelectedMediaPreview(
+	media: PickedMedia?,
+	selectedCount: Int,
 	onChooseAnother: () -> Unit
 ) {
 	Surface(
@@ -216,25 +230,28 @@ private fun SelectedPhotoPreview(
 		color = MaterialTheme.colorScheme.surfaceVariant
 	) {
 		Box(contentAlignment = Alignment.Center) {
-			AnimatedVisibility(visible = imageUri != null) {
-				imageUri?.let { uri ->
-					if (mimeType?.startsWith("video/") == true) {
-						InlineVideoPreview(uri = uri, active = true)
-					} else {
-						AsyncImage(
-							model = uri,
-							contentDescription = "Media yang dipilih",
-							modifier = Modifier.fillMaxSize(),
-							contentScale = ContentScale.Crop
-						)
+			AnimatedVisibility(visible = media != null) {
+				media?.let { picked ->
+					// a new uri must get a new player, so the preview follows the strip selection
+					key(picked.uri) {
+						if (picked.mimeType?.startsWith("video/") == true) {
+							InlineVideoPreview(uri = picked.uri, active = true)
+						} else {
+							AsyncImage(
+								model = picked.uri,
+								contentDescription = "Media yang dipilih",
+								modifier = Modifier.fillMaxSize(),
+								contentScale = ContentScale.Crop
+							)
+						}
 					}
 				}
 			}
-			if (imageUri == null) {
+			if (media == null) {
 				Column(horizontalAlignment = Alignment.CenterHorizontally) {
 					Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(36.dp))
 					Spacer(Modifier.height(8.dp))
-					Text("Pilih foto atau video untuk memulai")
+					Text("Tambahkan foto atau video (opsional)")
 				}
 			}
 			OutlinedButton(
@@ -247,7 +264,66 @@ private fun SelectedPhotoPreview(
 			) {
 				Icon(Icons.Default.Add, contentDescription = null)
 				Spacer(Modifier.width(6.dp))
-				Text(if (imageUri == null) "Pilih foto" else "Ganti")
+				Text(if (selectedCount == 0) "Pilih media" else "Tambah ($selectedCount/$MAX_POST_MEDIA)")
+			}
+		}
+	}
+}
+
+@Composable
+private fun SelectedMediaStrip(
+	media: List<PickedMedia>,
+	previewIndex: Int,
+	onPreviewSelected: (Int) -> Unit,
+	onRemove: (Int) -> Unit
+) {
+	LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+		itemsIndexed(media, key = { _, item -> item.uri.toString() }) { index, item ->
+			val isVideo = item.mimeType?.startsWith("video/") == true
+			Box(
+				modifier = Modifier
+					.size(72.dp)
+					.clip(RoundedCornerShape(14.dp))
+					.border(
+						width = if (index == previewIndex) 2.dp else 0.dp,
+						color = MaterialTheme.colorScheme.primary,
+						shape = RoundedCornerShape(14.dp)
+					)
+					.clickable { onPreviewSelected(index) }
+					.background(MaterialTheme.colorScheme.surfaceVariant)
+			) {
+				if (isVideo) {
+					// Coil cannot draw a video frame here, so a video is shown as a play icon
+					Icon(
+						Icons.Default.PlayCircle,
+						contentDescription = "Video",
+						modifier = Modifier
+							.align(Alignment.Center)
+							.size(28.dp)
+					)
+				} else {
+					AsyncImage(
+						model = item.uri,
+						contentDescription = "Media ${index + 1}",
+						modifier = Modifier.fillMaxSize(),
+						contentScale = ContentScale.Crop
+					)
+				}
+				Surface(
+					modifier = Modifier
+						.align(Alignment.TopEnd)
+						.padding(4.dp)
+						.size(22.dp)
+						.clickable { onRemove(index) },
+					shape = CircleShape,
+					color = MaterialTheme.colorScheme.background.copy(alpha = 0.9f)
+				) {
+					Icon(
+						Icons.Default.Close,
+						contentDescription = "Hapus media ${index + 1}",
+						modifier = Modifier.padding(4.dp)
+					)
+				}
 			}
 		}
 	}
@@ -292,17 +368,17 @@ private fun InlineVideoPreview(uri: Uri, active: Boolean) {
 @Composable
 private fun RecentPhotosSection(
 	images: List<Uri>,
-	selectedImage: Uri?,
+	selectedImages: Set<Uri>,
 	isLoading: Boolean,
 	hasGalleryAccess: Boolean,
-	onImageSelected: (Uri) -> Unit,
+	onImageToggled: (Uri) -> Unit,
 	onChooseAnother: () -> Unit
 ) {
 	Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
 		Row(verticalAlignment = Alignment.CenterVertically) {
 			Column(modifier = Modifier.weight(1f)) {
 				Text("Foto terbaru", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-				Text("Pilih satu untuk dibagikan", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+				Text("Pilih hingga $MAX_POST_MEDIA untuk dibagikan", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 			}
 			OutlinedButton(onClick = onChooseAnother, shape = RoundedCornerShape(12.dp)) {
 				Text("Lainnya")
@@ -318,8 +394,8 @@ private fun RecentPhotosSection(
 				items(images, key = { it.toString() }) { imageUri ->
 					RecentPhotoTile(
 						uri = imageUri,
-						isSelected = imageUri == selectedImage,
-						onClick = { onImageSelected(imageUri) }
+						isSelected = imageUri in selectedImages,
+						onClick = { onImageToggled(imageUri) }
 					)
 				}
 			}
@@ -388,7 +464,7 @@ private fun CaptionSection(caption: String, onCaptionChange: (String) -> Unit) {
 			shape = RoundedCornerShape(18.dp)
 		)
 		Text(
-			text = "${caption.length}/2200",
+			text = "${caption.length}/$MAX_CAPTION_LENGTH",
 			style = MaterialTheme.typography.labelSmall,
 			color = MaterialTheme.colorScheme.onSurfaceVariant,
 			modifier = Modifier.align(Alignment.End)
@@ -401,10 +477,15 @@ private fun CaptionSection(caption: String, onCaptionChange: (String) -> Unit) {
 private fun PostFeedScreenPreview() {
 	FeedzmoreTheme {
 		PostFeedScreen(
-			uiState = PostFeedUiState(selectedImage = "https://example.com/image.jpg".toUri()),
+			uiState = PostFeedUiState(
+					selectedMedia = listOf(PickedMedia("https://example.com/image.jpg".toUri(), "image/jpeg"))
+				),
 			isPreparing = false,
 			onCaptionChange = {},
-			onPickImage = {},
+			onPickMedia = {},
+				onToggleRecentImage = {},
+				onRemoveMedia = {},
+				onPreviewSelected = {},
 			onLoadRecentImages = {},
 			onNext = {}
 		)
