@@ -182,6 +182,7 @@ dependencies {
 
 	// video transcoding before upload
 	implementation(libs.media3.transformer)
+	implementation(libs.androidx.exifinterface)
 
 
 	// Credential Manager for Google Sign-In
