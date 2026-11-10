@@ -16,11 +16,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
@@ -49,7 +52,6 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -66,16 +68,12 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import androidx.navigation.NavController
-import coil3.compose.SubcomposeAsyncImage
-import coil3.request.ImageRequest
 import com.google.gson.Gson
 import com.rizkysiregar.feedzmore.R
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
-import com.rizkysiregar.feedzmore.data.remote.model.response.feed.MediaType
 import com.rizkysiregar.feedzmore.media.currentMediaUrlOrNull
 import com.rizkysiregar.feedzmore.media.rememberVideoPlayer
 import com.rizkysiregar.feedzmore.ui.components.InitialAvatar
-import com.rizkysiregar.feedzmore.ui.components.ShimmerEffect
 
 const val KEY_POST_JSON = "post_detail_post_json"
 const val KEY_LIKE_HANDLER = "post_detail_like_handler"
@@ -128,12 +126,19 @@ fun PostDetailScreen(
 
 	val videoPlayer = rememberVideoPlayer()
 
-	androidx.compose.runtime.LaunchedEffect(post.mediaUrl, isMuted) {
-		if (post.mediaType != MediaType.VIDEO) return@LaunchedEffect
+	// a post can hold several media: the video on the page being shown plays, an image page pauses it
+	var page by remember { mutableIntStateOf(0) }
+	val activeVideo = post.videoAt(page)
+
+	androidx.compose.runtime.LaunchedEffect(activeVideo?.url, isMuted) {
+		if (activeVideo == null) {
+			videoPlayer.playWhenReady = false
+			return@LaunchedEffect
+		}
 		val currentUri = videoPlayer.currentMediaUrlOrNull()
 		videoPlayer.volume = if (isMuted) 0f else 1f
-		if (currentUri != post.mediaUrl.orEmpty()) {
-			videoPlayer.setMediaItem(MediaItem.fromUri(post.mediaUrl.orEmpty()))
+		if (currentUri != activeVideo.url.orEmpty()) {
+			videoPlayer.setMediaItem(MediaItem.fromUri(activeVideo.url.orEmpty()))
 			videoPlayer.prepare()
 		}
 		videoPlayer.playWhenReady = true
@@ -170,39 +175,50 @@ fun PostDetailScreen(
 				.fillMaxWidth()
 				.fillMaxHeight(videoFraction)
 		) {
-			if (post.mediaType == MediaType.VIDEO) {
-				VideoFeedPlayer(
-					mediaUrl = post.mediaUrl.orEmpty(),
-					thumbnailUrl = post.thumbnailUrl,
+			if (post.hasMedia) {
+				PostMediaPager(
+					media = post.mediaItems,
 					isActive = true,
 					player = videoPlayer,
 					muted = isMuted,
+					onPageChange = { page = it },
 					showMuteButton = false,
-					// aspectRatio = null -> container fills the whole screen;
-					// the video letterboxes inside (RESIZE_MODE_FIT) so it is
-					// displayed as large and comfortable as possible.
+					// aspectRatio = null -> the pager fills the whole screen; videos letterbox
+					// (RESIZE_MODE_FIT) and images fit, so they are shown as large as possible.
 					aspectRatio = null,
-					playerResizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT,
+					imageContentScale = ContentScale.Fit,
+					videoResizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT,
 					modifier = Modifier.fillMaxSize()
 				)
 			} else {
-				SubcomposeAsyncImage(
-					model = ImageRequest.Builder(LocalContext.current)
-						.data(post.mediaUrl.orEmpty())
-						.build(),
-					contentDescription = "Foto post",
-					modifier = Modifier.fillMaxSize(),
-					contentScale = ContentScale.Fit,
-					loading = { ShimmerEffect(modifier = Modifier.fillMaxSize()) }
-				)
+				// caption-only post: the text is the content
+				Column(
+					modifier = Modifier
+						.fillMaxSize()
+						.verticalScroll(rememberScrollState())
+						.padding(start = 16.dp, end = 84.dp, top = 24.dp, bottom = 24.dp)
+				) {
+					Text(
+						text = post.username,
+						style = MaterialTheme.typography.titleMedium,
+						fontWeight = FontWeight.Bold,
+						color = MaterialTheme.colorScheme.onBackground
+					)
+					Spacer(Modifier.height(12.dp))
+					Text(
+						text = post.caption.orEmpty(),
+						style = MaterialTheme.typography.bodyLarge,
+						color = MaterialTheme.colorScheme.onBackground
+					)
+				}
 			}
 
-			if (post.mediaType == MediaType.VIDEO) {
+			if (activeVideo != null) {
 				IconButton(
 					onClick = { isMuted = !isMuted },
 					modifier = Modifier
 						.align(Alignment.TopEnd)
-						.padding(8.dp)
+						.padding(top = 40.dp, end = 8.dp)
 				) {
 					Icon(
 						imageVector = if (isMuted) Icons.Filled.VolumeOff else Icons.Filled.VolumeUp,
@@ -237,7 +253,7 @@ fun PostDetailScreen(
 				)
 			}
 
-			if (!post.caption.isNullOrBlank() && showCaptionOverlay) {
+			if (post.hasMedia && !post.caption.isNullOrBlank() && showCaptionOverlay) {
 				Text(
 					text = buildAnnotatedString {
 						withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {

@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -47,6 +48,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.MediaType
+import com.rizkysiregar.feedzmore.data.remote.model.response.feed.PostMediaItem
 import com.rizkysiregar.feedzmore.media.currentMediaUrlOrNull
 import com.rizkysiregar.feedzmore.media.rememberVideoPlayer
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
@@ -86,21 +88,25 @@ fun FeedScreen(
 	var isVideoMuted by remember { mutableStateOf(false) }
 	var activeVideoPostId by remember { mutableStateOf<String?>(null) }
 	val currentActiveVideoId by rememberUpdatedState(activeVideoPostId)
+	// the page each multi-media post is on; also seeds a card's pager when it scrolls back into view
+	val pageByPost = remember { mutableStateMapOf<String, Int>() }
+	val activePage = pageByPost[activeVideoPostId] ?: 0
 	val currentItems by rememberUpdatedState(uiState.items)
 
 	// Activate the centered video. If the player already has the same item
 	// prepared (scroll away & back, return from detail), just resume it —
 	// buffer and playback position are preserved.
-	LaunchedEffect(activeVideoPostId, isVideoMuted, uiState.items) {
+	LaunchedEffect(activeVideoPostId, activePage, isVideoMuted, uiState.items) {
 		if (player == null) return@LaunchedEffect
-		val activeItem = uiState.items.firstOrNull {
-			it.id == activeVideoPostId && it.mediaType == MediaType.VIDEO && !it.isTakenDown
-		}
-		if (activeItem != null) {
+		// the video on the page the centered post is showing; a post can hold images and videos mixed
+		val activeVideo = uiState.items
+			.firstOrNull { it.id == activeVideoPostId && !it.isTakenDown }
+			?.videoAt(activePage)
+		if (activeVideo != null) {
 			val currentUri = player.currentMediaUrlOrNull()
 			player.volume = if (isVideoMuted) 0f else 1f
-			if (currentUri != activeItem.mediaUrl.orEmpty()) {
-				player.setMediaItem(MediaItem.fromUri(activeItem.mediaUrl.orEmpty()))
+			if (currentUri != activeVideo.url.orEmpty()) {
+				player.setMediaItem(MediaItem.fromUri(activeVideo.url.orEmpty()))
 				player.prepare()
 			}
 			player.playWhenReady = true
@@ -147,8 +153,8 @@ fun FeedScreen(
 				}
 				val nextVideo = upcoming
 					.take(PRELOAD_AHEAD_COUNT)
-					.firstOrNull { it.mediaType == MediaType.VIDEO && !it.isTakenDown }
-				val url = nextVideo?.mediaUrl
+					.firstOrNull { it.hasVideo && !it.isTakenDown }
+				val url = nextVideo?.mediaItems?.firstOrNull { it.isVideo }?.url
 				val playingUri = player?.currentMediaUrlOrNull()
 				if (url != null && url != preloadedUrl && url != playingUri) {
 					preloadedUrl = url
@@ -168,7 +174,7 @@ fun FeedScreen(
 						kotlin.math.abs((info.offset + info.size / 2) - center)
 					}
 				val activeItem = activeInfo?.index?.let { idx -> uiState.items.getOrNull(idx - 1) }
-				if (activeItem?.mediaType == MediaType.VIDEO && !activeItem.isTakenDown) activeItem.id else null
+				if (activeItem?.hasVideo == true && !activeItem.isTakenDown) activeItem.id else null
 			}
 			.distinctUntilChanged()
 			.collect { id -> activeVideoPostId = id }
@@ -216,7 +222,9 @@ fun FeedScreen(
 							isVideoMuted = isVideoMuted,
 							onToggleVideoMute = { isVideoMuted = !isVideoMuted },
 							onVideoClick = { onVideoClick(item) },
-							player = player
+							player = player,
+							initialPage = pageByPost[item.id] ?: 0,
+							onPageChange = { page -> pageByPost[item.id] = page }
 						)
 					}
 
@@ -353,9 +361,7 @@ fun FeedScreenPreview() {
 						likeCount = 1,
 						liked = true,
 						createdAt = "2023-11-25",
-						mediaUrl = "https://dummy-url",
-						mediaType = MediaType.IMAGE,
-						thumbnailUrl = null,
+						media = listOf(PostMediaItem("m$index", MediaType.IMAGE, "https://dummy-url", null)),
 						username = "John Doe"
 					)
 				}

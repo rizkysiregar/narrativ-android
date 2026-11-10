@@ -1,6 +1,7 @@
 package com.rizkysiregar.feedzmore.domain.post
 
 import android.content.Context
+import android.util.Log
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
@@ -44,12 +45,15 @@ class UploadManager @Inject constructor(
 				.mapNotNull { it.toPendingUpload() }
 		}
 
-	fun enqueue(filePath: String, contentType: String, caption: String) {
+	/** Enqueues one post: its [media] (0..5, in display order) and the [caption]; at least one of them is required. */
+	fun enqueue(media: List<PreparedMedia>, caption: String) {
+		Log.i("PostFlow", "enqueue: media=${media.size} captionLength=${caption.length}")
+		require(media.isNotEmpty() || caption.isNotBlank()) { "A post needs a caption or a media" }
 		val request = OneTimeWorkRequestBuilder<PostUploadWorker>()
 			.setInputData(
 				workDataOf(
-					PostUploadWorker.KEY_FILE_PATH to filePath,
-					PostUploadWorker.KEY_CONTENT_TYPE to contentType,
+					PostUploadWorker.KEY_FILE_PATHS to media.map { it.filePath }.toTypedArray(),
+					PostUploadWorker.KEY_CONTENT_TYPES to media.map { it.contentType }.toTypedArray(),
 					PostUploadWorker.KEY_CAPTION to caption
 				)
 			)
@@ -63,7 +67,9 @@ class UploadManager @Inject constructor(
 			.setBackoffCriteria(BackoffPolicy.EXPONENTIAL, BACKOFF_SECONDS, TimeUnit.SECONDS)
 			.build()
 
-		workManager.enqueueUniqueWork(uniqueName(filePath), ExistingWorkPolicy.KEEP, request)
+		val name = uniqueName(media, caption)
+		workManager.enqueueUniqueWork(name, ExistingWorkPolicy.KEEP, request)
+		Log.i("PostFlow", "enqueue: work $name handed to WorkManager (id=${request.id})")
 	}
 
 	fun cancel(workId: UUID) {
@@ -96,6 +102,8 @@ class UploadManager @Inject constructor(
 
 		private fun captionTag(caption: String) = CAPTION_TAG_PREFIX + caption
 
-		private fun uniqueName(filePath: String) = "upload_" + filePath.hashCode()
+		// a caption-only post has no file to tell two posts apart, so a fresh id keeps them from replacing each other
+		private fun uniqueName(media: List<PreparedMedia>, caption: String) =
+			"upload_" + if (media.isEmpty()) "${caption.hashCode()}_${UUID.randomUUID()}" else media.joinToString("|") { it.filePath }.hashCode()
 	}
 }

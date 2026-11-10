@@ -6,6 +6,11 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- WorkManager takes a wake lock when a worker moves to the foreground (the post upload). Libraries only
+         declare it up to API 25, and without it the first foreground promotion after a cold start throws. -->
+    <uses-permission
+        android:name="android.permission.WAKE_LOCK"
+        tools:remove="android:maxSdkVersion" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission

@@ -46,6 +46,24 @@ class MediaPreparationUseCase @Inject constructor(
 		}
 	}
 
+	/**
+	 * Prepares every picked media in order, keeping [isPreparing] on for the whole batch. When one of them
+	 * is rejected, the files already prepared are deleted so nothing is left behind in the cache.
+	 */
+	suspend fun prepareAll(items: List<PickedMedia>): List<PreparedMedia> {
+		_isPreparing.value = true
+		val prepared = mutableListOf<PreparedMedia>()
+		try {
+			items.forEach { prepared += prepareInternal(it.uri, it.mimeType) }
+			return prepared
+		} catch (e: Throwable) {
+			withContext(Dispatchers.IO) { prepared.forEach { File(it.filePath).delete() } }
+			throw e
+		} finally {
+			_isPreparing.value = false
+		}
+	}
+
 	private suspend fun prepareInternal(uri: Uri, mimeType: String?): PreparedMedia {
 		val resolvedMime = mimeType ?: context.contentResolver.getType(uri)
 			?: throw MediaValidationException("Tipe media tidak dikenali")
@@ -117,4 +135,10 @@ class MediaPreparationUseCase @Inject constructor(
 data class PreparedMedia(
 	val filePath: String,
 	val contentType: String
+)
+
+/** A media the user picked, before it is compressed or copied. */
+data class PickedMedia(
+	val uri: Uri,
+	val mimeType: String?
 )

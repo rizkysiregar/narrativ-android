@@ -4,6 +4,25 @@ import com.google.gson.annotations.SerializedName
 
 enum class MediaType { IMAGE, VIDEO }
 
+/** One image or video of a post, in display order. [url] and [thumbnailUrl] are presigned and expire. */
+data class PostMediaItem(
+
+	@field:SerializedName("id")
+	val id: String,
+
+	@field:SerializedName("type")
+	val type: MediaType,
+
+	@field:SerializedName("url")
+	val url: String?,
+
+	@field:SerializedName("thumbnailUrl")
+	val thumbnailUrl: String?
+) {
+	val isVideo: Boolean
+		get() = type == MediaType.VIDEO
+}
+
 data class FeedsPostPaginationResponse(
 
 	@field:SerializedName("pageNumber")
@@ -30,14 +49,10 @@ data class FeedContentItem(
 	@field:SerializedName("createdAt")
 	val createdAt: String,
 
-	@field:SerializedName("mediaUrl")
-	val mediaUrl: String?,
-
-	@field:SerializedName("mediaType")
-	val mediaType: MediaType,
-
-	@field:SerializedName("thumbnailUrl")
-	val thumbnailUrl: String?,
+	// Empty for a caption-only post. Nullable because Gson skips the Kotlin default when it rebuilds
+	// a post from JSON (post detail), so always read it through [mediaItems].
+	@field:SerializedName("media")
+	val media: List<PostMediaItem>? = null,
 
 	@field:SerializedName("caption")
 	val caption: String?,
@@ -68,6 +83,19 @@ data class FeedContentItem(
 ) {
 	val isTakenDown: Boolean
 		get() = moderationStatus == MODERATION_TAKEN_DOWN
+
+	/** Media in display order; empty for a caption-only post and for a taken down post seen by others. */
+	val mediaItems: List<PostMediaItem>
+		get() = media.orEmpty()
+
+	val hasMedia: Boolean
+		get() = mediaItems.isNotEmpty()
+
+	val hasVideo: Boolean
+		get() = mediaItems.any { it.isVideo }
+
+	/** The video shown on [page], or null when that page is an image (or out of range). */
+	fun videoAt(page: Int): PostMediaItem? = mediaItems.getOrNull(page)?.takeIf { it.isVideo }
 
 	/** Shown in place of the media when the post is taken down. */
 	val takedownMessage: String
