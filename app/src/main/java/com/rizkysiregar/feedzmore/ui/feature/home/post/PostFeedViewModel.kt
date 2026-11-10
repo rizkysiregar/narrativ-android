@@ -99,7 +99,9 @@ class PostFeedViewModel @Inject constructor(
 			mimeType.startsWith("image/") -> {
 				when {
 					mimeType !in ALLOWED_IMAGE_TYPES -> "Format gambar tidak didukung"
-					sizeBytes != null && sizeBytes > 5L * 1024 * 1024 -> "Ukuran gambar maksimal 5MB"
+					// Static images are compressed before upload; GIFs are sent as-is.
+					mimeType == "image/gif" && sizeBytes != null && sizeBytes > 5L * 1024 * 1024 ->
+						"Ukuran GIF maksimal 5MB"
 					else -> null
 				}
 			}

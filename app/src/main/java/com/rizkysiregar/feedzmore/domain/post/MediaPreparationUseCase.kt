@@ -2,6 +2,7 @@ package com.rizkysiregar.feedzmore.domain.post
 
 import android.content.Context
 import android.net.Uri
+import com.rizkysiregar.feedzmore.media.ImageCompressor
 import com.rizkysiregar.feedzmore.media.MediaValidationException
 import com.rizkysiregar.feedzmore.media.VideoCompressor
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -24,7 +25,8 @@ import javax.inject.Singleton
 @Singleton
 class MediaPreparationUseCase @Inject constructor(
 	@ApplicationContext private val context: Context,
-	private val videoCompressor: VideoCompressor
+	private val videoCompressor: VideoCompressor,
+	private val imageCompressor: ImageCompressor
 ) {
 
 	private val _isPreparing = MutableStateFlow(false)
@@ -56,11 +58,16 @@ class MediaPreparationUseCase @Inject constructor(
 				val file = withContext(Dispatchers.IO) {
 					copyToCache(uri, mimeToExtension(resolvedMime))
 				}
-				if (file.length() > MAX_IMAGE_BYTES) {
-					file.delete()
-					throw MediaValidationException("Ukuran gambar maksimal 5MB")
+				// GIF is passed through as-is: re-encoding would drop the animation.
+				if (resolvedMime == "image/gif") {
+					if (file.length() > MAX_IMAGE_BYTES) {
+						file.delete()
+						throw MediaValidationException("Ukuran GIF maksimal 5MB")
+					}
+					return PreparedMedia(file.absolutePath, resolvedMime)
 				}
-				PreparedMedia(file.absolutePath, resolvedMime)
+				val image = imageCompressor.compress(file, resolvedMime)
+				PreparedMedia(image.file.absolutePath, image.contentType)
 			}
 
 			resolvedMime in ALLOWED_VIDEO_TYPES -> {
