@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.collectLatest
 fun ProfileRoute(
     profileVm: ProfileViewModel = hiltViewModel(),
     profileFeedVm: ProfileFeedViewModel = hiltViewModel(),
-	onLogoutClick: () -> Unit,
+	onSettingsClick: () -> Unit,
 	onFollowersClick: (String) -> Unit = {},
 	onFollowingClick: (String) -> Unit = {},
 	onPostClick: (FeedContentItem, (String) -> Unit) -> Unit = { _, _ -> }
@@ -80,10 +80,7 @@ fun ProfileRoute(
                 profileFeedVm.refresh()
             },
             onLikeClick = profileFeedVm::toggleLike,
-            onExitClick = {
-                profileVm.clearDataStore()
-                onLogoutClick()
-            },
+            onSettingsClick = onSettingsClick,
             followStatus = followStatus,
             onFollowersClick = { userId -> onFollowersClick(userId) },
             onFollowingClick = { userId -> onFollowingClick(userId) },
@@ -100,7 +97,7 @@ fun ProfileRoute(
 private fun ProfileRoutePreview() {
     FeedzmoreTheme {
         ProfileRoute(
-            onLogoutClick = {}
+            onSettingsClick = {}
         )
     }
 }

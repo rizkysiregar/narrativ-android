@@ -29,6 +29,7 @@ import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.post.PostFeedRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.profile.ProfileRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.search.SearchRoute
+import com.rizkysiregar.feedzmore.ui.feature.home.settings.SettingsRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.upload.UploadBannerViewModel
 import com.rizkysiregar.feedzmore.ui.feature.home.upload.UploadProgressBanner
 import com.rizkysiregar.feedzmore.ui.feature.home.userdetail.UserDetailRoute
@@ -67,7 +68,7 @@ fun HomeRoot(
 
 	Scaffold(
 		bottomBar = {
-			if (currentRoute != HomePathRoute.UserDetail.route && currentRoute != HomePathRoute.FollowList.route && !isDetailRoute) {
+			if (currentRoute != HomePathRoute.UserDetail.route && currentRoute != HomePathRoute.FollowList.route && currentRoute != HomePathRoute.Settings.route && !isDetailRoute) {
 				BottomBar(homeNavController)
 			}
 		}
@@ -117,14 +118,9 @@ fun HomeRoot(
 			}
 			composable(BottomNavScreen.Profile.route) {
 				ProfileRoute(
-					onLogoutClick = {
-						navController.navigate(AuthPathRoutes.Login.route) {
-							popUpTo(Constants.HOME_GRAPH) {
-								inclusive = true
-							}
-							launchSingleTop = true
-					}
-				},
+					onSettingsClick = {
+						homeNavController.navigate(HomePathRoute.Settings.route)
+					},
 				onFollowersClick = { userId ->
 					homeNavController.navigate(HomePathRoute.FollowList.create(userId, "followers"))
 				},
@@ -134,6 +130,19 @@ fun HomeRoot(
 				onPostClick = openPostDetail
 			)
 		}
+				composable(HomePathRoute.Settings.route) {
+					SettingsRoute(
+						onBackClick = { homeNavController.popBackStack() },
+						onLoggedOut = {
+							navController.navigate(AuthPathRoutes.Login.route) {
+								popUpTo(Constants.HOME_GRAPH) {
+									inclusive = true
+								}
+								launchSingleTop = true
+							}
+						}
+					)
+				}
 				composable(
 					route = HomePathRoute.FollowList.route,
 					arguments = listOf(

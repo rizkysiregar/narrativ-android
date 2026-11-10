@@ -12,7 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
@@ -50,7 +50,7 @@ fun ProfileScreen(
 	profileState: ResultState<UserSearchItemResponse>,
 	feedState: FeedUiState,
 	listState: LazyListState,
-	onExitClick: () -> Unit,
+	onSettingsClick: () -> Unit,
 	onRetry: () -> Unit,
 	onRetryFeed: () -> Unit,
 	onRefresh: () -> Unit,
@@ -66,10 +66,10 @@ fun ProfileScreen(
 			TopAppBar(
 				title = { Text("Profile") },
 				actions = {
-					IconButton(onClick = onExitClick) {
+					IconButton(onClick = onSettingsClick) {
 						Icon(
-							imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-							contentDescription = "Exit App"
+							imageVector = Icons.Filled.Settings,
+							contentDescription = "Settings"
 						)
 					}
 				},
@@ -279,7 +279,7 @@ private fun UserProfileInfoPreview() {
 //				)
 //			),
 //			onRetry = {},
-//			onExitClick = {},
+//			onSettingsClick = {},
 //			modifier = Modifier,
 //		)
 //	}
