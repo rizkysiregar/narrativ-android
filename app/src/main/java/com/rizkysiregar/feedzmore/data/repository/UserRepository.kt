@@ -5,6 +5,7 @@ import com.rizkysiregar.feedzmore.data.remote.model.request.user.SearchUserReque
 import com.rizkysiregar.feedzmore.data.remote.model.response.PaginationResponseWrapper
 import com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowStatusResponse
 import com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowUserResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.user.ProfileImageUploadUrlResponse
 import com.rizkysiregar.feedzmore.data.remote.model.response.user.UserSearchItemResponse
 import kotlinx.coroutines.flow.Flow
 
@@ -14,6 +15,11 @@ import kotlinx.coroutines.flow.Flow
  * Description: Software Engineer
  */
 interface UserRepository {
+	/** Each of these throws when the call fails, like [PostRepository.createUploadUrl]. */
+	suspend fun createProfileImageUploadUrl(contentType: String): ProfileImageUploadUrlResponse
+	suspend fun setProfileImage(objectKey: String): UserSearchItemResponse
+	suspend fun deleteProfileImage(): UserSearchItemResponse
+
 	fun getUserProfile(userId: String): Flow<ResultState<UserSearchItemResponse>>
 
 	fun searchUsers(request: SearchUserRequest): Flow<ResultState<PaginationResponseWrapper<UserSearchItemResponse>>>

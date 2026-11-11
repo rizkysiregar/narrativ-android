@@ -5,7 +5,10 @@ import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.request.user.SearchUserRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.PaginationResponseWrapper
 import com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowStatusResponse
+import com.rizkysiregar.feedzmore.data.remote.model.request.user.CreateProfileImageUploadUrlRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.user.SetProfileImageRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowUserResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.user.ProfileImageUploadUrlResponse
 import com.rizkysiregar.feedzmore.data.remote.model.response.user.UserSearchItemResponse
 import com.rizkysiregar.feedzmore.data.repository.UserRepository
 import com.rizkysiregar.feedzmore.util.flowFromApi
@@ -21,6 +24,21 @@ class UserRepositoryImpl @Inject constructor(
 
 	private val userApi: UserApi by lazy {
 		retrofit.create(UserApi::class.java)
+	}
+
+	override suspend fun createProfileImageUploadUrl(contentType: String): ProfileImageUploadUrlResponse {
+		val response = userApi.createProfileImageUploadUrl(CreateProfileImageUploadUrlRequest(contentType))
+		return response.data ?: throw IllegalStateException(response.message)
+	}
+
+	override suspend fun setProfileImage(objectKey: String): UserSearchItemResponse {
+		val response = userApi.setProfileImage(SetProfileImageRequest(objectKey))
+		return response.data ?: throw IllegalStateException(response.message)
+	}
+
+	override suspend fun deleteProfileImage(): UserSearchItemResponse {
+		val response = userApi.deleteProfileImage()
+		return response.data ?: throw IllegalStateException(response.message)
 	}
 
 	override fun getUserProfile(userId: String): Flow<ResultState<UserSearchItemResponse>> =

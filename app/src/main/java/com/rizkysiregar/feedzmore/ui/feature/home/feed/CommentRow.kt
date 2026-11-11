@@ -31,7 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.CommentItem
-import com.rizkysiregar.feedzmore.ui.components.InitialAvatar
+import com.rizkysiregar.feedzmore.ui.components.ProfileAvatar
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 import com.rizkysiregar.feedzmore.util.formatTimeAgo
 
@@ -90,8 +90,10 @@ internal fun CommentRow(
 			},
 		horizontalArrangement = Arrangement.spacedBy(12.dp)
 	) {
-		InitialAvatar(
-			name = comment.username,
+		ProfileAvatar(
+			imageUrl = comment.profileImageUrl,
+			userId = "", // no photo: initials, like the rest of the feed
+			userName = comment.username,
 			size = if (isReply) 28.dp else 36.dp
 		)
 
