@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -15,7 +16,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,11 +40,14 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -73,7 +80,7 @@ fun CommentSectionSheet(
 		CommentSectionContent(
 			postId = postId,
 			viewModel = viewModel,
-			modifier = Modifier.fillMaxWidth().heightIn(max = 640.dp)
+			modifier = Modifier.fillMaxWidth().fillMaxHeight(0.8f)
 		)
 	}
 }
@@ -95,6 +102,9 @@ fun CommentSectionContent(
 	val snackbarHostState = remember { SnackbarHostState() }
 	val inputFocusRequester = remember { FocusRequester() }
 	var commentText by rememberSaveable { mutableStateOf("") }
+	var pendingDelete by remember { mutableStateOf<CommentItem?>(null) }
+	val focusManager = LocalFocusManager.current
+	val keyboardController = LocalSoftwareKeyboardController.current
 
 	val rows = remember(comments, replies) { buildCommentRows(comments, replies) }
 	val latestRows by rememberUpdatedState(rows)
@@ -119,12 +129,19 @@ fun CommentSectionContent(
 		viewModel.events.collect { event ->
 			when (event) {
 				is CommentEvent.ShowMessage -> snackbarHostState.showSnackbar(event.message)
-				CommentEvent.Sent -> commentText = ""
+				CommentEvent.Sent -> {
+					commentText = ""
+					focusManager.clearFocus()
+					keyboardController?.hide()
+				}
+				is CommentEvent.SendFailed -> commentText = event.text
 				CommentEvent.ScrollToBottom -> {
+					withFrameNanos { } // let the new row be composed first
 					val last = latestRows.lastIndex
 					if (last >= 0) listState.animateScrollToItem(last)
 				}
 				is CommentEvent.ScrollToLastReply -> {
+					withFrameNanos { }
 					val index = latestRows.lastReplyIndex(event.rootId)
 					if (index >= 0) listState.animateScrollToItem(index)
 				}
@@ -139,7 +156,7 @@ fun CommentSectionContent(
 			style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
 			modifier = Modifier
 				.fillMaxWidth()
-				.padding(bottom = 8.dp),
+				.padding(top = 12.dp, bottom = 12.dp),
 			textAlign = TextAlign.Center
 		)
 
@@ -157,7 +174,7 @@ fun CommentSectionContent(
 					Button(onClick = viewModel::loadMore) { Text("Coba lagi") }
 				}
 			} else if (comments.isEmpty() && !isLoading) {
-				EmptyCommentsView()
+				EmptyCommentsView(onWriteClick = { inputFocusRequester.requestFocus() })
 			} else {
 				LazyColumn(
 					state = listState,
@@ -172,7 +189,8 @@ fun CommentSectionContent(
 							modifier = Modifier.animateItem(),
 							onReplyClick = viewModel::startReply,
 							onToggleReplies = viewModel::toggleReplies,
-							onLoadMoreReplies = viewModel::loadMoreReplies
+							onLoadMoreReplies = viewModel::loadMoreReplies,
+							onDeleteRequest = { pendingDelete = it }
 						)
 					}
 
@@ -197,6 +215,17 @@ fun CommentSectionContent(
 
 		SnackbarHost(hostState = snackbarHostState)
 
+		pendingDelete?.let { target ->
+			DeleteCommentDialog(
+				comment = target,
+				onConfirm = {
+					viewModel.deleteComment(target)
+					pendingDelete = null
+				},
+				onDismiss = { pendingDelete = null }
+			)
+		}
+
 		// Sticky Bottom Input Area
 		CommentInputArea(
 			text = commentText,
@@ -218,16 +247,29 @@ private fun CommentListRowContent(
 	onReplyClick: (CommentItem) -> Unit,
 	onToggleReplies: (String) -> Unit,
 	onLoadMoreReplies: (String) -> Unit,
+	onDeleteRequest: (CommentItem) -> Unit,
 	modifier: Modifier = Modifier
 ) {
 	when (row) {
-		is CommentListRow.Item -> CommentRow(
-			comment = row.comment,
-			onReplyClick = onReplyClick,
-			modifier = modifier,
-			isReplyTarget = row.comment.id == replyTargetId,
-			threadLine = threadLine
-		)
+		is CommentListRow.Item -> {
+			val comment = row.comment
+			val commentRow: @Composable (Modifier) -> Unit = { rowModifier ->
+				CommentRow(
+					comment = comment,
+					onReplyClick = onReplyClick,
+					modifier = rowModifier,
+					isReplyTarget = comment.id == replyTargetId,
+					threadLine = threadLine
+				)
+			}
+			if (comment.canDelete && !comment.isPending) {
+				SwipeToDeleteComment(onDeleteRequest = { onDeleteRequest(comment) }, modifier = modifier) {
+					commentRow(Modifier)
+				}
+			} else {
+				commentRow(modifier)
+			}
+		}
 
 		is CommentListRow.RepliesToggle -> ThreadControl(threadLine, modifier) {
 			RepliesActionText(
@@ -293,21 +335,45 @@ private fun RepliesActionText(text: String, onClick: () -> Unit, isError: Boolea
 
 
 @Composable
-fun EmptyCommentsView() {
+private fun DeleteCommentDialog(comment: CommentItem, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+	val what = if (comment.isReply) "Balasan" else "Komentar"
+	AlertDialog(
+		onDismissRequest = onDismiss,
+		title = { Text("Hapus ${what.lowercase()}?") },
+		text = {
+			Text(
+				if (!comment.isReply && comment.replyCount > 0) {
+					"Komentar ini beserta ${comment.replyCount} balasannya akan dihapus permanen."
+				} else {
+					"$what ini akan dihapus permanen."
+				}
+			)
+		},
+		confirmButton = {
+			TextButton(onClick = onConfirm) { Text("Hapus", color = MaterialTheme.colorScheme.error) }
+		},
+		dismissButton = { TextButton(onClick = onDismiss) { Text("Batal") } }
+	)
+}
+
+@Composable
+fun EmptyCommentsView(onWriteClick: () -> Unit = {}) {
 	Column(
-		modifier = Modifier.fillMaxSize(),
+		modifier = Modifier.fillMaxSize().padding(24.dp),
 		verticalArrangement = Arrangement.Center,
 		horizontalAlignment = Alignment.CenterHorizontally
 	) {
 		Text(
 			text = "Belum ada komentar",
-			style = MaterialTheme.typography.bodyLarge,
-			color = MaterialTheme.colorScheme.onSurfaceVariant
+			style = MaterialTheme.typography.titleMedium,
+			color = MaterialTheme.colorScheme.onSurface
 		)
 		Text(
 			text = "Jadilah yang pertama memulai obrolan!",
-			style = MaterialTheme.typography.bodySmall,
-			color = MaterialTheme.colorScheme.onSurfaceVariant
+			style = MaterialTheme.typography.bodyMedium,
+			color = MaterialTheme.colorScheme.onSurfaceVariant,
+			modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
 		)
+		OutlinedButton(onClick = onWriteClick) { Text("Tulis komentar") }
 	}
 }

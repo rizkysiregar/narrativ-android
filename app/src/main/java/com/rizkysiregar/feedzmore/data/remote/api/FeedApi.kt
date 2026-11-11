@@ -58,6 +58,11 @@ interface FeedApi {
 		@Path("postId") postId: UUID
 	): BaseResponse<String>
 
+	@DELETE("comments/{commentId}")
+	suspend fun deleteComment(
+		@Path("commentId") commentId: UUID
+	): BaseResponse<String>
+
 	@GET("posts/{postId}/comments")
 	suspend fun getPostComment(
 		@Path("postId") postId: UUID,

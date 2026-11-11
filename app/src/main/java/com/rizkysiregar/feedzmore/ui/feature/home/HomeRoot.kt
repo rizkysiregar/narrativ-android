@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -79,7 +80,10 @@ fun HomeRoot(
 				navController = homeNavController,
 				route = Constants.HOME_GRAPH,
 				startDestination = BottomNavScreen.Feed.route,
-				modifier = Modifier.padding(paddingValues)
+				modifier = Modifier
+					.padding(paddingValues)
+					// the scaffold already pads for the system bars, so imePadding below must not count them again
+					.consumeWindowInsets(paddingValues)
 			) {
 			composable(BottomNavScreen.Feed.route) {
 				FeedRoute(

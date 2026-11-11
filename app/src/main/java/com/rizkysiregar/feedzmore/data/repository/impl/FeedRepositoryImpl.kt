@@ -69,6 +69,11 @@ class FeedRepositoryImpl @Inject constructor(
 			)
 		}
 
+	override fun deleteComment(commentId: UUID): Flow<ResultState<String>> =
+		flowFromMessageApi {
+			feedApi.deleteComment(commentId)
+		}
+
 	override fun getComment(request: GetCommentRequest): Flow<ResultState<PaginationResponseWrapper<CommentItem>>> =
 		flowFromApi {
 			feedApi.getPostComment(

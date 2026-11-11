@@ -312,9 +312,9 @@ fun PostDetailScreen(
 							append(post.caption.orEmpty())
 						},
 						style = MaterialTheme.typography.bodyMedium,
-						modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+						modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 20.dp)
 					)
-					HorizontalDivider(thickness = 0.5.dp, color = Color.LightGray.copy(alpha = 0.5f))
+					HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
 				}
 
 				CommentSectionContent(

@@ -22,7 +22,11 @@ data class CommentItem(
 	// visible replies of a top-level comment, always 0 for a reply
 	val replyCount: Int = 0,
 	val moderationStatus: String? = null,
-	val takedownReason: String? = null
+	val takedownReason: String? = null,
+	// the author and the owner of the post may delete a comment, the server decides
+	val canDelete: Boolean = false,
+	// shown right after sending, before the server has confirmed it; never part of a server response
+	val isPending: Boolean = false
 ) {
 	val isTakenDown: Boolean
 		get() = moderationStatus == MODERATION_TAKEN_DOWN

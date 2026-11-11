@@ -24,6 +24,7 @@ interface FeedRepository {
 	fun likePost(postId: UUID): Flow<ResultState<String>>
 	fun dislikePost(postId: UUID): Flow<ResultState<String>>
 	fun addComment(request: AddCommentRequest): Flow<ResultState<String>>
+	fun deleteComment(commentId: UUID): Flow<ResultState<String>>
 	fun getComment(request: GetCommentRequest): Flow<ResultState<PaginationResponseWrapper<CommentItem>>>
 	fun getReplies(request: GetRepliesRequest): Flow<ResultState<PaginationResponseWrapper<CommentItem>>>
 }

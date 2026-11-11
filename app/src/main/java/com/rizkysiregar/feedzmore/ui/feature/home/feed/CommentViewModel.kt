@@ -8,7 +8,10 @@ import com.rizkysiregar.feedzmore.data.remote.model.request.feed.AddCommentReque
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetCommentRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetRepliesRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.CommentItem
+import com.rizkysiregar.feedzmore.constants.PrefKeys
+import com.rizkysiregar.feedzmore.data.cache.DataStoreManager
 import com.rizkysiregar.feedzmore.domain.feed.AddCommentUseCase
+import com.rizkysiregar.feedzmore.domain.feed.DeleteCommentUseCase
 import com.rizkysiregar.feedzmore.domain.feed.GetCommentUseCase
 import com.rizkysiregar.feedzmore.domain.feed.GetRepliesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,10 +21,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
 
@@ -44,8 +49,11 @@ data class RepliesState(
 sealed interface CommentEvent {
 	data class ShowMessage(val message: String) : CommentEvent
 
-	/** The comment was accepted by the server: clear the draft. */
+	/** The comment is on its way (shown as pending): clear the draft and close the keyboard. */
 	object Sent : CommentEvent
+
+	/** Sending failed: put the text back so nothing the user typed is lost. */
+	data class SendFailed(val text: String) : CommentEvent
 
 	/** A new top-level comment was added and the list is refreshed: show it. */
 	object ScrollToBottom : CommentEvent
@@ -58,7 +66,9 @@ sealed interface CommentEvent {
 class CommentViewModel @Inject constructor(
 	private val getCommentUseCase: GetCommentUseCase,
 	private val getRepliesUseCase: GetRepliesUseCase,
-	private val addCommentUseCase: AddCommentUseCase
+	private val addCommentUseCase: AddCommentUseCase,
+	private val deleteCommentUseCase: DeleteCommentUseCase,
+	private val dataStore: DataStoreManager
 ) : ViewModel() {
 
 	// state for fetch comments
@@ -92,6 +102,7 @@ class CommentViewModel @Inject constructor(
 	private var loadJob: Job? = null
 	private var loadGeneration = 0
 	private val replyJobs = mutableMapOf<String, Job>()
+	private val deleting = mutableSetOf<String>()
 
 	fun loadComments(postId: String, isRefresh: Boolean = false) {
 		if (isRefresh || postId != currentPostId) {
@@ -173,7 +184,7 @@ class CommentViewModel @Inject constructor(
 		_replyTarget.value = null
 	}
 
-	// send comment, or reply when a reply target is set
+	// send comment, or reply when a reply target is set; it shows up at once as a pending row
 	fun addComment(postId: String, content: String) {
 		val text = content.trim()
 		if (text.isEmpty() || _isSubmitting.value) return
@@ -181,6 +192,22 @@ class CommentViewModel @Inject constructor(
 		val target = _replyTarget.value
 		_isSubmitting.value = true
 		viewModelScope.launch {
+			val pending = CommentItem(
+				id = "pending-${UUID.randomUUID()}",
+				username = dataStore.get(PrefKeys.username, "").first(),
+				commentContent = text,
+				createdAt = Instant.now().toString(),
+				parentId = target?.rootId,
+				replyToCommentId = target?.id,
+				replyToUsername = target?.username,
+				isPending = true
+			)
+			val wasExpanded = target != null && _replies.value.containsKey(target.rootId)
+			insertPending(pending, target)
+			_replyTarget.value = null
+			eventChannel.send(CommentEvent.Sent)
+			eventChannel.send(if (target == null) CommentEvent.ScrollToBottom else CommentEvent.ScrollToLastReply(target.rootId))
+
 			val request = AddCommentRequest(
 				postId = UUID.fromString(postId),
 				content = text,
@@ -188,19 +215,97 @@ class CommentViewModel @Inject constructor(
 			)
 			when (val result = addCommentUseCase(request).awaitResult()) {
 				is ResultState.Success -> {
-					_replyTarget.value = null
-					eventChannel.send(CommentEvent.Sent)
+					replacePending(pending, pending.copy(isPending = false))
 					_isSubmitting.value = false
 					showNewComment(postId, target)
 				}
 
-				is ResultState.Failure -> {
+				else -> {
+					removePending(pending, wasExpanded)
+					_replyTarget.value = target
 					_isSubmitting.value = false
-					eventChannel.send(CommentEvent.ShowMessage(result.message))
+					eventChannel.send(CommentEvent.SendFailed(text))
+					eventChannel.send(
+						CommentEvent.ShowMessage((result as? ResultState.Failure)?.message ?: ApiMessages.GENERIC_ERROR)
+					)
 				}
-
-				else -> _isSubmitting.value = false
 			}
+		}
+	}
+
+	private fun insertPending(pending: CommentItem, target: CommentItem?) {
+		if (target == null) {
+			_comments.update { it + pending }
+		} else {
+			_replies.update { map ->
+				val state = map[target.rootId] ?: RepliesState(hasMore = false)
+				map + (target.rootId to state.copy(items = state.items + pending))
+			}
+		}
+	}
+
+	private fun replacePending(pending: CommentItem, with: CommentItem) {
+		_comments.update { list -> list.map { if (it.id == pending.id) with else it } }
+		_replies.update { map ->
+			map.mapValues { (_, state) -> state.copy(items = state.items.map { if (it.id == pending.id) with else it }) }
+		}
+	}
+
+	private fun removePending(pending: CommentItem, replyThreadWasExpanded: Boolean) {
+		_comments.update { list -> list.filterNot { it.id == pending.id } }
+		_replies.update { map ->
+			val rootId = pending.parentId ?: return@update map
+			val state = map[rootId] ?: return@update map
+			val items = state.items.filterNot { it.id == pending.id }
+			// a thread opened only to show the pending reply goes back to collapsed
+			if (items.isEmpty() && !replyThreadWasExpanded) map - rootId else map + (rootId to state.copy(items = items))
+		}
+	}
+
+	/** Deletes [comment] on the server, then drops it (and the replies of a top-level comment) from the lists. */
+	fun deleteComment(comment: CommentItem) {
+		if (comment.isPending || !deleting.add(comment.id)) return
+		viewModelScope.launch {
+			try {
+				when (val result = deleteCommentUseCase(UUID.fromString(comment.id)).awaitResult()) {
+					is ResultState.Success -> {
+						removeLocally(comment)
+						eventChannel.send(CommentEvent.ShowMessage(if (comment.isReply) "Balasan dihapus" else "Komentar dihapus"))
+					}
+
+					is ResultState.Failure -> eventChannel.send(CommentEvent.ShowMessage(result.message))
+					else -> Unit
+				}
+			} finally {
+				deleting.remove(comment.id)
+			}
+		}
+	}
+
+	private fun removeLocally(comment: CommentItem) {
+		val target = _replyTarget.value
+		if (target != null && (target.id == comment.id || (!comment.isReply && target.rootId == comment.id))) {
+			_replyTarget.value = null
+		}
+
+		if (!comment.isReply) {
+			replyJobs.remove(comment.id)?.cancel()
+			_replies.update { it - comment.id }
+			_comments.update { list -> list.filterNot { it.id == comment.id } }
+			return
+		}
+
+		val rootId = comment.rootId
+		_replies.update { map ->
+			val state = map[rootId] ?: return@update map
+			val items = state.items.filterNot { it.id == comment.id }.map {
+				// the server clears the tag of answers to a deleted reply, do the same here
+				if (it.replyToCommentId == comment.id) it.copy(replyToCommentId = null, replyToUsername = null) else it
+			}
+			if (items.isEmpty() && !state.hasMore) map - rootId else map + (rootId to state.copy(items = items))
+		}
+		_comments.update { list ->
+			list.map { if (it.id == rootId) it.copy(replyCount = (it.replyCount - 1).coerceAtLeast(0)) else it }
 		}
 	}
 
