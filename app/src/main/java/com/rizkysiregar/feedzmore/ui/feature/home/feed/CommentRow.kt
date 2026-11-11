@@ -5,6 +5,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.draw.alpha
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -75,8 +79,9 @@ internal fun CommentRow(
 	Row(
 		modifier = modifier
 			.fillMaxWidth()
+			.alpha(if (comment.isPending) 0.55f else 1f)
 			.threadLine(threadLine, lineColor, elbowY = if (isReply) 20.dp else 0.dp)
-			.padding(top = 6.dp, bottom = if (endsThread) 14.dp else 6.dp)
+			.padding(top = 6.dp, bottom = if (endsThread) 8.dp else 6.dp)
 			.padding(start = if (isReply) ThreadIndent else 0.dp)
 			.drawBehind {
 				// outset a little so the text does not touch the edge of the tint
@@ -103,7 +108,7 @@ internal fun CommentRow(
 					text = comment.username,
 					style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
 				)
-				val timeAgo = formatTimeAgo(comment.createdAt)
+				val timeAgo = if (comment.isPending) "Mengirim..." else formatTimeAgo(comment.createdAt)
 				if (timeAgo.isNotEmpty()) {
 					Spacer(modifier = Modifier.width(8.dp))
 					Text(
@@ -116,16 +121,21 @@ internal fun CommentRow(
 
 			CommentBody(comment)
 
-			if (!comment.isTakenDown) {
-				Text(
-					text = "Balas",
-					style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-					color = MaterialTheme.colorScheme.onSurfaceVariant,
+			if (!comment.isTakenDown && !comment.isPending) {
+				// a tall, wide touch target around a small label
+				Box(
+					contentAlignment = Alignment.CenterStart,
 					modifier = Modifier
 						.clip(RoundedCornerShape(8.dp))
-						.clickable { onReplyClick(comment) }
-						.padding(top = 4.dp, bottom = 2.dp, end = 12.dp)
-				)
+						.clickable(role = Role.Button) { onReplyClick(comment) }
+						.defaultMinSize(minWidth = 56.dp, minHeight = 40.dp)
+				) {
+					Text(
+						text = "Balas",
+						style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+						color = MaterialTheme.colorScheme.onSurfaceVariant
+					)
+				}
 			}
 		}
 	}

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,6 +45,8 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 // the server stores a comment in VARCHAR(255): longer text would be rejected with a server error
 const val MAX_COMMENT_LENGTH = 255
 private const val COUNTER_THRESHOLD = 200
+// the counter turns red when this few characters are left
+private const val COUNTER_WARNING_LEFT = 20
 
 @Composable
 fun CommentInputArea(
@@ -59,9 +62,11 @@ fun CommentInputArea(
 ) {
 	Surface(
 		tonalElevation = 2.dp,
-		modifier = modifier.imePadding() // Keyboard support
+		modifier = modifier
 	) {
-		Column {
+		// keyboard first, then the nav bar: only the part of the nav bar the keyboard does not cover is added,
+		// so the input sits directly on top of the keyboard
+		Column(modifier = Modifier.imePadding().navigationBarsPadding()) {
 			if (replyingTo != null) {
 				ReplyBanner(username = replyingTo, onCancel = onCancelReply)
 			}
@@ -81,7 +86,13 @@ fun CommentInputArea(
 						Text(if (replyingTo != null) "Balas @$replyingTo..." else "Tambahkan komentar...")
 					},
 					supportingText = if (text.length >= COUNTER_THRESHOLD) {
-						{ Text("${text.length}/$MAX_COMMENT_LENGTH") }
+						{
+							val nearLimit = MAX_COMMENT_LENGTH - text.length <= COUNTER_WARNING_LEFT
+							Text(
+								text = "${text.length}/$MAX_COMMENT_LENGTH",
+								color = if (nearLimit) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+							)
+						}
 					} else null,
 					modifier = Modifier
 						.weight(1f)
