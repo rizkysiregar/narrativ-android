@@ -63,4 +63,10 @@ interface FeedApi {
 		@Path("postId") postId: UUID,
 		@Query("page") page: Int
 	): BaseResponse<PaginationResponseWrapper<CommentItem>>
+
+	@GET("comments/{commentId}/replies")
+	suspend fun getCommentReplies(
+		@Path("commentId") commentId: UUID,
+		@Query("page") page: Int
+	): BaseResponse<PaginationResponseWrapper<CommentItem>>
 }

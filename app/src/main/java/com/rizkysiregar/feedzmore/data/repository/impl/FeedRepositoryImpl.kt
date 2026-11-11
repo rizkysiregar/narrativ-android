@@ -4,6 +4,7 @@ import com.rizkysiregar.feedzmore.data.remote.api.FeedApi
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.AddCommentRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetCommentRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetRepliesRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetAllFeedRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetFeedByUsernameRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.LikeFeedRequest
@@ -72,6 +73,14 @@ class FeedRepositoryImpl @Inject constructor(
 		flowFromApi {
 			feedApi.getPostComment(
 				postId = request.postId,
+				page = request.page
+			)
+		}
+
+	override fun getReplies(request: GetRepliesRequest): Flow<ResultState<PaginationResponseWrapper<CommentItem>>> =
+		flowFromApi {
+			feedApi.getCommentReplies(
+				commentId = request.commentId,
 				page = request.page
 			)
 		}
