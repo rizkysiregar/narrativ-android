@@ -18,7 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowUserResponse
-import com.rizkysiregar.feedzmore.ui.components.InitialAvatar
+import com.rizkysiregar.feedzmore.ui.components.ProfileAvatar
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -56,7 +56,12 @@ fun FollowListScreen(
 					headlineContent = { Text(user.displayName()) },
 					supportingContent = { Text("@${user.username}") },
 					leadingContent = {
-						InitialAvatar(name = user.username, size = 44.dp)
+						ProfileAvatar(
+							imageUrl = user.profileImage,
+							userId = "", // no photo: initials, like the rest of the feed
+							userName = user.username,
+							size = 44.dp
+						)
 					},
 					colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
 					modifier = Modifier

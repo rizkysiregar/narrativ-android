@@ -7,10 +7,19 @@ import com.rizkysiregar.feedzmore.data.cache.DataStoreManager
 import com.rizkysiregar.feedzmore.data.session.SessionManager
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.response.user.UserSearchItemResponse
+import com.rizkysiregar.feedzmore.data.remote.upload.UploadHttpException
 import com.rizkysiregar.feedzmore.domain.profile.FetchUserProfileUseCase
+import com.rizkysiregar.feedzmore.domain.profile.ProfilePhotoUseCase
+import com.rizkysiregar.feedzmore.media.MediaValidationException
 import com.rizkysiregar.feedzmore.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import android.net.Uri
+import java.io.File
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.Job
@@ -29,7 +38,8 @@ class ProfileViewModel @Inject constructor(
 	private val dataStore: DataStoreManager,
 	private val sessionManager: SessionManager,
 	private val fetchUserProfileUseCase: FetchUserProfileUseCase,
-	private val getFollowStatusUseCase: com.rizkysiregar.feedzmore.domain.user.GetFollowStatusUseCase
+	private val getFollowStatusUseCase: com.rizkysiregar.feedzmore.domain.user.GetFollowStatusUseCase,
+	private val profilePhotoUseCase: ProfilePhotoUseCase
 ) : BaseViewModel(dataStore) {
 
 	// clear user data aka logout
@@ -44,6 +54,49 @@ class ProfileViewModel @Inject constructor(
 	val followStatus: StateFlow<ResultState<com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowStatusResponse>?> = _followStatus
 
 	private var fetchJob: Job? = null
+
+	private val _isUpdatingPhoto = MutableStateFlow(false)
+	val isUpdatingPhoto: StateFlow<Boolean> = _isUpdatingPhoto
+
+	// one-shot messages (success or failure) for a snackbar
+	private val _photoMessages = MutableSharedFlow<String>(extraBufferCapacity = 1)
+	val photoMessages: SharedFlow<String> = _photoMessages.asSharedFlow()
+
+	/** Uploads the file produced by the crop step and deletes it afterwards. */
+	fun onPhotoCropped(file: File) {
+		updatePhoto("Foto profil diperbarui") {
+			try {
+				profilePhotoUseCase.upload(Uri.fromFile(file), "image/jpeg")
+			} finally {
+				file.delete()
+			}
+		}
+	}
+
+	fun removePhoto() {
+		updatePhoto("Foto profil dihapus") { profilePhotoUseCase.remove() }
+	}
+
+	private fun updatePhoto(successMessage: String, action: suspend () -> UserSearchItemResponse) {
+		if (_isUpdatingPhoto.value) return
+		viewModelScope.launch {
+			_isUpdatingPhoto.value = true
+			try {
+				_profileState.value = ResultState.Success(action())
+				_photoMessages.tryEmit(successMessage)
+			} catch (e: CancellationException) {
+				throw e
+			} catch (e: MediaValidationException) {
+				_photoMessages.tryEmit(e.message ?: "Foto tidak dapat digunakan")
+			} catch (e: UploadHttpException) {
+				_photoMessages.tryEmit("Gagal mengunggah foto, coba lagi")
+			} catch (e: Exception) {
+				_photoMessages.tryEmit("Gagal memperbarui foto profil, coba lagi")
+			} finally {
+				_isUpdatingPhoto.value = false
+			}
+		}
+	}
 
 	/**
 	 * Loads profile and follow status in parallel. A newer call cancels the previous one so a
