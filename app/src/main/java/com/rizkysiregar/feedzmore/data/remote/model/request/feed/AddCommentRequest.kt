@@ -10,5 +10,7 @@ import java.util.UUID
 
 data class AddCommentRequest(
 	val postId: UUID,
-	val content: String
+	val content: String,
+	// the comment being answered; a reply to a reply is flattened to one level by the server
+	val parentId: UUID? = null
 )

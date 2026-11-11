@@ -51,6 +51,7 @@ import com.rizkysiregar.feedzmore.data.remote.model.response.feed.PostMediaItem
 import com.rizkysiregar.feedzmore.ui.components.InitialAvatar
 import com.rizkysiregar.feedzmore.ui.components.TakenDownPlaceholder
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
+import com.rizkysiregar.feedzmore.util.formatPostDate
 
 private const val CAPTION_ONLY_MAX_LINES = 10
 private const val CAPTION_WITH_MEDIA_MAX_LINES = 4
@@ -157,7 +158,7 @@ private fun FeedAuthorHeader(item: FeedContentItem) {
 		)
 		if (item.createdAt.isNotBlank()) {
 			Text(
-				text = "  ·  ${item.createdAt.toReadableDate()}",
+				text = "  ·  ${formatPostDate(item.createdAt)}",
 				style = MaterialTheme.typography.labelMedium,
 				color = MaterialTheme.colorScheme.onSurfaceVariant,
 				maxLines = 1
@@ -262,9 +263,6 @@ private fun ActionButton(onClick: () -> Unit, content: @Composable () -> Unit) {
 		content()
 	}
 }
-
-private fun String.toReadableDate(): String =
-	take(10).replace('-', '·')
 
 @Preview(showBackground = true)
 @Composable

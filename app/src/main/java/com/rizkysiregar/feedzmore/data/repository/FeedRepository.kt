@@ -3,6 +3,7 @@ package com.rizkysiregar.feedzmore.data.repository
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.AddCommentRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetCommentRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetRepliesRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetAllFeedRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.feed.GetFeedByUsernameRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.PaginationResponseWrapper
@@ -24,4 +25,5 @@ interface FeedRepository {
 	fun dislikePost(postId: UUID): Flow<ResultState<String>>
 	fun addComment(request: AddCommentRequest): Flow<ResultState<String>>
 	fun getComment(request: GetCommentRequest): Flow<ResultState<PaginationResponseWrapper<CommentItem>>>
+	fun getReplies(request: GetRepliesRequest): Flow<ResultState<PaginationResponseWrapper<CommentItem>>>
 }

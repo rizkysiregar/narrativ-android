@@ -74,6 +74,7 @@ import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentIte
 import com.rizkysiregar.feedzmore.media.currentMediaUrlOrNull
 import com.rizkysiregar.feedzmore.media.rememberVideoPlayer
 import com.rizkysiregar.feedzmore.ui.components.InitialAvatar
+import com.rizkysiregar.feedzmore.util.formatPostDate
 
 const val KEY_POST_JSON = "post_detail_post_json"
 const val KEY_LIKE_HANDLER = "post_detail_like_handler"
@@ -381,7 +382,7 @@ private fun PostDetailHeader(
 			)
 			if (post.createdAt.isNotBlank()) {
 				Text(
-					text = post.createdAt.take(10).replace('-', '·'),
+					text = formatPostDate(post.createdAt),
 					style = MaterialTheme.typography.labelSmall,
 					color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
 				)
