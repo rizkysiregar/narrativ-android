@@ -4,6 +4,8 @@ import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -25,6 +27,9 @@ import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedItemCard
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedUiState
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.PostViewMode
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.PostViewPager
+import com.rizkysiregar.feedzmore.ui.feature.home.search.SearchResults
+import com.rizkysiregar.feedzmore.ui.feature.home.search.SearchUserBar
+import com.rizkysiregar.feedzmore.ui.feature.home.search.SearchUserUiState
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -42,8 +47,15 @@ fun ExploreScreenContent(
 	onLoadMoreList: () -> Unit,
 	onRetryGrid: () -> Unit,
 	onRetryList: () -> Unit,
+	searchState: SearchUserUiState,
+	onSearchQueryChange: (String) -> Unit,
+	onSearchRetry: () -> Unit,
+	onSearchLoadMore: () -> Unit,
+	onUserClick: (userId: String, username: String) -> Unit,
 	onRefresh: () -> Unit = {}
 ) {
+	val isSearching = searchState.query.isNotBlank()
+
 	val pagerModifier = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && selectedPost != null) {
 		Modifier.fillMaxSize().blur(14.dp)
 	} else {
@@ -62,21 +74,54 @@ fun ExploreScreenContent(
 		modifier = Modifier
 			.fillMaxSize()
 			.background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.22f))
-			.pullRefresh(pullState)
 	) {
-		PostViewPager(
-			pagerState = pagerState,
-			gridFeed = gridFeed,
-			listFeed = listFeed,
-			onGridPostClick = onGridPostClick,
-			onLikeClick = onLikeClick,
-			onVideoClick = onVideoClick,
-			onLoadMoreGrid = onLoadMoreGrid,
-			onLoadMoreList = onLoadMoreList,
-			onRetryGrid = onRetryGrid,
-			onRetryList = onRetryList,
-			modifier = pagerModifier
-		)
+		Column(modifier = Modifier.fillMaxSize()) {
+			SearchUserBar(
+				query = searchState.query,
+				onQueryChange = onSearchQueryChange,
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(horizontal = 16.dp, vertical = 8.dp)
+			)
+
+			Box(
+				modifier = Modifier
+					.fillMaxWidth()
+					.weight(1f)
+					// a pull inside the results must not refresh the explore feed underneath
+					.pullRefresh(pullState, enabled = !isSearching)
+			) {
+				PostViewPager(
+					pagerState = pagerState,
+					gridFeed = gridFeed,
+					listFeed = listFeed,
+					onGridPostClick = onGridPostClick,
+					onLikeClick = onLikeClick,
+					onVideoClick = onVideoClick,
+					onLoadMoreGrid = onLoadMoreGrid,
+					onLoadMoreList = onLoadMoreList,
+					onRetryGrid = onRetryGrid,
+					onRetryList = onRetryList,
+					modifier = pagerModifier
+				)
+
+				if (isSearching) {
+					SearchResults(
+						uiState = searchState,
+						onRetry = onSearchRetry,
+						onLoadMore = onSearchLoadMore,
+						onUserClick = onUserClick,
+						modifier = Modifier.imePadding()
+					)
+				} else {
+					PullRefreshIndicator(
+						refreshing = isRefreshing,
+						state = pullState,
+						modifier = Modifier.align(Alignment.TopCenter)
+					)
+				}
+			}
+		}
 
 		if (selectedPost != null) {
 			Box(
@@ -106,11 +151,5 @@ fun ExploreScreenContent(
 				}
 			}
 		}
-
-		PullRefreshIndicator(
-			refreshing = isRefreshing,
-			state = pullState,
-			modifier = Modifier.align(Alignment.TopCenter)
-		)
 	}
 }

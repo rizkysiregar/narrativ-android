@@ -29,7 +29,6 @@ import com.rizkysiregar.feedzmore.ui.feature.home.feed.KEY_POST_JSON
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.post.PostFeedRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.profile.ProfileRoute
-import com.rizkysiregar.feedzmore.ui.feature.home.search.SearchRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.settings.SettingsRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.upload.UploadBannerViewModel
 import com.rizkysiregar.feedzmore.ui.feature.home.upload.UploadProgressBanner
@@ -99,13 +98,6 @@ fun HomeRoot(
 				composable(BottomNavScreen.Explore.route) {
 				com.rizkysiregar.feedzmore.ui.feature.home.explore.ExploreRoute(
 					navController = homeNavController
-				)
-			}
-				composable(BottomNavScreen.Search.route) {
-				SearchRoute(
-					onUserClick = { userId, username ->
-						homeNavController.navigate(HomePathRoute.UserDetail.create(userId, username))
-					}
 				)
 			}
 			composable(BottomNavScreen.PostFeed.route) {

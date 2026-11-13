@@ -19,6 +19,8 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
@@ -30,15 +32,27 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.rizkysiregar.feedzmore.data.remote.model.response.user.UserSearchItemResponse
 import com.rizkysiregar.feedzmore.ui.components.ProfileAvatar
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
+import kotlinx.coroutines.flow.filterNotNull
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -46,89 +60,99 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
  * Description: Software Engineer
  */
 
+/**
+ * Results of a user search, shown in place of the explore feed while a query is active.
+ * Loads the next page near the end of the list and hides the keyboard as soon as it scrolls.
+ */
 @Composable
-fun SearchScreen(
+fun SearchResults(
 	uiState: SearchUserUiState,
-	onQueryChange: (String) -> Unit,
 	onRetry: () -> Unit,
+	onLoadMore: () -> Unit,
 	onUserClick: (userId: String, username: String) -> Unit,
+	modifier: Modifier = Modifier,
 	listState: LazyListState = rememberLazyListState()
 ) {
-	Column(
-		modifier = Modifier
+	val focusManager = LocalFocusManager.current
+	val dismissKeyboardOnScroll = remember(focusManager) {
+		object : NestedScrollConnection {
+			override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+				if (available.y != 0f) focusManager.clearFocus()
+				return Offset.Zero
+			}
+		}
+	}
+
+	val currentOnLoadMore by rememberUpdatedState(onLoadMore)
+	LaunchedEffect(listState) {
+		snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+			.filterNotNull()
+			.collect { last ->
+				if (last >= listState.layoutInfo.totalItemsCount - LOAD_AHEAD) currentOnLoadMore()
+			}
+	}
+
+	Box(
+		modifier = modifier
 			.fillMaxSize()
-			.background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.22f))
+			.background(MaterialTheme.colorScheme.background)
+			.nestedScroll(dismissKeyboardOnScroll)
 	) {
-		SearchUserBar(
-			query = uiState.query,
-			onQueryChange = onQueryChange,
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(horizontal = 16.dp, vertical = 12.dp)
-		)
+		when {
+			uiState.errorMessage != null && uiState.items.isEmpty() -> SearchErrorContent(
+				message = uiState.errorMessage,
+				onRetry = onRetry
+			)
 
-		Box(
-			modifier = Modifier
-				.fillMaxWidth()
-				.weight(1f)
-		) {
-			when {
-				uiState.isIdle -> SearchIdleContent()
+			uiState.hasLoadedInitialPage && uiState.items.isEmpty() -> SearchEmptyContent(
+				query = uiState.query
+			)
 
-				uiState.isLoading -> Box(
-					modifier = Modifier.fillMaxSize(),
-					contentAlignment = Alignment.Center
-				) {
-					CircularProgressIndicator()
+			// also covers the debounce gap between typing and the request starting
+			!uiState.hasLoadedInitialPage -> Box(
+				modifier = Modifier.fillMaxSize(),
+				contentAlignment = Alignment.Center
+			) {
+				CircularProgressIndicator()
+			}
+
+			else -> LazyColumn(
+				state = listState,
+				modifier = Modifier.fillMaxSize(),
+				contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+				verticalArrangement = Arrangement.spacedBy(4.dp)
+			) {
+				items(
+					items = uiState.items,
+					key = { it.id },
+					contentType = { "user_item" }
+				) { user ->
+					SearchUserItem(
+						user = user,
+						onClick = { onUserClick(user.id, user.username) }
+					)
 				}
 
-				uiState.errorMessage != null && uiState.items.isEmpty() -> SearchErrorContent(
-					message = uiState.errorMessage,
-					onRetry = onRetry
-				)
-
-				uiState.hasLoadedInitialPage && uiState.items.isEmpty() -> SearchEmptyContent(
-					query = uiState.query
-				)
-
-				else -> LazyColumn(
-					state = listState,
-					modifier = Modifier.fillMaxSize(),
-					contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-					verticalArrangement = Arrangement.spacedBy(4.dp)
-				) {
-					items(
-						items = uiState.items,
-						key = { it.id },
-						contentType = { "user_item" }
-					) { user ->
-						SearchUserItem(
-							user = user,
-							onClick = { onUserClick(user.id, user.username) }
-						)
-					}
-
-					if (uiState.isLoadingMore) {
-						item(contentType = "loading_more") {
-							Box(
-								modifier = Modifier
-									.fillMaxWidth()
-									.padding(16.dp),
-								contentAlignment = Alignment.Center
-							) {
-								CircularProgressIndicator(modifier = Modifier.height(28.dp))
-							}
+				if (uiState.isLoadingMore) {
+					item(contentType = "loading_more") {
+						Box(
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(16.dp),
+							contentAlignment = Alignment.Center
+						) {
+							CircularProgressIndicator(modifier = Modifier.height(28.dp))
 						}
 					}
+				}
 
-					if (uiState.isError && uiState.items.isNotEmpty()) {
-						item(contentType = "load_error") {
-							Box(
-								modifier = Modifier.fillMaxWidth(),
-								contentAlignment = Alignment.Center
-							) {
-								Button(onClick = onRetry) { Text("Retry") }
-							}
+				if (uiState.isError && uiState.items.isNotEmpty()) {
+					item(contentType = "load_error") {
+						Box(
+							modifier = Modifier.fillMaxWidth(),
+							contentAlignment = Alignment.Center
+						) {
+							Button(onClick = onRetry) { Text("Try again") }
 						}
 					}
 				}
@@ -137,19 +161,23 @@ fun SearchScreen(
 	}
 }
 
+private const val LOAD_AHEAD = 3
+
 @Composable
-private fun SearchUserBar(
+fun SearchUserBar(
 	query: String,
 	onQueryChange: (String) -> Unit,
 	modifier: Modifier = Modifier
 ) {
+	val focusManager = LocalFocusManager.current
+
 	OutlinedTextField(
 		value = query,
 		onValueChange = onQueryChange,
 		modifier = modifier,
 		singleLine = true,
 		shape = RoundedCornerShape(24.dp),
-		placeholder = { Text("Cari pengguna...") },
+		placeholder = { Text("Search users") },
 		leadingIcon = {
 			Icon(
 				imageVector = Icons.Default.Search,
@@ -158,14 +186,19 @@ private fun SearchUserBar(
 		},
 		trailingIcon = {
 			if (query.isNotEmpty()) {
-				IconButton(onClick = { onQueryChange("") }) {
+				IconButton(onClick = {
+					onQueryChange("")
+					focusManager.clearFocus()
+				}) {
 					Icon(
 						imageVector = Icons.Default.Close,
-						contentDescription = "Bersihkan pencarian"
+						contentDescription = "Clear search"
 					)
 				}
 			}
-		}
+		},
+		keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+		keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() })
 	)
 }
 
@@ -212,31 +245,6 @@ private fun SearchUserItem(
 }
 
 @Composable
-private fun SearchIdleContent() {
-	Column(
-		modifier = Modifier
-			.fillMaxSize()
-			.padding(24.dp),
-		verticalArrangement = Arrangement.Center,
-		horizontalAlignment = Alignment.CenterHorizontally
-	) {
-		Icon(
-			imageVector = Icons.Default.Search,
-			contentDescription = null,
-			modifier = Modifier.size(48.dp),
-			tint = MaterialTheme.colorScheme.onSurfaceVariant
-		)
-		Spacer(modifier = Modifier.height(12.dp))
-		Text("Cari pengguna")
-		Spacer(modifier = Modifier.height(4.dp))
-		Text(
-			text = "Ketik nama pengguna untuk mulai mencari",
-			color = MaterialTheme.colorScheme.onSurfaceVariant
-		)
-	}
-}
-
-@Composable
 private fun SearchEmptyContent(query: String) {
 	Column(
 		modifier = Modifier
@@ -252,10 +260,10 @@ private fun SearchEmptyContent(query: String) {
 			tint = MaterialTheme.colorScheme.onSurfaceVariant
 		)
 		Spacer(modifier = Modifier.height(12.dp))
-		Text("Tidak ada pengguna yang ditemukan")
+		Text("No users found")
 		Spacer(modifier = Modifier.height(4.dp))
 		Text(
-			text = "Tidak ada hasil untuk \"$query\"",
+			text = "No results for \"$query\"",
 			color = MaterialTheme.colorScheme.onSurfaceVariant
 		)
 	}
@@ -272,15 +280,15 @@ private fun SearchErrorContent(message: String, onRetry: () -> Unit) {
 	) {
 		Text(text = message)
 		Spacer(modifier = Modifier.height(8.dp))
-		Button(onClick = onRetry) { Text("Retry") }
+		Button(onClick = onRetry) { Text("Try again") }
 	}
 }
 
 @Preview(showBackground = true)
 @Composable
-fun SearchScreenPreview() {
+fun SearchResultsPreview() {
 	FeedzmoreTheme {
-		SearchScreen(
+		SearchResults(
 			uiState = SearchUserUiState(
 				query = "rizky",
 				items = listOf(
@@ -303,8 +311,8 @@ fun SearchScreenPreview() {
 				),
 				hasLoadedInitialPage = true
 			),
-			onQueryChange = {},
 			onRetry = {},
+			onLoadMore = {},
 			onUserClick = { _, _ -> }
 		)
 	}
