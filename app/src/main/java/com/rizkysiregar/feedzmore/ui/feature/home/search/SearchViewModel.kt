@@ -51,7 +51,7 @@ class SearchViewModel @Inject constructor(
 	fun loadNextPage() {
 		val state = _uiState.value
 		if (state.query.isBlank() || !state.hasLoadedInitialPage || !state.hasMore ||
-			state.isLoadingMore || state.isLoading
+			state.isLoadingMore || state.isLoading || state.isError
 		) return
 
 		_uiState.update { it.copy(isLoadingMore = true, errorMessage = null, isError = false) }

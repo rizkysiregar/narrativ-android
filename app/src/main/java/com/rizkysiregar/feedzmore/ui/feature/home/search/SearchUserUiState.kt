@@ -18,7 +18,4 @@ data class SearchUserUiState(
 	val hasMore: Boolean = false,
 	val errorMessage: String? = null,
 	val isError: Boolean = false
-) {
-	val isIdle: Boolean
-		get() = query.isBlank() && !isLoading && !hasLoadedInitialPage && errorMessage == null
-}
+)

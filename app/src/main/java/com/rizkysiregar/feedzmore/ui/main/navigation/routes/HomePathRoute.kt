@@ -14,7 +14,6 @@ sealed class HomePathRoute(val route: String) {
 
 		fun create(postId: String): String = "post_detail/$postId"
 	}
-	object SearchPage : MainPathRoute("search-page")
 	object Profile : MainPathRoute("profile")
 	object Settings : HomePathRoute("settings")
 
