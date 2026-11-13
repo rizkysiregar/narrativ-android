@@ -15,3 +15,8 @@
 .cxx
 local.properties
 ./.idea
+
+# release signing
+keystore.properties
+*.jks
+*.keystore

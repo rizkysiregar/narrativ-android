@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 /*
 *  Build Types > debug, release
@@ -16,9 +17,20 @@ plugins {
 	alias(libs.plugins.google.services)
 }
 
+// Release signing comes from keystore.properties (see keystore.properties.example) or, on CI, from
+// the KEYSTORE_FILE / KEYSTORE_PASSWORD / KEY_ALIAS / KEY_PASSWORD environment variables.
+// Neither is committed. Without them the release build is simply left unsigned.
+val keystoreProperties = Properties().apply {
+	val file = rootProject.file("keystore.properties")
+	if (file.exists()) file.inputStream().use { load(it) }
+}
+
+fun signingValue(propertyName: String, envName: String): String? =
+	keystoreProperties.getProperty(propertyName) ?: System.getenv(envName)
+
 android {
 	namespace = "com.rizkysiregar.feedzmore"
-	compileSdk = 35
+	compileSdk = 36
 	flavorDimensions += "env"
 
 	productFlavors {
@@ -60,16 +72,30 @@ android {
 		)
 
 		minSdk = 26
-		targetSdk = 35
-		versionCode = 2
-		versionName = "1.0.1"
+		targetSdk = 36
+		versionCode = 3
+		versionName = "1.0.2"
 
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 	}
 
+	signingConfigs {
+		val storeFile = signingValue("storeFile", "KEYSTORE_FILE")
+		if (storeFile != null) {
+			create("release") {
+				this.storeFile = rootProject.file(storeFile)
+				storePassword = signingValue("storePassword", "KEYSTORE_PASSWORD")
+				keyAlias = signingValue("keyAlias", "KEY_ALIAS")
+				keyPassword = signingValue("keyPassword", "KEY_PASSWORD")
+			}
+		}
+	}
+
 	buildTypes {
 		release {
-			isMinifyEnabled = false
+			signingConfig = signingConfigs.findByName("release")
+			isMinifyEnabled = true
+			isShrinkResources = true
 			proguardFiles(
 				getDefaultProguardFile("proguard-android-optimize.txt"),
 				"proguard-rules.pro"

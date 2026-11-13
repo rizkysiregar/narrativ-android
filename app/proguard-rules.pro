@@ -1,21 +1,24 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Release builds run R8 (minify + resource shrinking). Libraries such as Retrofit, OkHttp, Hilt,
+# WorkManager, Firebase and AppAuth ship their own consumer rules; only app specifics live here.
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Stack traces: keep line numbers, hide the original file name.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Gson maps JSON by reflecting on field names and generic signatures, so every request/response
+# model must keep its fields, and the generic types (BaseResponse<T> through TypeToken) their signatures.
+-keepattributes Signature,*Annotation*,EnclosingMethod,InnerClasses
+-keep class com.rizkysiregar.feedzmore.data.remote.model.** { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Models are also written into the nav saved state as JSON (Gson().toJson(post)); nothing else to keep.
+
+# WorkManager stores a worker's class name with the pending request. Keep the names stable, or an upload
+# that is still queued when the app updates would fail to find its renamed worker.
+-keepnames class * extends androidx.work.ListenableWorker
+
+# Debug logging is dropped from release builds.
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+}
