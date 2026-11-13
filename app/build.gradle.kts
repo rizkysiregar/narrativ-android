@@ -22,8 +22,7 @@ android {
 	flavorDimensions += "env"
 
 	productFlavors {
-
-		create("local-emulator") {
+		create("local") {
 			dimension = "env"
 			buildConfigField(
 				"String",
@@ -32,21 +31,21 @@ android {
 			)
 		}
 
-		create("local-real-device") {
-			dimension = "env"
-			buildConfigField(
-				"String",
-				"BASE_URL",
-				"\"http://192.168.1.4:9091/api/v1/\""
-			)
-		}
-
-		create("dev-public") {
+		create("dev") {
 			dimension = "env"
 			buildConfigField(
 				"String",
 				"BASE_URL",
 				"\"https://api-dev-feedzmore.rizkysiregar.my.id/api/v1/\""
+			)
+		}
+
+		create("prod") {
+			dimension = "env"
+			buildConfigField(
+				"String",
+				"BASE_URL",
+				"\"https://api-feedzmore.rizkysiregar.my.id/api/v1/\""
 			)
 		}
 	}
