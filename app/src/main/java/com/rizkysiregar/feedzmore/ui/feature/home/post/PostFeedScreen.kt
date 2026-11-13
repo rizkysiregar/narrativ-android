@@ -8,8 +8,16 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +27,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -48,6 +57,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -60,6 +70,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -68,23 +79,37 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import coil3.compose.AsyncImage
 import com.rizkysiregar.feedzmore.domain.post.PickedMedia
 import com.rizkysiregar.feedzmore.ui.components.ProfileAvatar
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
+import com.rizkysiregar.feedzmore.ui.theme.Warning
+import kotlinx.coroutines.delay
 
 /** Warn about the caption limit once this few characters are left. */
 private const val CAPTION_WARNING_THRESHOLD = 20
 private val MediaThumbSize = 112.dp
+private val CaptionMinHeight = 160.dp
+private const val PROMPT_INTERVAL_MILLIS = 3500L
+private val CaptionPrompts = listOf(
+	"What's on your mind?",
+	"Share something with your friends…",
+	"What happened today?",
+	"Got a story to tell?"
+)
 
 /**
  * Caption-first composer: the caption is the page, media is an optional extra that shows up
@@ -149,6 +174,17 @@ fun PostFeedScreen(
 
 	val canAddMedia = uiState.selectedMedia.size < MAX_POST_MEDIA && !isPreparing
 
+	val captionFocus = remember { FocusRequester() }
+	// opens the keyboard straight away: writing is the point of this page
+	LaunchedEffect(Unit) { captionFocus.requestFocus() }
+
+	// a small buzz when the limit is hit, since further typing silently does nothing
+	val haptic = LocalHapticFeedback.current
+	val atLimit = uiState.caption.length >= MAX_CAPTION_LENGTH
+	LaunchedEffect(atLimit) {
+		if (atLimit) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+	}
+
 	Column(
 		modifier = Modifier
 			.fillMaxSize()
@@ -173,10 +209,18 @@ fun PostFeedScreen(
 				.weight(1f)
 				.fillMaxWidth()
 				.verticalScroll(rememberScrollState())
+				// tapping anywhere in the empty area puts the cursor back in the caption
+				.clickable(
+					interactionSource = remember { MutableInteractionSource() },
+					indication = null
+				) { captionFocus.requestFocus() }
 				.padding(horizontal = 16.dp, vertical = 12.dp)
 		) {
-			Row(modifier = Modifier.fillMaxWidth()) {
-				val author = uiState.author
+			val author = uiState.author
+			Row(
+				modifier = Modifier.fillMaxWidth(),
+				verticalAlignment = Alignment.CenterVertically
+			) {
 				ProfileAvatar(
 					imageUrl = author?.profileImageUrl,
 					userId = author?.id.orEmpty(),
@@ -184,24 +228,22 @@ fun PostFeedScreen(
 					size = 44.dp
 				)
 				Spacer(Modifier.width(12.dp))
-				Column(modifier = Modifier.weight(1f)) {
-					if (author != null) {
-						Text(
-							text = author.displayName(),
-							style = MaterialTheme.typography.titleMedium,
-							fontWeight = FontWeight.SemiBold
-						)
-					}
-					CaptionField(caption = uiState.caption, onCaptionChange = onCaptionChange)
-					if (uiState.selectedMedia.isNotEmpty()) {
-						Spacer(Modifier.height(12.dp))
-						SelectedMediaStrip(
-							media = uiState.selectedMedia,
-							onRemove = onRemoveMedia
-						)
-					}
+				if (author != null) {
+					Text(
+						text = author.displayName(),
+						style = MaterialTheme.typography.titleMedium,
+						fontWeight = FontWeight.SemiBold
+					)
 				}
 			}
+			Spacer(Modifier.height(14.dp))
+			CaptionCard(
+				caption = uiState.caption,
+				onCaptionChange = onCaptionChange,
+				media = uiState.selectedMedia,
+				onRemoveMedia = onRemoveMedia,
+				focusRequester = captionFocus
+			)
 		}
 
 		HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -292,35 +334,86 @@ private fun ComposerTopBar(
 	}
 }
 
+/**
+ * The writing surface: a rounded card whose border lights up while typing. Picked media sits
+ * inside the same card, so the caption and its attachments read as one post.
+ */
 @Composable
-private fun CaptionField(caption: String, onCaptionChange: (String) -> Unit) {
-	val focusRequester = remember { FocusRequester() }
-	// opens the keyboard straight away: writing is the point of this page
-	LaunchedEffect(Unit) { focusRequester.requestFocus() }
+private fun CaptionCard(
+	caption: String,
+	onCaptionChange: (String) -> Unit,
+	media: List<PickedMedia>,
+	onRemoveMedia: (Int) -> Unit,
+	focusRequester: FocusRequester
+) {
+	var focused by remember { mutableStateOf(false) }
+	val borderColor by animateColorAsState(
+		targetValue = if (focused) MaterialTheme.colorScheme.primary
+		else MaterialTheme.colorScheme.outlineVariant,
+		label = "caption-border"
+	)
+	val borderWidth by animateDpAsState(
+		targetValue = if (focused) 1.5.dp else 1.dp,
+		label = "caption-border-width"
+	)
+	val shape = RoundedCornerShape(22.dp)
 
-	TextField(
-		value = caption,
-		onValueChange = onCaptionChange,
+	Column(
 		modifier = Modifier
 			.fillMaxWidth()
-			.focusRequester(focusRequester),
-		placeholder = {
-			Text(
-				text = "What's on your mind?",
-				style = MaterialTheme.typography.bodyLarge
+			.clip(shape)
+			.background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
+			.border(borderWidth, borderColor, shape)
+			.animateContentSize()
+	) {
+		TextField(
+			value = caption,
+			onValueChange = onCaptionChange,
+			modifier = Modifier
+				.fillMaxWidth()
+				.heightIn(min = CaptionMinHeight)
+				.focusRequester(focusRequester)
+				.onFocusChanged { focused = it.isFocused },
+			placeholder = { RotatingPlaceholder() },
+			textStyle = MaterialTheme.typography.bodyLarge.copy(
+				fontSize = 18.sp,
+				lineHeight = 26.sp
+			),
+			keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+			colors = TextFieldDefaults.colors(
+				focusedContainerColor = Color.Transparent,
+				unfocusedContainerColor = Color.Transparent,
+				disabledContainerColor = Color.Transparent,
+				focusedIndicatorColor = Color.Transparent,
+				unfocusedIndicatorColor = Color.Transparent,
+				disabledIndicatorColor = Color.Transparent,
+				cursorColor = MaterialTheme.colorScheme.primary
 			)
-		},
-		textStyle = MaterialTheme.typography.bodyLarge,
-		keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-		colors = TextFieldDefaults.colors(
-			focusedContainerColor = Color.Transparent,
-			unfocusedContainerColor = Color.Transparent,
-			disabledContainerColor = Color.Transparent,
-			focusedIndicatorColor = Color.Transparent,
-			unfocusedIndicatorColor = Color.Transparent,
-			disabledIndicatorColor = Color.Transparent
 		)
-	)
+		AnimatedVisibility(visible = media.isNotEmpty()) {
+			Box(modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 12.dp)) {
+				SelectedMediaStrip(media = media, onRemove = onRemoveMedia)
+			}
+		}
+	}
+}
+
+/** Cycles through a few prompts while the caption is empty; it leaves composition once typing starts. */
+@Composable
+private fun RotatingPlaceholder() {
+	var index by remember { mutableIntStateOf(0) }
+	LaunchedEffect(Unit) {
+		while (true) {
+			delay(PROMPT_INTERVAL_MILLIS)
+			index = (index + 1) % CaptionPrompts.size
+		}
+	}
+	Crossfade(targetState = index, label = "caption-prompt") { current ->
+		Text(
+			text = CaptionPrompts[current],
+			style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp, lineHeight = 26.sp)
+		)
+	}
 }
 
 @Composable
@@ -383,8 +476,9 @@ private fun ComposerToolbar(
 	onGalleryClick: () -> Unit,
 	onVideoClick: () -> Unit
 ) {
-	val remaining = MAX_CAPTION_LENGTH - caption.length
-	val nearLimit = remaining <= CAPTION_WARNING_THRESHOLD
+	val buttonColors = IconButtonDefaults.iconButtonColors(
+		contentColor = MaterialTheme.colorScheme.primary
+	)
 
 	Row(
 		modifier = Modifier
@@ -392,10 +486,10 @@ private fun ComposerToolbar(
 			.padding(horizontal = 8.dp, vertical = 4.dp),
 		verticalAlignment = Alignment.CenterVertically
 	) {
-		IconButton(onClick = onGalleryClick, enabled = canAddMedia) {
+		IconButton(onClick = onGalleryClick, enabled = canAddMedia, colors = buttonColors) {
 			Icon(Icons.Outlined.Image, contentDescription = "Add photos")
 		}
-		IconButton(onClick = onVideoClick, enabled = canAddMedia) {
+		IconButton(onClick = onVideoClick, enabled = canAddMedia, colors = buttonColors) {
 			Icon(Icons.Outlined.Videocam, contentDescription = "Add a video")
 		}
 		Spacer(Modifier.weight(1f))
@@ -407,13 +501,45 @@ private fun ComposerToolbar(
 			)
 			Spacer(Modifier.width(12.dp))
 		}
-		Text(
-			text = "${caption.length}/$MAX_CAPTION_LENGTH",
-			style = MaterialTheme.typography.labelMedium,
-			color = if (nearLimit) MaterialTheme.colorScheme.error
-			else MaterialTheme.colorScheme.onSurfaceVariant,
-			modifier = Modifier.padding(end = 8.dp)
-		)
+		CaptionCounter(length = caption.length, modifier = Modifier.padding(end = 8.dp))
+	}
+}
+
+/** A ring that fills as the caption grows; the remaining count only appears near the limit. */
+@Composable
+private fun CaptionCounter(length: Int, modifier: Modifier = Modifier) {
+	val remaining = MAX_CAPTION_LENGTH - length
+	val nearLimit = remaining <= CAPTION_WARNING_THRESHOLD
+	val progress by animateFloatAsState(
+		targetValue = length / MAX_CAPTION_LENGTH.toFloat(),
+		label = "caption-progress"
+	)
+	val color by animateColorAsState(
+		targetValue = when {
+			remaining <= 0 -> MaterialTheme.colorScheme.error
+			nearLimit -> Warning
+			else -> MaterialTheme.colorScheme.primary
+		},
+		label = "caption-counter-color"
+	)
+
+	AnimatedVisibility(visible = length > 0, modifier = modifier) {
+		Box(modifier = Modifier.size(28.dp), contentAlignment = Alignment.Center) {
+			CircularProgressIndicator(
+				progress = { progress },
+				modifier = Modifier.fillMaxSize(),
+				color = color,
+				trackColor = MaterialTheme.colorScheme.outlineVariant,
+				strokeWidth = 2.5.dp
+			)
+			if (nearLimit) {
+				Text(
+					text = "$remaining",
+					style = MaterialTheme.typography.labelSmall,
+					color = color
+				)
+			}
+		}
 	}
 }
 
