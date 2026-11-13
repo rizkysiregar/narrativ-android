@@ -4,16 +4,20 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,58 +32,89 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.Videocam
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
-import androidx.media3.common.MediaItem
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.AspectRatioFrameLayout
-import androidx.media3.ui.PlayerView
 import coil3.compose.AsyncImage
 import com.rizkysiregar.feedzmore.domain.post.PickedMedia
+import com.rizkysiregar.feedzmore.ui.components.ProfileAvatar
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
+import com.rizkysiregar.feedzmore.ui.theme.Warning
+import kotlinx.coroutines.delay
 
+/** Warn about the caption limit once this few characters are left. */
+private const val CAPTION_WARNING_THRESHOLD = 20
+private val MediaThumbSize = 112.dp
+private val CaptionMinHeight = 160.dp
+private const val PROMPT_INTERVAL_MILLIS = 3500L
+private val CaptionPrompts = listOf(
+	"What's on your mind?",
+	"Share something with your friends…",
+	"What happened today?",
+	"Got a story to tell?"
+)
+
+/**
+ * Caption-first composer: the caption is the page, media is an optional extra that shows up
+ * under it once picked. The gallery lives in a sheet so it never competes with the caption.
+ */
 @Composable
 fun PostFeedScreen(
 	uiState: PostFeedUiState,
@@ -88,8 +123,8 @@ fun PostFeedScreen(
 	onPickMedia: (List<Uri>) -> Unit,
 	onToggleRecentImage: (Uri) -> Unit,
 	onRemoveMedia: (Int) -> Unit,
-	onPreviewSelected: (Int) -> Unit,
 	onLoadRecentImages: () -> Unit,
+	onClose: () -> Unit,
 	onNext: () -> Unit
 ) {
 	val context = LocalContext.current
@@ -105,6 +140,8 @@ fun PostFeedScreen(
 			ContextCompat.checkSelfPermission(context, galleryPermission) == PackageManager.PERMISSION_GRANTED
 		)
 	}
+	var showGallery by remember { mutableStateOf(false) }
+	var showDiscardDialog by remember { mutableStateOf(false) }
 
 	val photoPickerLauncher = rememberLauncherForActivityResult(
 		contract = ActivityResultContracts.PickMultipleVisualMedia(MAX_POST_MEDIA)
@@ -113,7 +150,9 @@ fun PostFeedScreen(
 		contract = ActivityResultContracts.RequestPermission()
 	) { granted -> hasGalleryAccess = granted }
 
-	LaunchedEffect(hasGalleryAccess) {
+	// the gallery permission is only asked for once the user opens the gallery
+	LaunchedEffect(showGallery, hasGalleryAccess) {
+		if (!showGallery) return@LaunchedEffect
 		if (hasGalleryAccess) onLoadRecentImages()
 		else permissionLauncher.launch(galleryPermission)
 	}
@@ -130,151 +169,256 @@ fun PostFeedScreen(
 		}
 	}
 
+	val requestClose = { if (uiState.hasContent) showDiscardDialog = true else onClose() }
+	BackHandler(onBack = requestClose)
+
+	val canAddMedia = uiState.selectedMedia.size < MAX_POST_MEDIA && !isPreparing
+
+	val captionFocus = remember { FocusRequester() }
+	// opens the keyboard straight away: writing is the point of this page
+	LaunchedEffect(Unit) { captionFocus.requestFocus() }
+
+	// a small buzz when the limit is hit, since further typing silently does nothing
+	val haptic = LocalHapticFeedback.current
+	val atLimit = uiState.caption.length >= MAX_CAPTION_LENGTH
+	LaunchedEffect(atLimit) {
+		if (atLimit) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+	}
+
 	Column(
 		modifier = Modifier
 			.fillMaxSize()
+			.statusBarsPadding()
 			.navigationBarsPadding()
 			.imePadding()
-			.verticalScroll(rememberScrollState())
-			.padding(horizontal = 16.dp, vertical = 12.dp),
-		verticalArrangement = Arrangement.spacedBy(20.dp)
 	) {
-		PostHeader()
-		val launchPicker = {
-			photoPickerLauncher.launch(
-				PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
-			)
-		}
-		SelectedMediaPreview(
-			media = uiState.selectedMedia.getOrNull(uiState.previewIndex),
-			selectedCount = uiState.selectedMedia.size,
-			onChooseAnother = launchPicker
+		ComposerTopBar(
+			canPost = uiState.canSubmit && !isPreparing,
+			isPreparing = isPreparing,
+			onClose = requestClose,
+			onPost = onNext
 		)
-		if (uiState.selectedMedia.isNotEmpty()) {
-			SelectedMediaStrip(
+		if (isPreparing) {
+			LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+		} else {
+			HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+		}
+
+		Column(
+			modifier = Modifier
+				.weight(1f)
+				.fillMaxWidth()
+				.verticalScroll(rememberScrollState())
+				// tapping anywhere in the empty area puts the cursor back in the caption
+				.clickable(
+					interactionSource = remember { MutableInteractionSource() },
+					indication = null
+				) { captionFocus.requestFocus() }
+				.padding(horizontal = 16.dp, vertical = 12.dp)
+		) {
+			val author = uiState.author
+			Row(
+				modifier = Modifier.fillMaxWidth(),
+				verticalAlignment = Alignment.CenterVertically
+			) {
+				ProfileAvatar(
+					imageUrl = author?.profileImageUrl,
+					userId = author?.id.orEmpty(),
+					userName = author?.displayName().orEmpty(),
+					size = 44.dp
+				)
+				Spacer(Modifier.width(12.dp))
+				if (author != null) {
+					Text(
+						text = author.displayName(),
+						style = MaterialTheme.typography.titleMedium,
+						fontWeight = FontWeight.SemiBold
+					)
+				}
+			}
+			Spacer(Modifier.height(14.dp))
+			CaptionCard(
+				caption = uiState.caption,
+				onCaptionChange = onCaptionChange,
 				media = uiState.selectedMedia,
-				previewIndex = uiState.previewIndex,
-				onPreviewSelected = onPreviewSelected,
-				onRemove = onRemoveMedia
+				onRemoveMedia = onRemoveMedia,
+				focusRequester = captionFocus
 			)
 		}
-		if (uiState.validationError != null) {
-			Text(
-				text = uiState.validationError,
-				color = MaterialTheme.colorScheme.error,
-				style = MaterialTheme.typography.bodyMedium
-			)
-		}
-		RecentPhotosSection(
+
+		HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+		ComposerToolbar(
+			caption = uiState.caption,
+			mediaCount = uiState.selectedMedia.size,
+			canAddMedia = canAddMedia,
+			onGalleryClick = { showGallery = true },
+			onVideoClick = {
+				photoPickerLauncher.launch(
+					PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly)
+				)
+			}
+		)
+	}
+
+	if (showGallery) {
+		GallerySheet(
 			images = uiState.recentImages,
 			selectedImages = uiState.selectedMedia.map { it.uri }.toSet(),
+			selectedCount = uiState.selectedMedia.size,
 			isLoading = uiState.isLoadingGallery,
 			hasGalleryAccess = hasGalleryAccess,
 			onImageToggled = onToggleRecentImage,
-			onChooseAnother = launchPicker
+			onBrowse = {
+				showGallery = false
+				photoPickerLauncher.launch(
+					PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
+				)
+			},
+			onDismiss = { showGallery = false }
 		)
-		CaptionSection(caption = uiState.caption, onCaptionChange = onCaptionChange)
-		if (isPreparing) {
-			PreparingSection()
+	}
+
+	if (showDiscardDialog) {
+		AlertDialog(
+			onDismissRequest = { showDiscardDialog = false },
+			title = { Text("Discard post?") },
+			text = { Text("Your caption and media will be lost.") },
+			confirmButton = {
+				TextButton(onClick = {
+					showDiscardDialog = false
+					onClose()
+				}) { Text("Discard", color = MaterialTheme.colorScheme.error) }
+			},
+			dismissButton = {
+				TextButton(onClick = { showDiscardDialog = false }) { Text("Keep editing") }
+			}
+		)
+	}
+}
+
+@Composable
+private fun ComposerTopBar(
+	canPost: Boolean,
+	isPreparing: Boolean,
+	onClose: () -> Unit,
+	onPost: () -> Unit
+) {
+	Row(
+		modifier = Modifier
+			.fillMaxWidth()
+			.height(56.dp)
+			.padding(horizontal = 4.dp),
+		verticalAlignment = Alignment.CenterVertically
+	) {
+		IconButton(onClick = onClose) {
+			Icon(Icons.Default.Close, contentDescription = "Close")
 		}
+		Spacer(Modifier.weight(1f))
 		Button(
-			onClick = onNext,
-			enabled = uiState.canSubmit && !isPreparing,
-			modifier = Modifier
-				.fillMaxWidth()
-				.height(52.dp),
-			shape = RoundedCornerShape(16.dp),
-			colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+			onClick = onPost,
+			// disabled while preparing, so a second tap cannot enqueue the post twice
+			enabled = canPost,
+			modifier = Modifier.padding(end = 8.dp),
+			shape = RoundedCornerShape(20.dp)
 		) {
 			if (isPreparing) {
 				CircularProgressIndicator(
-					modifier = Modifier.size(22.dp),
+					modifier = Modifier.size(18.dp),
 					strokeWidth = 2.dp,
-					color = MaterialTheme.colorScheme.onBackground
+					color = MaterialTheme.colorScheme.onPrimary
 				)
 			} else {
-				Text("Bagikan feed", fontWeight = FontWeight.SemiBold)
+				Text("Post", fontWeight = FontWeight.SemiBold)
 			}
 		}
 	}
 }
 
+/**
+ * The writing surface: a rounded card whose border lights up while typing. Picked media sits
+ * inside the same card, so the caption and its attachments read as one post.
+ */
 @Composable
-private fun PreparingSection() {
-	Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-		Text("Menyiapkan media...", style = MaterialTheme.typography.bodyMedium)
-		LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-	}
-}
-
-@Composable
-private fun PostHeader() {
-	Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-		Text("Buat feed baru", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-		Text("Tulis sesuatu, atau tambahkan hingga $MAX_POST_MEDIA foto dan video.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-	}
-}
-
-@Composable
-private fun SelectedMediaPreview(
-	media: PickedMedia?,
-	selectedCount: Int,
-	onChooseAnother: () -> Unit
+private fun CaptionCard(
+	caption: String,
+	onCaptionChange: (String) -> Unit,
+	media: List<PickedMedia>,
+	onRemoveMedia: (Int) -> Unit,
+	focusRequester: FocusRequester
 ) {
-	Surface(
+	var focused by remember { mutableStateOf(false) }
+	val borderColor by animateColorAsState(
+		targetValue = if (focused) MaterialTheme.colorScheme.primary
+		else MaterialTheme.colorScheme.outlineVariant,
+		label = "caption-border"
+	)
+	val borderWidth by animateDpAsState(
+		targetValue = if (focused) 1.5.dp else 1.dp,
+		label = "caption-border-width"
+	)
+	val shape = RoundedCornerShape(22.dp)
+
+	Column(
 		modifier = Modifier
 			.fillMaxWidth()
-			.aspectRatio(1f)
-			.animateContentSize(),
-		shape = RoundedCornerShape(24.dp),
-		color = MaterialTheme.colorScheme.surfaceVariant
+			.clip(shape)
+			.background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
+			.border(borderWidth, borderColor, shape)
+			.animateContentSize()
 	) {
-		Box(contentAlignment = Alignment.Center) {
-			AnimatedVisibility(visible = media != null) {
-				media?.let { picked ->
-					// a new uri must get a new player, so the preview follows the strip selection
-					key(picked.uri) {
-						if (picked.mimeType?.startsWith("video/") == true) {
-							InlineVideoPreview(uri = picked.uri, active = true)
-						} else {
-							AsyncImage(
-								model = picked.uri,
-								contentDescription = "Media yang dipilih",
-								modifier = Modifier.fillMaxSize(),
-								contentScale = ContentScale.Crop
-							)
-						}
-					}
-				}
-			}
-			if (media == null) {
-				Column(horizontalAlignment = Alignment.CenterHorizontally) {
-					Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(36.dp))
-					Spacer(Modifier.height(8.dp))
-					Text("Tambahkan foto atau video (opsional)")
-				}
-			}
-			OutlinedButton(
-				onClick = onChooseAnother,
-				modifier = Modifier
-					.align(Alignment.BottomEnd)
-					.padding(12.dp),
-				shape = RoundedCornerShape(14.dp),
-				colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.92f))
-			) {
-				Icon(Icons.Default.Add, contentDescription = null)
-				Spacer(Modifier.width(6.dp))
-				Text(if (selectedCount == 0) "Pilih media" else "Tambah ($selectedCount/$MAX_POST_MEDIA)")
+		TextField(
+			value = caption,
+			onValueChange = onCaptionChange,
+			modifier = Modifier
+				.fillMaxWidth()
+				.heightIn(min = CaptionMinHeight)
+				.focusRequester(focusRequester)
+				.onFocusChanged { focused = it.isFocused },
+			placeholder = { RotatingPlaceholder() },
+			textStyle = MaterialTheme.typography.bodyLarge.copy(
+				fontSize = 18.sp,
+				lineHeight = 26.sp
+			),
+			keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+			colors = TextFieldDefaults.colors(
+				focusedContainerColor = Color.Transparent,
+				unfocusedContainerColor = Color.Transparent,
+				disabledContainerColor = Color.Transparent,
+				focusedIndicatorColor = Color.Transparent,
+				unfocusedIndicatorColor = Color.Transparent,
+				disabledIndicatorColor = Color.Transparent,
+				cursorColor = MaterialTheme.colorScheme.primary
+			)
+		)
+		AnimatedVisibility(visible = media.isNotEmpty()) {
+			Box(modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 12.dp)) {
+				SelectedMediaStrip(media = media, onRemove = onRemoveMedia)
 			}
 		}
+	}
+}
+
+/** Cycles through a few prompts while the caption is empty; it leaves composition once typing starts. */
+@Composable
+private fun RotatingPlaceholder() {
+	var index by remember { mutableIntStateOf(0) }
+	LaunchedEffect(Unit) {
+		while (true) {
+			delay(PROMPT_INTERVAL_MILLIS)
+			index = (index + 1) % CaptionPrompts.size
+		}
+	}
+	Crossfade(targetState = index, label = "caption-prompt") { current ->
+		Text(
+			text = CaptionPrompts[current],
+			style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp, lineHeight = 26.sp)
+		)
 	}
 }
 
 @Composable
 private fun SelectedMediaStrip(
 	media: List<PickedMedia>,
-	previewIndex: Int,
-	onPreviewSelected: (Int) -> Unit,
 	onRemove: (Int) -> Unit
 ) {
 	LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -282,29 +426,23 @@ private fun SelectedMediaStrip(
 			val isVideo = item.mimeType?.startsWith("video/") == true
 			Box(
 				modifier = Modifier
-					.size(72.dp)
-					.clip(RoundedCornerShape(14.dp))
-					.border(
-						width = if (index == previewIndex) 2.dp else 0.dp,
-						color = MaterialTheme.colorScheme.primary,
-						shape = RoundedCornerShape(14.dp)
-					)
-					.clickable { onPreviewSelected(index) }
+					.size(MediaThumbSize)
+					.clip(RoundedCornerShape(16.dp))
 					.background(MaterialTheme.colorScheme.surfaceVariant)
 			) {
 				if (isVideo) {
 					// Coil cannot draw a video frame here, so a video is shown as a play icon
 					Icon(
 						Icons.Default.PlayCircle,
-						contentDescription = "Video",
+						contentDescription = "Video ${index + 1}",
 						modifier = Modifier
 							.align(Alignment.Center)
-							.size(28.dp)
+							.size(36.dp)
 					)
 				} else {
 					AsyncImage(
 						model = item.uri,
-						contentDescription = "Media ${index + 1}",
+						contentDescription = "Photo ${index + 1}",
 						modifier = Modifier.fillMaxSize(),
 						contentScale = ContentScale.Crop
 					)
@@ -312,16 +450,16 @@ private fun SelectedMediaStrip(
 				Surface(
 					modifier = Modifier
 						.align(Alignment.TopEnd)
-						.padding(4.dp)
-						.size(22.dp)
+						.padding(6.dp)
+						.size(24.dp)
 						.clickable { onRemove(index) },
 					shape = CircleShape,
 					color = MaterialTheme.colorScheme.background.copy(alpha = 0.9f)
 				) {
 					Icon(
 						Icons.Default.Close,
-						contentDescription = "Hapus media ${index + 1}",
-						modifier = Modifier.padding(4.dp)
+						contentDescription = "Remove media ${index + 1}",
+						modifier = Modifier.padding(5.dp)
 					)
 				}
 			}
@@ -329,104 +467,173 @@ private fun SelectedMediaStrip(
 	}
 }
 
+/** Sits above the keyboard: add media on the left, counters on the right. */
 @Composable
-private fun InlineVideoPreview(uri: Uri, active: Boolean) {
-	val context = LocalContext.current
-	val player = remember {
-		ExoPlayer.Builder(context).build().apply {
-			setMediaItem(MediaItem.fromUri(uri))
-			prepare()
-			playWhenReady = true
-		}
-	}
-	DisposableEffect(Unit) {
-		onDispose { player.release() }
-	}
-	LaunchedEffect(active) {
-		if (active) player.play()
-		else player.pause()
-	}
-	Box(
+private fun ComposerToolbar(
+	caption: String,
+	mediaCount: Int,
+	canAddMedia: Boolean,
+	onGalleryClick: () -> Unit,
+	onVideoClick: () -> Unit
+) {
+	val buttonColors = IconButtonDefaults.iconButtonColors(
+		contentColor = MaterialTheme.colorScheme.primary
+	)
+
+	Row(
 		modifier = Modifier
-			.fillMaxSize()
-			.background(MaterialTheme.colorScheme.surfaceVariant),
-		contentAlignment = Alignment.Center
+			.fillMaxWidth()
+			.padding(horizontal = 8.dp, vertical = 4.dp),
+		verticalAlignment = Alignment.CenterVertically
 	) {
-		AndroidView(
-			factory = { ctx ->
-				PlayerView(ctx).apply {
-					this.player = player
-					useController = true
-					resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-				}
-			},
-			modifier = Modifier.fillMaxSize()
-		)
+		IconButton(onClick = onGalleryClick, enabled = canAddMedia, colors = buttonColors) {
+			Icon(Icons.Outlined.Image, contentDescription = "Add photos")
+		}
+		IconButton(onClick = onVideoClick, enabled = canAddMedia, colors = buttonColors) {
+			Icon(Icons.Outlined.Videocam, contentDescription = "Add a video")
+		}
+		Spacer(Modifier.weight(1f))
+		if (mediaCount > 0) {
+			Text(
+				text = "$mediaCount/$MAX_POST_MEDIA media",
+				style = MaterialTheme.typography.labelMedium,
+				color = MaterialTheme.colorScheme.onSurfaceVariant
+			)
+			Spacer(Modifier.width(12.dp))
+		}
+		CaptionCounter(length = caption.length, modifier = Modifier.padding(end = 8.dp))
 	}
 }
 
+/** A ring that fills as the caption grows; the remaining count only appears near the limit. */
 @Composable
-private fun RecentPhotosSection(
+private fun CaptionCounter(length: Int, modifier: Modifier = Modifier) {
+	val remaining = MAX_CAPTION_LENGTH - length
+	val nearLimit = remaining <= CAPTION_WARNING_THRESHOLD
+	val progress by animateFloatAsState(
+		targetValue = length / MAX_CAPTION_LENGTH.toFloat(),
+		label = "caption-progress"
+	)
+	val color by animateColorAsState(
+		targetValue = when {
+			remaining <= 0 -> MaterialTheme.colorScheme.error
+			nearLimit -> Warning
+			else -> MaterialTheme.colorScheme.primary
+		},
+		label = "caption-counter-color"
+	)
+
+	AnimatedVisibility(visible = length > 0, modifier = modifier) {
+		Box(modifier = Modifier.size(28.dp), contentAlignment = Alignment.Center) {
+			CircularProgressIndicator(
+				progress = { progress },
+				modifier = Modifier.fillMaxSize(),
+				color = color,
+				trackColor = MaterialTheme.colorScheme.outlineVariant,
+				strokeWidth = 2.5.dp
+			)
+			if (nearLimit) {
+				Text(
+					text = "$remaining",
+					style = MaterialTheme.typography.labelSmall,
+					color = color
+				)
+			}
+		}
+	}
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GallerySheet(
 	images: List<Uri>,
 	selectedImages: Set<Uri>,
+	selectedCount: Int,
 	isLoading: Boolean,
 	hasGalleryAccess: Boolean,
 	onImageToggled: (Uri) -> Unit,
-	onChooseAnother: () -> Unit
+	onBrowse: () -> Unit,
+	onDismiss: () -> Unit
 ) {
-	Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-		Row(verticalAlignment = Alignment.CenterVertically) {
-			Column(modifier = Modifier.weight(1f)) {
-				Text("Foto terbaru", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-				Text("Pilih hingga $MAX_POST_MEDIA untuk dibagikan", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-			}
-			OutlinedButton(onClick = onChooseAnother, shape = RoundedCornerShape(12.dp)) {
-				Text("Lainnya")
-			}
-		}
-
-		when {
-			isLoading -> Box(Modifier.fillMaxWidth().height(104.dp), contentAlignment = Alignment.Center) {
-				CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
-			}
-
-			images.isNotEmpty() -> LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-				items(images, key = { it.toString() }) { imageUri ->
-					RecentPhotoTile(
-						uri = imageUri,
-						isSelected = imageUri in selectedImages,
-						onClick = { onImageToggled(imageUri) }
+	ModalBottomSheet(onDismissRequest = onDismiss) {
+		Column(
+			modifier = Modifier
+				.fillMaxWidth()
+				.navigationBarsPadding()
+				.padding(horizontal = 16.dp)
+		) {
+			Row(verticalAlignment = Alignment.CenterVertically) {
+				Column(modifier = Modifier.weight(1f)) {
+					Text(
+						"Recent photos",
+						style = MaterialTheme.typography.titleMedium,
+						fontWeight = FontWeight.SemiBold
+					)
+					Text(
+						"$selectedCount/$MAX_POST_MEDIA selected",
+						style = MaterialTheme.typography.bodySmall,
+						color = MaterialTheme.colorScheme.onSurfaceVariant
 					)
 				}
+				OutlinedButton(onClick = onBrowse, shape = RoundedCornerShape(12.dp)) {
+					Text("Browse all")
+				}
 			}
+			Spacer(Modifier.height(12.dp))
 
-			else -> Text(
-				text = if (hasGalleryAccess) "Belum ada foto di gallery." else "Izin gallery tidak diberikan. Pilih foto melalui pemilih sistem.",
-				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.onSurfaceVariant
-			)
+			when {
+				isLoading -> Box(
+					Modifier
+						.fillMaxWidth()
+						.height(160.dp),
+					contentAlignment = Alignment.Center
+				) {
+					CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
+				}
+
+				images.isNotEmpty() -> LazyVerticalGrid(
+					columns = GridCells.Fixed(3),
+					horizontalArrangement = Arrangement.spacedBy(6.dp),
+					verticalArrangement = Arrangement.spacedBy(6.dp),
+					modifier = Modifier
+						.fillMaxWidth()
+						.height(360.dp)
+				) {
+					items(images, key = { it.toString() }) { imageUri ->
+						GalleryTile(
+							uri = imageUri,
+							isSelected = imageUri in selectedImages,
+							onClick = { onImageToggled(imageUri) }
+						)
+					}
+				}
+
+				else -> Text(
+					text = if (hasGalleryAccess) "No photos in your gallery yet."
+					else "Gallery access was not granted. Use Browse all to pick with the system picker.",
+					style = MaterialTheme.typography.bodyMedium,
+					color = MaterialTheme.colorScheme.onSurfaceVariant,
+					modifier = Modifier.padding(vertical = 24.dp)
+				)
+			}
+			Spacer(Modifier.height(16.dp))
 		}
 	}
 }
 
 @Composable
-private fun RecentPhotoTile(uri: Uri, isSelected: Boolean, onClick: () -> Unit) {
-	val scale by animateFloatAsState(
-		targetValue = if (isSelected) 1f else 0.94f,
-		animationSpec = tween(180),
-		label = "gallery-photo-scale"
-	)
+private fun GalleryTile(uri: Uri, isSelected: Boolean, onClick: () -> Unit) {
 	Box(
 		modifier = Modifier
-			.size(88.dp)
-			.scale(scale)
-			.clip(RoundedCornerShape(16.dp))
+			.fillMaxWidth()
+			.aspectRatio(1f)
+			.clip(RoundedCornerShape(12.dp))
 			.clickable(onClick = onClick)
 			.background(MaterialTheme.colorScheme.surfaceVariant)
 	) {
 		AsyncImage(
 			model = uri,
-			contentDescription = "Foto gallery",
+			contentDescription = "Gallery photo",
 			modifier = Modifier.fillMaxSize(),
 			contentScale = ContentScale.Crop
 		)
@@ -436,39 +643,18 @@ private fun RecentPhotoTile(uri: Uri, isSelected: Boolean, onClick: () -> Unit) 
 					.align(Alignment.TopEnd)
 					.padding(6.dp),
 				shape = CircleShape,
-				color = MaterialTheme.colorScheme.background
+				color = MaterialTheme.colorScheme.primary
 			) {
 				Icon(
 					Icons.Default.Check,
-					contentDescription = "Foto terpilih",
-					tint = MaterialTheme.colorScheme.onBackground,
-					modifier = Modifier.padding(4.dp).size(14.dp)
+					contentDescription = "Selected",
+					tint = MaterialTheme.colorScheme.onPrimary,
+					modifier = Modifier
+						.padding(4.dp)
+						.size(14.dp)
 				)
 			}
 		}
-	}
-}
-
-@Composable
-private fun CaptionSection(caption: String, onCaptionChange: (String) -> Unit) {
-	Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-		Text("Caption", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-		OutlinedTextField(
-			value = caption,
-			onValueChange = onCaptionChange,
-			placeholder = { Text("Ceritakan tentang post ini...") },
-			modifier = Modifier
-				.fillMaxWidth()
-				.heightIn(min = 120.dp),
-			maxLines = 5,
-			shape = RoundedCornerShape(18.dp)
-		)
-		Text(
-			text = "${caption.length}/$MAX_CAPTION_LENGTH",
-			style = MaterialTheme.typography.labelSmall,
-			color = MaterialTheme.colorScheme.onSurfaceVariant,
-			modifier = Modifier.align(Alignment.End)
-		)
 	}
 }
 
@@ -478,15 +664,16 @@ private fun PostFeedScreenPreview() {
 	FeedzmoreTheme {
 		PostFeedScreen(
 			uiState = PostFeedUiState(
-					selectedMedia = listOf(PickedMedia("https://example.com/image.jpg".toUri(), "image/jpeg"))
-				),
+				caption = "Sunday morning ride",
+				selectedMedia = listOf(PickedMedia("https://example.com/image.jpg".toUri(), "image/jpeg"))
+			),
 			isPreparing = false,
 			onCaptionChange = {},
 			onPickMedia = {},
-				onToggleRecentImage = {},
-				onRemoveMedia = {},
-				onPreviewSelected = {},
+			onToggleRecentImage = {},
+			onRemoveMedia = {},
 			onLoadRecentImages = {},
+			onClose = {},
 			onNext = {}
 		)
 	}
