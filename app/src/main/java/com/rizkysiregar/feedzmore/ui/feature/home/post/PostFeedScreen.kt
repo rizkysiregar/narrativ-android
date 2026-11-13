@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -35,9 +34,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -45,7 +41,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.outlined.Image
@@ -53,15 +48,12 @@ import androidx.compose.material.icons.outlined.Videocam
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -69,9 +61,9 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -113,7 +105,7 @@ private val CaptionPrompts = listOf(
 
 /**
  * Caption-first composer: the caption is the page, media is an optional extra that shows up
- * under it once picked. The gallery lives in a sheet so it never competes with the caption.
+ * under it once picked. Media comes from the system photo picker, so the app needs no gallery permission.
  */
 @Composable
 fun PostFeedScreen(
@@ -121,41 +113,16 @@ fun PostFeedScreen(
 	isPreparing: Boolean,
 	onCaptionChange: (String) -> Unit,
 	onPickMedia: (List<Uri>) -> Unit,
-	onToggleRecentImage: (Uri) -> Unit,
 	onRemoveMedia: (Int) -> Unit,
-	onLoadRecentImages: () -> Unit,
 	onClose: () -> Unit,
 	onNext: () -> Unit
 ) {
 	val context = LocalContext.current
-	val galleryPermission = remember {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-			Manifest.permission.READ_MEDIA_IMAGES
-		} else {
-			Manifest.permission.READ_EXTERNAL_STORAGE
-		}
-	}
-	var hasGalleryAccess by remember {
-		mutableStateOf(
-			ContextCompat.checkSelfPermission(context, galleryPermission) == PackageManager.PERMISSION_GRANTED
-		)
-	}
-	var showGallery by remember { mutableStateOf(false) }
 	var showDiscardDialog by remember { mutableStateOf(false) }
 
 	val photoPickerLauncher = rememberLauncherForActivityResult(
 		contract = ActivityResultContracts.PickMultipleVisualMedia(MAX_POST_MEDIA)
 	) { uris -> if (uris.isNotEmpty()) onPickMedia(uris) }
-	val permissionLauncher = rememberLauncherForActivityResult(
-		contract = ActivityResultContracts.RequestPermission()
-	) { granted -> hasGalleryAccess = granted }
-
-	// the gallery permission is only asked for once the user opens the gallery
-	LaunchedEffect(showGallery, hasGalleryAccess) {
-		if (!showGallery) return@LaunchedEffect
-		if (hasGalleryAccess) onLoadRecentImages()
-		else permissionLauncher.launch(galleryPermission)
-	}
 
 	val notificationPermissionLauncher = rememberLauncherForActivityResult(
 		contract = ActivityResultContracts.RequestPermission()
@@ -251,30 +218,16 @@ fun PostFeedScreen(
 			caption = uiState.caption,
 			mediaCount = uiState.selectedMedia.size,
 			canAddMedia = canAddMedia,
-			onGalleryClick = { showGallery = true },
+			onPhotoClick = {
+				photoPickerLauncher.launch(
+					PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+				)
+			},
 			onVideoClick = {
 				photoPickerLauncher.launch(
 					PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly)
 				)
 			}
-		)
-	}
-
-	if (showGallery) {
-		GallerySheet(
-			images = uiState.recentImages,
-			selectedImages = uiState.selectedMedia.map { it.uri }.toSet(),
-			selectedCount = uiState.selectedMedia.size,
-			isLoading = uiState.isLoadingGallery,
-			hasGalleryAccess = hasGalleryAccess,
-			onImageToggled = onToggleRecentImage,
-			onBrowse = {
-				showGallery = false
-				photoPickerLauncher.launch(
-					PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
-				)
-			},
-			onDismiss = { showGallery = false }
 		)
 	}
 
@@ -473,7 +426,7 @@ private fun ComposerToolbar(
 	caption: String,
 	mediaCount: Int,
 	canAddMedia: Boolean,
-	onGalleryClick: () -> Unit,
+	onPhotoClick: () -> Unit,
 	onVideoClick: () -> Unit
 ) {
 	val buttonColors = IconButtonDefaults.iconButtonColors(
@@ -486,7 +439,7 @@ private fun ComposerToolbar(
 			.padding(horizontal = 8.dp, vertical = 4.dp),
 		verticalAlignment = Alignment.CenterVertically
 	) {
-		IconButton(onClick = onGalleryClick, enabled = canAddMedia, colors = buttonColors) {
+		IconButton(onClick = onPhotoClick, enabled = canAddMedia, colors = buttonColors) {
 			Icon(Icons.Outlined.Image, contentDescription = "Add photos")
 		}
 		IconButton(onClick = onVideoClick, enabled = canAddMedia, colors = buttonColors) {
@@ -543,121 +496,6 @@ private fun CaptionCounter(length: Int, modifier: Modifier = Modifier) {
 	}
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun GallerySheet(
-	images: List<Uri>,
-	selectedImages: Set<Uri>,
-	selectedCount: Int,
-	isLoading: Boolean,
-	hasGalleryAccess: Boolean,
-	onImageToggled: (Uri) -> Unit,
-	onBrowse: () -> Unit,
-	onDismiss: () -> Unit
-) {
-	ModalBottomSheet(onDismissRequest = onDismiss) {
-		Column(
-			modifier = Modifier
-				.fillMaxWidth()
-				.navigationBarsPadding()
-				.padding(horizontal = 16.dp)
-		) {
-			Row(verticalAlignment = Alignment.CenterVertically) {
-				Column(modifier = Modifier.weight(1f)) {
-					Text(
-						"Recent photos",
-						style = MaterialTheme.typography.titleMedium,
-						fontWeight = FontWeight.SemiBold
-					)
-					Text(
-						"$selectedCount/$MAX_POST_MEDIA selected",
-						style = MaterialTheme.typography.bodySmall,
-						color = MaterialTheme.colorScheme.onSurfaceVariant
-					)
-				}
-				OutlinedButton(onClick = onBrowse, shape = RoundedCornerShape(12.dp)) {
-					Text("Browse all")
-				}
-			}
-			Spacer(Modifier.height(12.dp))
-
-			when {
-				isLoading -> Box(
-					Modifier
-						.fillMaxWidth()
-						.height(160.dp),
-					contentAlignment = Alignment.Center
-				) {
-					CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
-				}
-
-				images.isNotEmpty() -> LazyVerticalGrid(
-					columns = GridCells.Fixed(3),
-					horizontalArrangement = Arrangement.spacedBy(6.dp),
-					verticalArrangement = Arrangement.spacedBy(6.dp),
-					modifier = Modifier
-						.fillMaxWidth()
-						.height(360.dp)
-				) {
-					items(images, key = { it.toString() }) { imageUri ->
-						GalleryTile(
-							uri = imageUri,
-							isSelected = imageUri in selectedImages,
-							onClick = { onImageToggled(imageUri) }
-						)
-					}
-				}
-
-				else -> Text(
-					text = if (hasGalleryAccess) "No photos in your gallery yet."
-					else "Gallery access was not granted. Use Browse all to pick with the system picker.",
-					style = MaterialTheme.typography.bodyMedium,
-					color = MaterialTheme.colorScheme.onSurfaceVariant,
-					modifier = Modifier.padding(vertical = 24.dp)
-				)
-			}
-			Spacer(Modifier.height(16.dp))
-		}
-	}
-}
-
-@Composable
-private fun GalleryTile(uri: Uri, isSelected: Boolean, onClick: () -> Unit) {
-	Box(
-		modifier = Modifier
-			.fillMaxWidth()
-			.aspectRatio(1f)
-			.clip(RoundedCornerShape(12.dp))
-			.clickable(onClick = onClick)
-			.background(MaterialTheme.colorScheme.surfaceVariant)
-	) {
-		AsyncImage(
-			model = uri,
-			contentDescription = "Gallery photo",
-			modifier = Modifier.fillMaxSize(),
-			contentScale = ContentScale.Crop
-		)
-		if (isSelected) {
-			Surface(
-				modifier = Modifier
-					.align(Alignment.TopEnd)
-					.padding(6.dp),
-				shape = CircleShape,
-				color = MaterialTheme.colorScheme.primary
-			) {
-				Icon(
-					Icons.Default.Check,
-					contentDescription = "Selected",
-					tint = MaterialTheme.colorScheme.onPrimary,
-					modifier = Modifier
-						.padding(4.dp)
-						.size(14.dp)
-				)
-			}
-		}
-	}
-}
-
 @Preview(showBackground = true)
 @Composable
 private fun PostFeedScreenPreview() {
@@ -670,9 +508,7 @@ private fun PostFeedScreenPreview() {
 			isPreparing = false,
 			onCaptionChange = {},
 			onPickMedia = {},
-			onToggleRecentImage = {},
 			onRemoveMedia = {},
-			onLoadRecentImages = {},
 			onClose = {},
 			onNext = {}
 		)

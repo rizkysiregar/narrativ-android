@@ -1,9 +1,7 @@
 package com.rizkysiregar.feedzmore.ui.feature.home.post
 
 import android.app.Application
-import android.content.ContentUris
 import android.net.Uri
-import android.provider.MediaStore
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,7 +15,6 @@ import com.rizkysiregar.feedzmore.domain.post.UploadManager
 import com.rizkysiregar.feedzmore.media.MediaValidationException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -97,12 +94,6 @@ class PostFeedViewModel @Inject constructor(
 		}
 	}
 
-	/** Tapping a recent photo selects it, tapping it again takes it out of the post. */
-	fun onRecentImageToggled(uri: Uri) {
-		val index = _uiState.value.selectedMedia.indexOfFirst { it.uri == uri }
-		if (index >= 0) onMediaRemoved(index) else onMediaPicked(listOf(uri))
-	}
-
 	fun onMediaRemoved(index: Int) {
 		_uiState.update { state ->
 			if (index !in state.selectedMedia.indices) return@update state
@@ -174,42 +165,6 @@ class PostFeedViewModel @Inject constructor(
 		}
 	}
 
-	fun loadRecentImages() {
-		if (_uiState.value.isLoadingGallery) return
-
-		viewModelScope.launch(Dispatchers.IO) {
-			_uiState.update { it.copy(isLoadingGallery = true) }
-
-			val images = runCatching {
-				val projection = arrayOf(MediaStore.Images.Media._ID)
-				app.contentResolver.query(
-					MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-					projection,
-					null,
-					null,
-					"${MediaStore.Images.Media.DATE_ADDED} DESC"
-				)?.use { cursor ->
-					val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
-					buildList {
-						while (cursor.moveToNext() && size < RECENT_IMAGE_LIMIT) {
-							add(
-								ContentUris.withAppendedId(
-									MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-									cursor.getLong(idColumn)
-								)
-							)
-						}
-					}
-				} ?: emptyList()
-			}.getOrDefault(emptyList())
-
-			_uiState.update { state ->
-				// nothing is pre-selected: a post may be caption only
-				state.copy(recentImages = images, isLoadingGallery = false)
-			}
-		}
-	}
-
 	fun clearValidationError() {
 		_uiState.update { it.copy(validationError = null) }
 	}
@@ -222,7 +177,6 @@ class PostFeedViewModel @Inject constructor(
 	}
 
 	private companion object {
-		const val RECENT_IMAGE_LIMIT = 18
 		val ALLOWED_IMAGE_TYPES = setOf("image/jpeg", "image/png", "image/webp", "image/gif")
 		val ALLOWED_VIDEO_TYPES = setOf("video/mp4", "video/quicktime", "video/webm")
 	}

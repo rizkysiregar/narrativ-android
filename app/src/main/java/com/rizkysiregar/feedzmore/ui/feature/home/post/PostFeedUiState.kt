@@ -17,8 +17,6 @@ data class PostFeedUiState(
 	// 0..MAX_POST_MEDIA, in the order they will be shown; a post may also be caption only
 	val selectedMedia: List<PickedMedia> = emptyList(),
 	val caption: String = "",
-	val recentImages: List<Uri> = emptyList(),
-	val isLoadingGallery: Boolean = false,
 	val validationError: String? = null,
 	// the signed in user, shown next to the caption; null until the profile is loaded
 	val author: UserSearchItemResponse? = null

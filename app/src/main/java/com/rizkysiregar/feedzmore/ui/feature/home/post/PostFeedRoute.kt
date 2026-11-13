@@ -35,9 +35,7 @@ fun PostFeedRoute(
 			uiState = uiState,
 			isPreparing = isPreparing,
 			onPickMedia = vm::onMediaPicked,
-			onToggleRecentImage = vm::onRecentImageToggled,
 			onRemoveMedia = vm::onMediaRemoved,
-			onLoadRecentImages = vm::loadRecentImages,
 			onCaptionChange = { vm.onCaptionChanged(it) },
 			onClose = onClose,
 			onNext = { vm.submitPost() }
