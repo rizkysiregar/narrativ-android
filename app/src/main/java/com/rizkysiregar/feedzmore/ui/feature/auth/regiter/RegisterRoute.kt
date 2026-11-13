@@ -56,8 +56,7 @@ fun RegisterRoute(
 					password = finalState.password,
 					email = finalState.email,
 					firstName = finalState.firstName,
-					lastName = finalState.lastName,
-					phoneNumber = finalState.phoneNumber
+					lastName = finalState.lastName
 				)
 
 				authViewModel.register(request)

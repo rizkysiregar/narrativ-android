@@ -171,24 +171,6 @@ private fun TopSection(
 			)
 		)
 
-		// -- Phone Number -- //
-		Spacer(modifier = Modifier.height(16.dp))
-		OutlinedTextField(
-			value = registerState.phoneNumber,
-			onValueChange = { newPhoneNumber ->
-				onStateChange(registerState.copy(phoneNumber = newPhoneNumber.removeLineBreaks()))
-			},
-			label = { Text("Phone Number") },
-			isError = formErrors.phoneNumber != null,
-			supportingText = formErrors.phoneNumber?.let { { Text(it) } },
-			modifier = Modifier.fillMaxWidth(),
-			singleLine = true,
-			keyboardOptions = KeyboardOptions(
-				keyboardType = KeyboardType.Phone,
-				imeAction = ImeAction.Next
-			)
-		)
-
 		// -- Username -- //
 		Spacer(modifier = Modifier.height(16.dp))
 		UsernameField(
@@ -337,11 +319,10 @@ private data class RegisterFormErrors(
 	val lastName: String? = null,
 	val username: String? = null,
 	val email: String? = null,
-	val password: String? = null,
-	val phoneNumber: String? = null
+	val password: String? = null
 ) {
 	val hasErrors: Boolean
-		get() = listOf(firstName, lastName, username, email, password, phoneNumber).any { it != null }
+		get() = listOf(firstName, lastName, username, email, password).any { it != null }
 }
 
 private fun RegisterState.validate(): RegisterFormErrors = RegisterFormErrors(
@@ -349,8 +330,7 @@ private fun RegisterState.validate(): RegisterFormErrors = RegisterFormErrors(
 	lastName = lastName.requiredError("Nama belakang"),
 	username = username.requiredError("Username"),
 	email = email.requiredError("Email"),
-	password = password.requiredError("Password"),
-	phoneNumber = phoneNumber.requiredError("Nomor telepon")
+	password = password.requiredError("Password")
 )
 
 private fun RegisterFormErrors.clearResolvedErrors(state: RegisterState): RegisterFormErrors = copy(
@@ -358,8 +338,7 @@ private fun RegisterFormErrors.clearResolvedErrors(state: RegisterState): Regist
 	lastName = lastName?.takeIf { state.lastName.isBlank() },
 	username = username?.takeIf { state.username.isBlank() },
 	email = email?.takeIf { state.email.isBlank() },
-	password = password?.takeIf { state.password.isBlank() },
-	phoneNumber = phoneNumber?.takeIf { state.phoneNumber.isBlank() }
+	password = password?.takeIf { state.password.isBlank() }
 )
 
 private fun String.requiredError(label: String): String? =
@@ -369,8 +348,7 @@ private fun RegisterState.trimmed(): RegisterState = copy(
 	firstName = firstName.trim(),
 	lastName = lastName.trim(),
 	username = username.trim(),
-	email = email.trim(),
-	phoneNumber = phoneNumber.trim()
+	email = email.trim()
 )
 
 private fun String.removeLineBreaks(): String =

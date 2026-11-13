@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "570846727986",
+    "project_id": "feedzmore-prod",
+    "storage_bucket": "feedzmore-prod.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:570846727986:android:cc4aea49b78c3fcbe9d12b",
+        "android_client_info": {
+          "package_name": "com.rizkysiregar.feedzmore"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9FLi5g2StePyYbjZBCUrh0Xx3TkKPQhE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
