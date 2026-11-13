@@ -1,27 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Allow HTTP for your backend API - Ubuntu Docker Host -->
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">192.168.1.50</domain>
-    </domain-config>
-
-    <!--    <domain-config cleartextTrafficPermitted="true">-->
-    <!--        <domain includeSubdomains="false">192.168.1.10</domain>-->
-    <!--    </domain-config>-->
-
-    <!--  Tailscale Dev  -->
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">100.126.105.106</domain>
-    </domain-config>
-
-    <!--  Local IDE Via Emulator  -->
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">10.0.2.2</domain>
-    </domain-config>
-
-    <!--  Local IDE Via Real Device  -->
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">192.168.1.4</domain>
-    </domain-config>
-
+    <!-- HTTPS only. The local flavor overrides this file (src/local/res/xml) to reach a dev machine over HTTP. -->
+    <base-config cleartextTrafficPermitted="false" />
 </network-security-config>
