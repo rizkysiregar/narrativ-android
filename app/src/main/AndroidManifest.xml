@@ -19,7 +19,7 @@
 
     <application
         android:name=".FeedzmoreApplication"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/feedzmore_logo_title_with_bg_337x337"
