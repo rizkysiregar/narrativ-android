@@ -68,7 +68,7 @@ fun HomeRoot(
 
 	Scaffold(
 		bottomBar = {
-			if (currentRoute != HomePathRoute.UserDetail.route && currentRoute != HomePathRoute.FollowList.route && currentRoute != HomePathRoute.Settings.route && !isDetailRoute) {
+			if (currentRoute != HomePathRoute.UserDetail.route && currentRoute != HomePathRoute.FollowList.route && currentRoute != HomePathRoute.Settings.route && currentRoute != BottomNavScreen.PostFeed.route && !isDetailRoute) {
 				BottomBar(homeNavController)
 			}
 		}
@@ -102,6 +102,7 @@ fun HomeRoot(
 			}
 			composable(BottomNavScreen.PostFeed.route) {
 				PostFeedRoute(
+					onClose = { homeNavController.popBackStack() },
 					onPostSuccess = {
 						homeNavController.navigate(BottomNavScreen.Feed.route) {
 							popUpTo(BottomNavScreen.PostFeed.route) {

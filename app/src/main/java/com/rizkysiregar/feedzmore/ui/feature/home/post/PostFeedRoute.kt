@@ -17,6 +17,7 @@ import com.rizkysiregar.feedzmore.ui.base.BaseScreen
 @Composable
 fun PostFeedRoute(
 	onPostSuccess: () -> Unit,
+	onClose: () -> Unit,
 	vm: PostFeedViewModel = hiltViewModel()
 ) {
 	val uiState by vm.uiState.collectAsState()
@@ -36,9 +37,9 @@ fun PostFeedRoute(
 			onPickMedia = vm::onMediaPicked,
 			onToggleRecentImage = vm::onRecentImageToggled,
 			onRemoveMedia = vm::onMediaRemoved,
-			onPreviewSelected = vm::onPreviewSelected,
 			onLoadRecentImages = vm::loadRecentImages,
 			onCaptionChange = { vm.onCaptionChanged(it) },
+			onClose = onClose,
 			onNext = { vm.submitPost() }
 		)
 	}

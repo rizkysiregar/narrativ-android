@@ -7,7 +7,11 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rizkysiregar.feedzmore.constants.PrefKeys
+import com.rizkysiregar.feedzmore.data.cache.DataStoreManager
+import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.domain.post.MediaPreparationUseCase
+import com.rizkysiregar.feedzmore.domain.profile.FetchUserProfileUseCase
 import com.rizkysiregar.feedzmore.domain.post.PickedMedia
 import com.rizkysiregar.feedzmore.domain.post.UploadManager
 import com.rizkysiregar.feedzmore.media.MediaValidationException
@@ -20,6 +24,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -34,7 +39,9 @@ import javax.inject.Inject
 class PostFeedViewModel @Inject constructor(
 	private val app: Application,
 	private val mediaPreparationUseCase: MediaPreparationUseCase,
-	private val uploadManager: UploadManager
+	private val uploadManager: UploadManager,
+	private val dataStore: DataStoreManager,
+	private val fetchUserProfileUseCase: FetchUserProfileUseCase
 ) : ViewModel() {
 
 	// UI State for watching property changes
@@ -43,8 +50,24 @@ class PostFeedViewModel @Inject constructor(
 
 	val isPreparing: StateFlow<Boolean> = mediaPreparationUseCase.isPreparing
 
+	init {
+		loadAuthor()
+	}
+
 	private val _navigateHome = MutableSharedFlow<Unit>()
 	val navigateHome: SharedFlow<Unit> = _navigateHome.asSharedFlow()
+
+	private fun loadAuthor() {
+		viewModelScope.launch {
+			val userId = dataStore.get(PrefKeys.userId, "").first()
+			if (userId.isBlank()) return@launch
+			fetchUserProfileUseCase(userId).collect { result ->
+				if (result is ResultState.Success) {
+					_uiState.update { it.copy(author = result.data) }
+				}
+			}
+		}
+	}
 
 	/** Adds the picked media (up to [MAX_POST_MEDIA] in total); the ones that do not fit or are invalid are skipped. */
 	fun onMediaPicked(uris: List<Uri>) {
@@ -55,7 +78,7 @@ class PostFeedViewModel @Inject constructor(
 			val current = _uiState.value.selectedMedia + added
 			if (current.any { it.uri == uri }) continue
 			if (current.size >= MAX_POST_MEDIA) {
-				error = "Maksimal $MAX_POST_MEDIA foto atau video per post"
+				error = "You can add up to $MAX_POST_MEDIA photos or videos per post"
 				break
 			}
 			val mimeType = app.contentResolver.getType(uri)
@@ -69,7 +92,6 @@ class PostFeedViewModel @Inject constructor(
 		_uiState.update {
 			it.copy(
 				selectedMedia = it.selectedMedia + added,
-				previewIndex = if (added.isNotEmpty()) it.selectedMedia.size else it.previewIndex,
 				validationError = error
 			)
 		}
@@ -87,15 +109,8 @@ class PostFeedViewModel @Inject constructor(
 			val remaining = state.selectedMedia.filterIndexed { i, _ -> i != index }
 			state.copy(
 				selectedMedia = remaining,
-				previewIndex = state.previewIndex.coerceAtMost((remaining.size - 1).coerceAtLeast(0)),
 				validationError = null
 			)
-		}
-	}
-
-	fun onPreviewSelected(index: Int) {
-		_uiState.update { state ->
-			if (index in state.selectedMedia.indices) state.copy(previewIndex = index) else state
 		}
 	}
 
@@ -116,33 +131,33 @@ class PostFeedViewModel @Inject constructor(
 				_navigateHome.emit(Unit)
 			} catch (e: MediaValidationException) {
 				Log.w("PostFlow", "submitPost: media rejected: ${e.message}")
-				_uiState.update { it.copy(validationError = e.message ?: "Media tidak valid") }
+				_uiState.update { it.copy(validationError = e.message ?: "Invalid media") }
 			} catch (e: CancellationException) {
 				throw e
 			} catch (e: Exception) {
 				Log.e("PostFlow", "submitPost failed", e)
-				_uiState.update { it.copy(validationError = "Gagal menyiapkan media, silakan coba lagi") }
+				_uiState.update { it.copy(validationError = "Could not prepare the media, please try again") }
 			}
 		}
 	}
 
 	private fun validateMedia(uri: Uri, mimeType: String?): String? {
-		if (mimeType == null) return "Tipe media tidak dikenali"
+		if (mimeType == null) return "Unknown media type"
 		val sizeBytes = runCatching {
 			app.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize }
 		}.getOrNull()
 		return when {
 			mimeType.startsWith("image/") -> {
 				when {
-					mimeType !in ALLOWED_IMAGE_TYPES -> "Format gambar tidak didukung"
+					mimeType !in ALLOWED_IMAGE_TYPES -> "Unsupported image format"
 					// Static images are compressed before upload; GIFs are sent as-is.
 					mimeType == "image/gif" && sizeBytes != null && sizeBytes > 5L * 1024 * 1024 ->
-						"Ukuran GIF maksimal 5MB"
+						"GIFs can be up to 5MB"
 					else -> null
 				}
 			}
 			mimeType in ALLOWED_VIDEO_TYPES -> {
-				if (sizeBytes != null && sizeBytes > 50L * 1024 * 1024) return "Ukuran video maksimal 50MB"
+				if (sizeBytes != null && sizeBytes > 50L * 1024 * 1024) return "Videos can be up to 50MB"
 				val durationMs = runCatching {
 					val retriever = android.media.MediaMetadataRetriever()
 					app.contentResolver.openAssetFileDescriptor(uri, "r")?.use { afd ->
@@ -152,10 +167,10 @@ class PostFeedViewModel @Inject constructor(
 					retriever.release()
 					d?.toLongOrNull()
 				}.getOrNull()
-				if (durationMs != null && durationMs > 60_000L) "Durasi video maksimal 60 detik"
+				if (durationMs != null && durationMs > 60_000L) "Videos can be up to 60 seconds"
 				else null
 			}
-			else -> "Format media tidak didukung. Gunakan gambar atau video mp4/mov/webm"
+			else -> "Unsupported media format. Use an image or an mp4/mov/webm video"
 		}
 	}
 
