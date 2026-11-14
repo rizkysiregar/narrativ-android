@@ -207,6 +207,7 @@ class PostUploadWorker @AssistedInject constructor(
 		UploadNotifications.notifyResult(
 			context = applicationContext,
 			notificationId = resultNotificationId(),
+			progressNotificationId = progressNotificationId(),
 			caption = caption,
 			success = success
 		)
@@ -227,10 +228,10 @@ class PostUploadWorker @AssistedInject constructor(
 		const val KEY_PERCENT = "percent"
 		const val KEY_ERROR = "error"
 
-		const val STAGE_REQUESTING = "Menyiapkan unggahan"
-		const val STAGE_UPLOADING = "Mengunggah"
-		const val STAGE_FINALIZING = "Menyelesaikan"
-		const val STAGE_RETRYING = "Mencoba lagi"
+		const val STAGE_REQUESTING = "Preparing"
+		const val STAGE_UPLOADING = "Uploading"
+		const val STAGE_FINALIZING = "Finishing up"
+		const val STAGE_RETRYING = "Retrying"
 
 		private const val MAX_RETRY_ATTEMPTS = 3
 	}

@@ -65,12 +65,12 @@ fun UploadProgressBanner(
 				CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
 				Column(modifier = Modifier.weight(1f)) {
 					Text(
-						text = "Mengunggah post",
+						text = "Sending your post",
 						style = MaterialTheme.typography.titleSmall
 					)
 					Spacer(Modifier.height(2.dp))
 					Text(
-						text = first.stageLabel.ifBlank { "Menunggu koneksi..." },
+						text = first.stageLabel.ifBlank { "Waiting for connection..." },
 						style = MaterialTheme.typography.bodySmall,
 						color = MaterialTheme.colorScheme.onSurfaceVariant,
 						maxLines = 1
@@ -83,7 +83,7 @@ fun UploadProgressBanner(
 				}
 				Icon(
 					imageVector = Icons.Default.Close,
-					contentDescription = "Batalkan upload",
+					contentDescription = "Cancel upload",
 					modifier = Modifier
 						.size(20.dp)
 						.clip(RoundedCornerShape(10.dp))

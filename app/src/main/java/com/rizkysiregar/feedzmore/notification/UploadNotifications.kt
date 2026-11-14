@@ -7,9 +7,18 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.view.View
+import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.compose.ui.graphics.toArgb
 import com.rizkysiregar.feedzmore.MainActivity
+import com.rizkysiregar.feedzmore.R
+import com.rizkysiregar.feedzmore.ui.theme.Accent500
+import com.rizkysiregar.feedzmore.ui.theme.Error
+import com.rizkysiregar.feedzmore.ui.theme.Success
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.abs
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -21,6 +30,12 @@ object UploadNotifications {
 	const val CHANNEL_PROGRESS = "upload_progress"
 	const val CHANNEL_RESULT = "upload_result"
 
+	private const val TITLE_PROGRESS = "Sending your post"
+	private const val MIN_PERCENT_STEP = 2
+
+	// last stage and percent posted per progress notification, to skip updates nobody would see
+	private val lastPosted = ConcurrentHashMap<Int, Pair<String, Int>>()
+
 	fun createChannels(context: Context) {
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
 		val manager = context.getSystemService(NotificationManager::class.java) ?: return
@@ -28,10 +43,10 @@ object UploadNotifications {
 		manager.createNotificationChannel(
 			NotificationChannel(
 				CHANNEL_PROGRESS,
-				"Progres unggahan",
+				"Upload progress",
 				NotificationManager.IMPORTANCE_LOW
 			).apply {
-				description = "Menampilkan progres upload post"
+				description = "Shows the progress of a post being uploaded"
 				setShowBadge(false)
 			}
 		)
@@ -39,10 +54,10 @@ object UploadNotifications {
 		manager.createNotificationChannel(
 			NotificationChannel(
 				CHANNEL_RESULT,
-				"Hasil unggahan",
+				"Upload result",
 				NotificationManager.IMPORTANCE_DEFAULT
 			).apply {
-				description = "Hasil akhir upload post"
+				description = "The final result of a post upload"
 			}
 		)
 	}
@@ -52,31 +67,66 @@ object UploadNotifications {
 		caption: String,
 		stageLabel: String,
 		percent: Int
-	): Notification =
-		NotificationCompat.Builder(context, CHANNEL_PROGRESS)
-			.setSmallIcon(android.R.drawable.stat_sys_upload)
-			.setContentTitle("Mengunggah post")
+	): Notification {
+		val progress = percent.coerceIn(0, PROGRESS_MAX)
+		val percentText = "$progress%"
+
+		val collapsed = RemoteViews(context.packageName, R.layout.notification_upload_collapsed).apply {
+			setTextViewText(R.id.title, TITLE_PROGRESS)
+			setTextViewText(R.id.percent, percentText)
+			setImageViewBitmap(R.id.bar, UploadBarRenderer.render(progress, UploadBarRenderer.HEIGHT_COLLAPSED_PX))
+		}
+		val expanded = RemoteViews(context.packageName, R.layout.notification_upload_expanded).apply {
+			setTextViewText(R.id.title, TITLE_PROGRESS)
+			setTextViewText(R.id.percent, percentText)
+			setTextViewText(R.id.caption, caption.ifBlank { stageLabel })
+			setViewVisibility(R.id.caption, if (caption.isBlank()) View.GONE else View.VISIBLE)
+			setImageViewBitmap(R.id.bar, UploadBarRenderer.render(progress, UploadBarRenderer.HEIGHT_EXPANDED_PX))
+			setTextViewText(R.id.stage, stageLabel)
+		}
+
+		return NotificationCompat.Builder(context, CHANNEL_PROGRESS)
+			.setSmallIcon(R.drawable.ic_stat_plane)
+			.setColor(Accent500.toArgb())
+			// the plain fields stay filled for surfaces that do not draw custom views (lock screen, wearables)
+			.setContentTitle(TITLE_PROGRESS)
 			.setContentText(caption.ifBlank { stageLabel })
-			.setSubText(stageLabel)
-			.setProgress(PROGRESS_MAX, percent.coerceIn(0, PROGRESS_MAX), false)
+			.setStyle(NotificationCompat.DecoratedCustomViewStyle())
+			.setCustomContentView(collapsed)
+			.setCustomBigContentView(expanded)
 			.setOngoing(true)
 			.setOnlyAlertOnce(true)
 			.setContentIntent(contentIntent(context))
 			.setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
 			.build()
+	}
 
-	fun buildResult(context: Context, caption: String, success: Boolean): Notification =
-		NotificationCompat.Builder(context, CHANNEL_RESULT)
-			.setSmallIcon(
-				if (success) android.R.drawable.stat_sys_upload_done
-				else android.R.drawable.stat_notify_error
-			)
-			.setContentTitle(if (success) "Post berhasil diunggah" else "Upload post gagal")
-			.setContentText(caption.ifBlank { if (success) "Post kamu sudah tampil di feed" else "Silakan coba lagi" })
+	fun buildResult(context: Context, caption: String, success: Boolean): Notification {
+		val title = if (success) "Post shared" else "Couldn't share your post"
+		val text = caption.ifBlank { if (success) "It's live in your feed" else "Please try again" }
+
+		val card = RemoteViews(context.packageName, R.layout.notification_upload_result).apply {
+			setImageViewResource(R.id.badge, if (success) R.drawable.ic_notif_success else R.drawable.ic_notif_error)
+			setTextViewText(R.id.title, title)
+			setTextViewText(R.id.text, text)
+		}
+
+		return NotificationCompat.Builder(context, CHANNEL_RESULT)
+			.setSmallIcon(R.drawable.ic_stat_plane)
+			.setColor(if (success) Success.toArgb() else Error.toArgb())
+			.setContentTitle(title)
+			.setContentText(text)
+			.setStyle(NotificationCompat.DecoratedCustomViewStyle())
+			.setCustomContentView(card)
 			.setAutoCancel(true)
 			.setContentIntent(contentIntent(context))
 			.build()
+	}
 
+	/**
+	 * Progress ticks can arrive many times per percent, and each one re-renders the bar bitmap and
+	 * sends it to the system, so only post when the stage changed or the bar moved a visible step.
+	 */
 	fun notifyProgress(
 		context: Context,
 		notificationId: Int,
@@ -84,10 +134,22 @@ object UploadNotifications {
 		stageLabel: String,
 		percent: Int
 	) {
+		val last = lastPosted[notificationId]
+		val unchanged = last != null && last.first == stageLabel &&
+			abs(percent - last.second) < MIN_PERCENT_STEP && !(percent == PROGRESS_MAX && last.second != PROGRESS_MAX)
+		if (unchanged) return
+		lastPosted[notificationId] = stageLabel to percent
 		post(context, notificationId, buildProgress(context, caption, stageLabel, percent))
 	}
 
-	fun notifyResult(context: Context, notificationId: Int, caption: String, success: Boolean) {
+	fun notifyResult(
+		context: Context,
+		notificationId: Int,
+		progressNotificationId: Int,
+		caption: String,
+		success: Boolean
+	) {
+		lastPosted.remove(progressNotificationId)
 		post(context, notificationId, buildResult(context, caption, success))
 	}
 
