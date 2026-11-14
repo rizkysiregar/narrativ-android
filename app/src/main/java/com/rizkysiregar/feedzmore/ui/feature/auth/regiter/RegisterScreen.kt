@@ -22,6 +22,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.ripple
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withLink
+import com.rizkysiregar.feedzmore.ui.feature.legal.LegalDocument
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -61,7 +68,8 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 @Composable
 fun RegisterScreen(
 	onRegisterClick: (RegisterState) -> Unit,
-	onNavigateToLogin: () -> Unit
+	onNavigateToLogin: () -> Unit,
+	onLegalClick: (LegalDocument) -> Unit = {}
 ) {
 	var registerState by remember { mutableStateOf(RegisterState()) }
 	var formErrors by remember { mutableStateOf(RegisterFormErrors()) }
@@ -82,6 +90,7 @@ fun RegisterScreen(
 			}
 		)
 		MiddleSection(
+			onLegalClick = onLegalClick,
 			onRegisterClick = {
 				val errors = registerState.validate()
 				formErrors = errors
@@ -194,8 +203,12 @@ private fun TopSection(
 }
 
 @Composable
-fun MiddleSection(onRegisterClick: () -> Unit) {
+fun MiddleSection(onRegisterClick: () -> Unit, onLegalClick: (LegalDocument) -> Unit = {}) {
 	Column {
+		LegalConsentText(onLegalClick)
+
+		Spacer(modifier = Modifier.height(12.dp))
+
 		Button(
 			onClick = {
 				onRegisterClick()
@@ -223,6 +236,37 @@ fun MiddleSection(onRegisterClick: () -> Unit) {
 
 		OAuthButtonsRow()
 	}
+}
+
+/**
+ * Signing up, with an email or with Google, means accepting the terms; both documents open inside the app.
+ */
+@Composable
+private fun LegalConsentText(onLegalClick: (LegalDocument) -> Unit) {
+	val indonesian = LegalDocument.deviceLanguage() == LegalDocument.LANGUAGE_ID
+	val linkStyle = TextLinkStyles(
+		style = SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+	)
+	fun link(document: LegalDocument) = LinkAnnotation.Clickable(
+		tag = document.path,
+		styles = linkStyle,
+		linkInteractionListener = { onLegalClick(document) }
+	)
+
+	val text = buildAnnotatedString {
+		append(if (indonesian) "Dengan mendaftar, Anda menyetujui " else "By signing up, you agree to our ")
+		withLink(link(LegalDocument.TERMS)) { append(LegalDocument.TERMS.title(if (indonesian) "id" else "en")) }
+		append(if (indonesian) " dan " else " and ")
+		withLink(link(LegalDocument.PRIVACY_POLICY)) { append(LegalDocument.PRIVACY_POLICY.title(if (indonesian) "id" else "en")) }
+		append(".")
+	}
+	Text(
+		text = text,
+		style = MaterialTheme.typography.bodySmall,
+		color = MaterialTheme.colorScheme.onSurfaceVariant,
+		textAlign = TextAlign.Center,
+		modifier = Modifier.fillMaxWidth()
+	)
 }
 
 @Composable

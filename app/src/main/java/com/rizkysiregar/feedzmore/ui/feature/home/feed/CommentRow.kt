@@ -37,6 +37,9 @@ import androidx.compose.ui.unit.sp
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.CommentItem
 import com.rizkysiregar.feedzmore.ui.components.ProfileAvatar
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
+import com.rizkysiregar.feedzmore.domain.moderation.ReportTarget
+import com.rizkysiregar.feedzmore.ui.feature.moderation.ContentModerationMenu
+import com.rizkysiregar.feedzmore.ui.feature.moderation.ModerationTarget
 import com.rizkysiregar.feedzmore.util.formatTimeAgo
 
 /**
@@ -55,9 +58,11 @@ fun CommentRow(
 	comment: CommentItem,
 	onReplyClick: (CommentItem) -> Unit,
 	modifier: Modifier = Modifier,
-	isReplyTarget: Boolean = false
+	isReplyTarget: Boolean = false,
+	// set where the comment may be reported or its author blocked; runs after the author was blocked
+	onAuthorBlocked: (() -> Unit)? = null
 ) {
-	CommentRow(comment, onReplyClick, modifier, isReplyTarget, ThreadLine.None)
+	CommentRow(comment, onReplyClick, modifier, isReplyTarget, ThreadLine.None, onAuthorBlocked)
 }
 
 @Composable
@@ -66,7 +71,8 @@ internal fun CommentRow(
 	onReplyClick: (CommentItem) -> Unit,
 	modifier: Modifier,
 	isReplyTarget: Boolean,
-	threadLine: ThreadLine
+	threadLine: ThreadLine,
+	onAuthorBlocked: (() -> Unit)? = null
 ) {
 	val isReply = comment.isReply
 	val lineColor = threadLineColor()
@@ -115,6 +121,14 @@ internal fun CommentRow(
 						text = timeAgo,
 						style = MaterialTheme.typography.bodySmall,
 						color = MaterialTheme.colorScheme.onSurfaceVariant
+					)
+				}
+				if (onAuthorBlocked != null && !comment.isPending) {
+					Spacer(modifier = Modifier.weight(1f))
+					ContentModerationMenu(
+						target = ModerationTarget(ReportTarget.COMMENT, comment.id, comment.userId, comment.username),
+						iconSize = 16.dp,
+						onBlocked = onAuthorBlocked
 					)
 				}
 			}

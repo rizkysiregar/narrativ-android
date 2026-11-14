@@ -77,6 +77,7 @@ fun ExploreRoute(
 			if (listFeed.hasLoadedInitialPage) viewModel.loadNextPage() else viewModel.refresh()
 		},
 		onRefresh = viewModel::refreshAll,
+		onAuthorBlocked = viewModel::refreshAll,
 		searchState = searchState,
 		onSearchQueryChange = searchViewModel::onQueryChange,
 		onSearchRetry = searchViewModel::retry,

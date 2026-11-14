@@ -1,16 +1,104 @@
 package com.rizkysiregar.feedzmore.ui.feature.home.settings
 
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.rizkysiregar.feedzmore.data.remote.model.ResultState
+import com.rizkysiregar.feedzmore.data.remote.model.request.user.DeleteAccountRequest
+import com.rizkysiregar.feedzmore.data.repository.UserRepository
+import com.rizkysiregar.feedzmore.data.session.GoogleIdTokenProvider
+import com.rizkysiregar.feedzmore.data.session.RemoteSessionCleaner
 import com.rizkysiregar.feedzmore.data.session.SessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import retrofit2.HttpException
+import java.io.IOException
 import javax.inject.Inject
+
+data class SettingsUiState(
+	/** A logout or an account deletion is running; the buttons wait. */
+	val isBusy: Boolean = false,
+	/** Why deleting the account failed, when the global error dialog did not already say so. */
+	val deleteError: String? = null
+)
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-	private val sessionManager: SessionManager
+	private val sessionManager: SessionManager,
+	private val remoteSessionCleaner: RemoteSessionCleaner,
+	private val userRepository: UserRepository,
+	private val googleIdTokenProvider: GoogleIdTokenProvider
 ) : ViewModel() {
 
-	fun logout() {
-		sessionManager.logout()
+	private val _uiState = MutableStateFlow(SettingsUiState())
+	val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+
+	/** Ends the session on the server first (best effort), then clears it on this device. */
+	fun logout(onDone: () -> Unit) {
+		if (_uiState.value.isBusy) return
+		_uiState.update { it.copy(isBusy = true) }
+		viewModelScope.launch {
+			remoteSessionCleaner.signOut()
+			sessionManager.logout()
+			onDone()
+		}
+	}
+
+	fun deleteAccountWithPassword(password: String, onDone: () -> Unit) {
+		if (password.isBlank()) {
+			_uiState.update { it.copy(deleteError = "Kata sandi wajib diisi.") }
+			return
+		}
+		deleteAccount(onDone) { DeleteAccountRequest(password = password) }
+	}
+
+	/** For an account that signs in with Google: the user picks the account again as proof. */
+	fun deleteAccountWithGoogle(onDone: () -> Unit) {
+		deleteAccount(onDone) { DeleteAccountRequest(idToken = googleIdTokenProvider.get()) }
+	}
+
+	fun clearDeleteError() {
+		_uiState.update { it.copy(deleteError = null) }
+	}
+
+	private fun deleteAccount(onDone: () -> Unit, request: suspend () -> DeleteAccountRequest) {
+		if (_uiState.value.isBusy) return
+		_uiState.update { it.copy(isBusy = true, deleteError = null) }
+		viewModelScope.launch {
+			try {
+				var deleted = false
+				userRepository.deleteAccount(request()).collect { result ->
+					when (result) {
+						is ResultState.Success -> deleted = true
+						is ResultState.Failure -> {
+							// HTTP and network errors already reached the user through the global error dialog
+							val alreadyShown = result.throwable is HttpException || result.throwable is IOException
+							_uiState.update { it.copy(deleteError = result.message.takeUnless { alreadyShown }) }
+						}
+						else -> Unit
+					}
+				}
+				if (deleted) {
+					// the server revoked every session, so there is nothing left to sign out of there
+					remoteSessionCleaner.dropPushToken()
+					sessionManager.logout()
+					onDone()
+				}
+			} catch (e: CancellationException) {
+				throw e
+			} catch (e: GetCredentialCancellationException) {
+				// the user closed the Google account picker
+			} catch (e: GetCredentialException) {
+				_uiState.update { it.copy(deleteError = "Tidak bisa memverifikasi akun Google. Coba lagi.") }
+			} finally {
+				_uiState.update { it.copy(isBusy = false) }
+			}
+		}
 	}
 }

@@ -2,6 +2,7 @@ package com.rizkysiregar.feedzmore.data.repository.impl
 
 import com.rizkysiregar.feedzmore.data.remote.api.UserApi
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
+import com.rizkysiregar.feedzmore.data.remote.model.request.user.DeleteAccountRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.user.SearchUserRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.PaginationResponseWrapper
 import com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowStatusResponse
@@ -40,6 +41,9 @@ class UserRepositoryImpl @Inject constructor(
 		val response = userApi.deleteProfileImage()
 		return response.data ?: throw IllegalStateException(response.message)
 	}
+
+	override fun deleteAccount(request: DeleteAccountRequest): Flow<ResultState<String>> =
+		flowFromMessageApi { userApi.deleteAccount(request) }
 
 	override fun getUserProfile(userId: String): Flow<ResultState<UserSearchItemResponse>> =
 		flowFromApi {

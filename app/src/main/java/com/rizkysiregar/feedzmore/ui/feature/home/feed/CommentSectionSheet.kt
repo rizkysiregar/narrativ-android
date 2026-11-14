@@ -190,7 +190,8 @@ fun CommentSectionContent(
 							onReplyClick = viewModel::startReply,
 							onToggleReplies = viewModel::toggleReplies,
 							onLoadMoreReplies = viewModel::loadMoreReplies,
-							onDeleteRequest = { pendingDelete = it }
+							onDeleteRequest = { pendingDelete = it },
+							onAuthorBlocked = { viewModel.loadComments(postId, isRefresh = true) }
 						)
 					}
 
@@ -248,6 +249,7 @@ private fun CommentListRowContent(
 	onToggleReplies: (String) -> Unit,
 	onLoadMoreReplies: (String) -> Unit,
 	onDeleteRequest: (CommentItem) -> Unit,
+	onAuthorBlocked: () -> Unit,
 	modifier: Modifier = Modifier
 ) {
 	when (row) {
@@ -259,7 +261,8 @@ private fun CommentListRowContent(
 					onReplyClick = onReplyClick,
 					modifier = rowModifier,
 					isReplyTarget = comment.id == replyTargetId,
-					threadLine = threadLine
+					threadLine = threadLine,
+					onAuthorBlocked = onAuthorBlocked
 				)
 			}
 			if (comment.canDelete && !comment.isPending) {

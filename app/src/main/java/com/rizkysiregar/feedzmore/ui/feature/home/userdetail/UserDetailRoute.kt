@@ -80,7 +80,10 @@ fun UserDetailRoute(
 			onFollowClick = { detailViewModel.toggleFollow(userId) },
 			onFollowersClick = { onFollowersClick(userId) },
 			onFollowingClick = { onFollowingClick(userId) },
-			onPostClick = { post -> onPostClick(post, feedViewModel::toggleLike) }
+			onPostClick = { post -> onPostClick(post, feedViewModel::toggleLike) },
+			userId = userId,
+			username = username,
+			onUserBlocked = onBackClick
 		)
 	}
 }

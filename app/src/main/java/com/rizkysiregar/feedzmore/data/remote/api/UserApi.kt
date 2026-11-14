@@ -1,6 +1,7 @@
 package com.rizkysiregar.feedzmore.data.remote.api
 
 import com.rizkysiregar.feedzmore.data.remote.model.request.user.CreateProfileImageUploadUrlRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.user.DeleteAccountRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.user.SetProfileImageRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.BaseResponse
 import com.rizkysiregar.feedzmore.data.remote.model.response.PaginationResponseWrapper
@@ -35,6 +36,22 @@ interface UserApi {
 
 	@DELETE("users/me/profile-image")
 	suspend fun deleteProfileImage(): BaseResponse<UserSearchItemResponse>
+
+	/** Deletes the account and its personal data for good. */
+	@POST("users/me/deletion")
+	suspend fun deleteAccount(@Body request: DeleteAccountRequest): BaseResponse<String>
+
+	@POST("users/{userId}/block")
+	suspend fun blockUser(@Path("userId") userId: String): BaseResponse<String>
+
+	@DELETE("users/{userId}/block")
+	suspend fun unblockUser(@Path("userId") userId: String): BaseResponse<String>
+
+	@GET("users/me/blocks")
+	suspend fun getBlockedUsers(
+		@Query("page") page: Int,
+		@Query("size") size: Int
+	): BaseResponse<PaginationResponseWrapper<FollowUserResponse>>
 
 	@GET("users/{userId}")
 	suspend fun getUserProfile(

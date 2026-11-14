@@ -16,6 +16,7 @@ sealed class HomePathRoute(val route: String) {
 	}
 	object Profile : MainPathRoute("profile")
 	object Settings : HomePathRoute("settings")
+	object BlockedUsers : HomePathRoute("blocked_users")
 
 	object FollowList : HomePathRoute("follow_list/{userId}/{type}") {
 		const val ARG_USER_ID = "userId"

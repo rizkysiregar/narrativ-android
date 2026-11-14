@@ -40,6 +40,9 @@ import androidx.compose.ui.unit.dp
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.feedzmore.data.remote.model.response.user.UserSearchItemResponse
+import com.rizkysiregar.feedzmore.domain.moderation.ReportTarget
+import com.rizkysiregar.feedzmore.ui.feature.moderation.ContentModerationMenu
+import com.rizkysiregar.feedzmore.ui.feature.moderation.ModerationTarget
 import com.rizkysiregar.feedzmore.ui.components.ProfileAvatar
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedUiState
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.PostViewPager
@@ -70,7 +73,11 @@ fun UserDetailScreen(
 	onFollowClick: () -> Unit = {},
 	onFollowersClick: () -> Unit = {},
 	onFollowingClick: () -> Unit = {},
-	onPostClick: (FeedContentItem) -> Unit = {}
+	onPostClick: (FeedContentItem) -> Unit = {},
+	userId: String? = null,
+	username: String? = null,
+	// set where the profile may be reported or the user blocked; runs after the user was blocked
+	onUserBlocked: (() -> Unit)? = null
 ) {
 	Scaffold(
 		topBar = {
@@ -81,6 +88,14 @@ fun UserDetailScreen(
 						Icon(
 							imageVector = Icons.AutoMirrored.Filled.ArrowBack,
 							contentDescription = "Kembali"
+						)
+					}
+				},
+				actions = {
+					if (onUserBlocked != null && userId != null && username != null) {
+						ContentModerationMenu(
+							target = ModerationTarget(ReportTarget.USER, userId, userId, username),
+							onBlocked = onUserBlocked
 						)
 					}
 				},

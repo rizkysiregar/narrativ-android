@@ -12,6 +12,8 @@ package com.rizkysiregar.feedzmore.data.remote.model.response.feed
 data class CommentItem(
 	val id: String,
 	val username: String,
+	// the author, so the comment can be reported and the author blocked
+	val userId: String? = null,
 	val profileImageUrl: String? = null,
 	// null for everybody but the author when the comment is taken down
 	val commentContent: String? = null,

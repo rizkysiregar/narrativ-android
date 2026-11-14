@@ -77,7 +77,8 @@ fun FeedScreen(
 	onLikeClick: (String) -> Unit,
 	onCreateFeed: () -> Unit,
 	player: ExoPlayer? = null,
-	onVideoClick: (FeedContentItem) -> Unit = {}
+	onVideoClick: (FeedContentItem) -> Unit = {},
+	onAuthorBlocked: (() -> Unit)? = null
 ) {
 	val currentOnLikeClick by rememberUpdatedState(onLikeClick)
 	val pullState =
@@ -224,7 +225,8 @@ fun FeedScreen(
 							onVideoClick = { onVideoClick(item) },
 							player = player,
 							initialPage = pageByPost[item.id] ?: 0,
-							onPageChange = { page -> pageByPost[item.id] = page }
+							onPageChange = { page -> pageByPost[item.id] = page },
+							onAuthorBlocked = onAuthorBlocked
 						)
 					}
 
