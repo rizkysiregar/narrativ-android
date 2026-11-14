@@ -1,5 +1,6 @@
 package com.rizkysiregar.feedzmore.ui.feature.home
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -10,9 +11,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavType
@@ -24,6 +27,7 @@ import androidx.navigation.navArgument
 import com.google.gson.Gson
 import com.rizkysiregar.feedzmore.constants.Constants
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
+import com.rizkysiregar.feedzmore.ui.components.PaperPlaneFlight
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.KEY_LIKE_HANDLER
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.KEY_POST_JSON
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedRoute
@@ -54,6 +58,8 @@ fun HomeRoot(
 	val homeNavController = rememberNavController()
 	val uploadBannerViewModel: UploadBannerViewModel = hiltViewModel()
 	var feedRefreshVersion by remember { mutableIntStateOf(0) }
+	// where the paper plane takes off from after a post; null while no plane is flying
+	var planeOrigin by remember { mutableStateOf<Offset?>(null) }
 	val currentRoute = homeNavController.currentBackStackEntryAsState().value?.destination?.route
 	val openPostDetail: (FeedContentItem, (String) -> Unit) -> Unit = { post, likeHandler ->
 		homeNavController.currentBackStackEntry?.savedStateHandle?.apply {
@@ -68,6 +74,8 @@ fun HomeRoot(
 		uploadBannerViewModel.feedRefreshVersion.collect { feedRefreshVersion += 1 }
 	}
 
+	// the plane is drawn above the Scaffold so it keeps flying across the switch to the feed
+	Box(modifier = Modifier.fillMaxSize()) {
 	Scaffold(
 		bottomBar = {
 			if (currentRoute != HomePathRoute.UserDetail.route && currentRoute != HomePathRoute.FollowList.route && currentRoute != HomePathRoute.Settings.route && currentRoute != HomePathRoute.BlockedUsers.route && currentRoute != BottomNavScreen.PostFeed.route && !isDetailRoute) {
@@ -105,7 +113,8 @@ fun HomeRoot(
 			composable(BottomNavScreen.PostFeed.route) {
 				PostFeedRoute(
 					onClose = { homeNavController.popBackStack() },
-					onPostSuccess = {
+					onPostSuccess = { origin ->
+						planeOrigin = origin
 						homeNavController.navigate(BottomNavScreen.Feed.route) {
 							popUpTo(BottomNavScreen.PostFeed.route) {
 								inclusive = true
@@ -195,5 +204,9 @@ fun HomeRoot(
 			}
 		}
 		}
+	}
+	planeOrigin?.let { origin ->
+		PaperPlaneFlight(origin = origin, onFinished = { planeOrigin = null })
+	}
 	}
 }
