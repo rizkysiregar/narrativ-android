@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.Feedzmoreandroidnative" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- The window is dark so nothing flashes white before Compose draws the first frame. -->
+    <style name="Theme.Feedzmoreandroidnative" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/bg_base</item>
+    </style>
+
+    <!-- Launch theme: system splash on the app background, then handed over to the real theme. -->
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/bg_base</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.Feedzmoreandroidnative</item>
+    </style>
 </resources>
