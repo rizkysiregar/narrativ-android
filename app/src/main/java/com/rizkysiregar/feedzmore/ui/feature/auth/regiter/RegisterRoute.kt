@@ -12,6 +12,7 @@ import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.RegisterRequest
 import com.rizkysiregar.feedzmore.ui.base.BaseScreen
 import com.rizkysiregar.feedzmore.ui.feature.auth.AuthViewModel
+import com.rizkysiregar.feedzmore.ui.main.navigation.routes.MainPathRoute
 import com.rizkysiregar.feedzmore.ui.main.navigation.routes.AuthPathRoutes
 
 /**
@@ -66,7 +67,8 @@ fun RegisterRoute(
 					popUpTo(AuthPathRoutes.Register.route) { inclusive = true }
 					launchSingleTop = true
 				}
-			}
+			},
+			onLegalClick = { document -> navController.navigate(MainPathRoute.Legal.create(document.path)) }
 		)
 	}
 }

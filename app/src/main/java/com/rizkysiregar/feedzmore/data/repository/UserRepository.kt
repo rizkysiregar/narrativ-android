@@ -1,6 +1,7 @@
 package com.rizkysiregar.feedzmore.data.repository
 
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
+import com.rizkysiregar.feedzmore.data.remote.model.request.user.DeleteAccountRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.user.SearchUserRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.PaginationResponseWrapper
 import com.rizkysiregar.feedzmore.data.remote.model.response.user.FollowStatusResponse
@@ -19,6 +20,9 @@ interface UserRepository {
 	suspend fun createProfileImageUploadUrl(contentType: String): ProfileImageUploadUrlResponse
 	suspend fun setProfileImage(objectKey: String): UserSearchItemResponse
 	suspend fun deleteProfileImage(): UserSearchItemResponse
+
+	/** The account is gone on the server when this succeeds; the caller clears the local session. */
+	fun deleteAccount(request: DeleteAccountRequest): Flow<ResultState<String>>
 
 	fun getUserProfile(userId: String): Flow<ResultState<UserSearchItemResponse>>
 

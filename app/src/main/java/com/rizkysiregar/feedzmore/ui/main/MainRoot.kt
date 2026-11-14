@@ -18,6 +18,7 @@ import com.rizkysiregar.feedzmore.ui.feature.common.ErrorDialog
 import com.rizkysiregar.feedzmore.ui.main.navigation.routes.MainPathRoute
 import com.rizkysiregar.feedzmore.ui.main.navigation.authGraph
 import com.rizkysiregar.feedzmore.ui.main.navigation.homeGraph
+import com.rizkysiregar.feedzmore.ui.main.navigation.legalGraph
 import com.rizkysiregar.feedzmore.ui.main.navigation.splashGraph
 import com.rizkysiregar.feedzmore.ui.main.navigation.routes.AuthPathRoutes
 
@@ -64,5 +65,6 @@ fun MainRoot(
 		splashGraph(navController)
 		authGraph(navController)
 		homeGraph(navController)
+		legalGraph(navController)
 	}
 }

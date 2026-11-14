@@ -30,11 +30,13 @@ import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.post.PostFeedRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.profile.ProfileRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.settings.SettingsRoute
+import com.rizkysiregar.feedzmore.ui.feature.moderation.BlockedUsersRoute
 import com.rizkysiregar.feedzmore.ui.feature.home.upload.UploadBannerViewModel
 import com.rizkysiregar.feedzmore.ui.feature.home.upload.UploadProgressBanner
 import com.rizkysiregar.feedzmore.ui.feature.home.userdetail.UserDetailRoute
 import com.rizkysiregar.feedzmore.ui.main.navigation.BottomNavScreen
 import com.rizkysiregar.feedzmore.ui.main.navigation.routes.AuthPathRoutes
+import com.rizkysiregar.feedzmore.ui.main.navigation.routes.MainPathRoute
 import com.rizkysiregar.feedzmore.ui.main.navigation.routes.HomePathRoute
 
 /**
@@ -68,7 +70,7 @@ fun HomeRoot(
 
 	Scaffold(
 		bottomBar = {
-			if (currentRoute != HomePathRoute.UserDetail.route && currentRoute != HomePathRoute.FollowList.route && currentRoute != HomePathRoute.Settings.route && currentRoute != BottomNavScreen.PostFeed.route && !isDetailRoute) {
+			if (currentRoute != HomePathRoute.UserDetail.route && currentRoute != HomePathRoute.FollowList.route && currentRoute != HomePathRoute.Settings.route && currentRoute != HomePathRoute.BlockedUsers.route && currentRoute != BottomNavScreen.PostFeed.route && !isDetailRoute) {
 				BottomBar(homeNavController)
 			}
 		}
@@ -130,6 +132,8 @@ fun HomeRoot(
 				composable(HomePathRoute.Settings.route) {
 					SettingsRoute(
 						onBackClick = { homeNavController.popBackStack() },
+						onBlockedUsersClick = { homeNavController.navigate(HomePathRoute.BlockedUsers.route) },
+						onLegalClick = { document -> navController.navigate(MainPathRoute.Legal.create(document.path)) },
 						onLoggedOut = {
 							navController.navigate(AuthPathRoutes.Login.route) {
 								popUpTo(Constants.HOME_GRAPH) {
@@ -139,6 +143,9 @@ fun HomeRoot(
 							}
 						}
 					)
+				}
+				composable(HomePathRoute.BlockedUsers.route) {
+					BlockedUsersRoute(onBackClick = { homeNavController.popBackStack() })
 				}
 				composable(
 					route = HomePathRoute.FollowList.route,

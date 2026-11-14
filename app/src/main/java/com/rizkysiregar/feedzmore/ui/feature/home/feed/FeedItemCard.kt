@@ -44,6 +44,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.media3.exoplayer.ExoPlayer
+import com.rizkysiregar.feedzmore.ui.feature.moderation.ContentModerationMenu
+import com.rizkysiregar.feedzmore.ui.feature.moderation.ModerationTarget
+import com.rizkysiregar.feedzmore.domain.moderation.ReportTarget
 import com.rizkysiregar.feedzmore.R
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.MediaType
@@ -72,7 +75,9 @@ fun FeedItemCard(
 	onVideoClick: (() -> Unit)? = null,
 	player: ExoPlayer? = null,
 	initialPage: Int = 0,
-	onPageChange: (Int) -> Unit = {}
+	onPageChange: (Int) -> Unit = {},
+	// set where the card may be reported or its author blocked; runs after the author was blocked
+	onAuthorBlocked: (() -> Unit)? = null
 ) {
 	val likeScale by animateFloatAsState(
 		targetValue = if (item.liked) 1.12f else 1f,
@@ -93,7 +98,7 @@ fun FeedItemCard(
 		elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
 	) {
 		Column(modifier = Modifier.padding(start = 16.dp, top = 14.dp, end = 16.dp, bottom = 6.dp)) {
-			FeedAuthorHeader(item = item)
+			FeedAuthorHeader(item = item, onAuthorBlocked = onAuthorBlocked)
 
 			if (item.isTakenDown) {
 				Spacer(Modifier.height(12.dp))
@@ -141,7 +146,7 @@ fun FeedItemCard(
 }
 
 @Composable
-private fun FeedAuthorHeader(item: FeedContentItem) {
+private fun FeedAuthorHeader(item: FeedContentItem, onAuthorBlocked: (() -> Unit)?) {
 	Row(
 		modifier = Modifier.fillMaxWidth(),
 		verticalAlignment = Alignment.CenterVertically
@@ -162,6 +167,13 @@ private fun FeedAuthorHeader(item: FeedContentItem) {
 				style = MaterialTheme.typography.labelMedium,
 				color = MaterialTheme.colorScheme.onSurfaceVariant,
 				maxLines = 1
+			)
+		}
+		if (onAuthorBlocked != null) {
+			Spacer(Modifier.weight(1f))
+			ContentModerationMenu(
+				target = ModerationTarget(ReportTarget.POST, item.id, item.userId, item.username),
+				onBlocked = onAuthorBlocked
 			)
 		}
 	}

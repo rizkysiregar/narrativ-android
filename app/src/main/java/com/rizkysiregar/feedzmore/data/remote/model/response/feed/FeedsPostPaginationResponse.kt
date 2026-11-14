@@ -69,6 +69,10 @@ data class FeedContentItem(
 	@field:SerializedName("username")
 	val username: String,
 
+	// the author, so the post can be reported and the author blocked; null for an older server
+	@field:SerializedName("userId")
+	val userId: String? = null,
+
 	@field:SerializedName("commentCount")
 	val commentCount: Int,
 

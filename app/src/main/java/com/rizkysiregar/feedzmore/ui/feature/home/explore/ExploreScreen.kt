@@ -52,7 +52,8 @@ fun ExploreScreenContent(
 	onSearchRetry: () -> Unit,
 	onSearchLoadMore: () -> Unit,
 	onUserClick: (userId: String, username: String) -> Unit,
-	onRefresh: () -> Unit = {}
+	onRefresh: () -> Unit = {},
+	onAuthorBlocked: (() -> Unit)? = null
 ) {
 	val isSearching = searchState.query.isNotBlank()
 
@@ -102,7 +103,8 @@ fun ExploreScreenContent(
 					onLoadMoreList = onLoadMoreList,
 					onRetryGrid = onRetryGrid,
 					onRetryList = onRetryList,
-					modifier = pagerModifier
+					modifier = pagerModifier,
+					onAuthorBlocked = onAuthorBlocked
 				)
 
 				if (isSearching) {
@@ -146,7 +148,13 @@ fun ExploreScreenContent(
 						onLikeClick = onLikeClick,
 						onCommentClick = onCommentClick,
 						// posts with a video open the full screen detail instead, so this card holds images only
-						isActiveVideo = false
+						isActiveVideo = false,
+						onAuthorBlocked = onAuthorBlocked?.let { refresh ->
+							{
+								onDismissDetail()
+								refresh()
+							}
+						}
 					)
 				}
 			}

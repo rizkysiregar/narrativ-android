@@ -1,22 +1,16 @@
 package com.rizkysiregar.feedzmore.ui.feature.auth
 
-import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.core.net.toUri
-import androidx.credentials.CredentialManager
-import androidx.credentials.CustomCredential
-import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import com.rizkysiregar.feedzmore.constants.OAuthConfig
 import com.rizkysiregar.feedzmore.constants.PrefKeys
 import com.rizkysiregar.feedzmore.data.cache.DataStoreManager
 import com.rizkysiregar.feedzmore.data.remote.DeviceSyncScheduler
 import com.rizkysiregar.feedzmore.data.cache.JwtTokenHolder
+import com.rizkysiregar.feedzmore.data.session.GoogleIdTokenProvider
 import com.rizkysiregar.feedzmore.data.session.SessionManager
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.LoginRequest
@@ -26,7 +20,6 @@ import com.rizkysiregar.feedzmore.domain.auth.GoogleLoginUseCase
 import com.rizkysiregar.feedzmore.domain.auth.LoginUseCase
 import com.rizkysiregar.feedzmore.domain.auth.RegisterUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,7 +40,7 @@ class AuthViewModel @Inject constructor(
     private val tokenHolder: JwtTokenHolder,
     private val sessionManager: SessionManager,
     private val deviceSyncScheduler: DeviceSyncScheduler,
-    @ApplicationContext private val context: Context
+    private val googleIdTokenProvider: GoogleIdTokenProvider
 ) : ViewModel() {
 
     // state for register
@@ -109,40 +102,7 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    private suspend fun getGoogleIdToken(): String {
-        val credentialManager = CredentialManager.create(context)
-
-        val googleIdOption = GetGoogleIdOption.Builder()
-            .setServerClientId(OAuthConfig.WEB_CLIENT_ID)
-            .setFilterByAuthorizedAccounts(false)
-            .setAutoSelectEnabled(false)
-            .build()
-
-        val request = GetCredentialRequest.Builder()
-            .addCredentialOption(googleIdOption)
-            .build()
-
-        val result = credentialManager.getCredential(context, request)
-        val credential = result.credential
-
-        // check type before casting
-        return when {
-            credential is GoogleIdTokenCredential -> {
-                credential.idToken
-            }
-
-            credential is CustomCredential &&
-                    credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL -> {
-                // wrap as CustomCredential - this is what you hitting
-                val googleCredential = GoogleIdTokenCredential.createFrom(credential.data)
-                googleCredential.idToken
-            }
-
-            else -> {
-                throw Exception("Unexpected credentials type: ${credential.type}")
-            }
-        }
-    }
+    private suspend fun getGoogleIdToken(): String = googleIdTokenProvider.get()
 
 
     fun resetLoginState() {

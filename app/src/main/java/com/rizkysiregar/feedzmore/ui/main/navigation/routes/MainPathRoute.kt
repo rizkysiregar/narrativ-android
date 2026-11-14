@@ -9,4 +9,11 @@ sealed class MainPathRoute(val route: String) {
 
 	// onboard page
 	object Splash : MainPathRoute("splash")
+
+	// privacy policy and terms, shown from Settings and from the Register screen
+	object Legal : MainPathRoute("legal/{doc}") {
+		const val ARG_DOC = "doc"
+
+		fun create(path: String): String = "legal/$path"
+	}
 }

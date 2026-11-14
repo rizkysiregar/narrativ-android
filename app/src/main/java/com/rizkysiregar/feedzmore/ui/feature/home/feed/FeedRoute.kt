@@ -70,6 +70,7 @@ fun FeedRoute(
 		onLikeClick = viewModel::toggleLike,
 		onCreateFeed = onCreateFeed,
 		player = viewModel.player,
+		onAuthorBlocked = viewModel::refresh,
 		onVideoClick = { post ->
 			navController.currentBackStackEntry?.savedStateHandle?.set(
 				KEY_POST_JSON,

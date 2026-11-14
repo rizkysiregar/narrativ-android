@@ -98,7 +98,8 @@ fun PostViewPager(
 	onRetryGrid: () -> Unit,
 	onRetryList: () -> Unit,
 	modifier: Modifier = Modifier,
-	header: (@Composable () -> Unit)? = null
+	header: (@Composable () -> Unit)? = null,
+	onAuthorBlocked: (() -> Unit)? = null
 ) {
 	// hoisted so each page keeps its scroll position while swiped out of composition
 	val gridState = rememberLazyGridState()
@@ -127,7 +128,8 @@ fun PostViewPager(
 					onCommentClick = { commentPostId = it.id },
 					onVideoClick = onVideoClick,
 					onLoadMore = onLoadMoreList,
-					onRetry = onRetryList
+					onRetry = onRetryList,
+					onAuthorBlocked = onAuthorBlocked
 				)
 			}
 		}
@@ -265,7 +267,8 @@ private fun PostListPage(
 	onCommentClick: (FeedContentItem) -> Unit,
 	onVideoClick: (FeedContentItem) -> Unit,
 	onLoadMore: () -> Unit,
-	onRetry: () -> Unit
+	onRetry: () -> Unit,
+	onAuthorBlocked: (() -> Unit)? = null
 ) {
 	LoadMoreEffect(
 		feed = feed,
@@ -289,7 +292,8 @@ private fun PostListPage(
 				item = post,
 				onLikeClick = onLikeClick,
 				onCommentClick = onCommentClick,
-				onVideoClick = { onVideoClick(post) }
+				onVideoClick = { onVideoClick(post) },
+				onAuthorBlocked = onAuthorBlocked
 			)
 		}
 

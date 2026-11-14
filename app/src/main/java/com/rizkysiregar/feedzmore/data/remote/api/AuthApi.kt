@@ -32,6 +32,12 @@ interface AuthApi {
 		@Body request: RefreshTokenRequest
 	): BaseResponse<LoginResponse>
 
+	/** Revokes the refresh token on the server. Public endpoint: no access token is sent. */
+	@POST("auth/logout")
+	suspend fun logout(
+		@Body request: RefreshTokenRequest
+	): BaseResponse<String>
+
 	@POST("auth/google")
 	suspend fun googleLogin(
 		@Body request: GoogleLoginRequest

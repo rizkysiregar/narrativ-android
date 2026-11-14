@@ -1,5 +1,6 @@
 package com.rizkysiregar.feedzmore.data.remote.api
 
+import com.rizkysiregar.feedzmore.data.remote.model.request.device.DeactivateDeviceRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.device.RegisterDeviceRequest
 import retrofit2.Response
 import retrofit2.http.Body
@@ -10,4 +11,8 @@ interface DeviceApi {
 	// does not throw.
 	@POST("devices")
 	suspend fun registerDevice(@Body request: RegisterDeviceRequest): Response<Unit>
+
+	/** Stops push notifications to this device. Same lenient handling as [registerDevice]. */
+	@POST("devices/deactivate")
+	suspend fun deactivateDevice(@Body request: DeactivateDeviceRequest): Response<Unit>
 }
