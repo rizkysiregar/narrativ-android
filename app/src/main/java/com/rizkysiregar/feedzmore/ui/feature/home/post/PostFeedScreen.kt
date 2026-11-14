@@ -72,7 +72,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -115,7 +119,11 @@ fun PostFeedScreen(
 	onPickMedia: (List<Uri>) -> Unit,
 	onRemoveMedia: (Int) -> Unit,
 	onClose: () -> Unit,
-	onNext: () -> Unit
+	onNext: () -> Unit,
+	isLaunching: Boolean = false,
+	/** 0 = composer as usual, 1 = folded away into the paper plane. */
+	launchProgress: Float = 0f,
+	onBodyPositioned: (Offset) -> Unit = {}
 ) {
 	val context = LocalContext.current
 	var showDiscardDialog by remember { mutableStateOf(false) }
@@ -160,7 +168,7 @@ fun PostFeedScreen(
 			.imePadding()
 	) {
 		ComposerTopBar(
-			canPost = uiState.canSubmit && !isPreparing,
+			canPost = uiState.canSubmit && !isPreparing && !isLaunching,
 			isPreparing = isPreparing,
 			onClose = requestClose,
 			onPost = onNext
@@ -175,6 +183,15 @@ fun PostFeedScreen(
 			modifier = Modifier
 				.weight(1f)
 				.fillMaxWidth()
+				// read before the fold transform below, so it stays the untransformed center
+				.onGloballyPositioned { onBodyPositioned(it.boundsInRoot().center) }
+				.graphicsLayer {
+					val scale = 1f - 0.8f * launchProgress
+					scaleX = scale
+					scaleY = scale
+					rotationZ = -10f * launchProgress
+					alpha = 1f - launchProgress
+				}
 				.verticalScroll(rememberScrollState())
 				// tapping anywhere in the empty area puts the cursor back in the caption
 				.clickable(

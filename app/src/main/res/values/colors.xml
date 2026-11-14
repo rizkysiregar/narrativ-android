@@ -8,4 +8,10 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="bg_base">#FF0D0B14</color>
+    <color name="notif_card">#FF16131F</color>
+    <color name="notif_border">#FF2B2639</color>
+    <color name="notif_title">#FFEAE6F2</color>
+    <color name="notif_text">#FF9D96B0</color>
+    <color name="notif_muted">#FF7D7693</color>
+    <color name="notif_accent">#FFC4AEF2</color>
 </resources>
