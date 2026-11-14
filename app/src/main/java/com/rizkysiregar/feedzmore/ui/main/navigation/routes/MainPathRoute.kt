@@ -10,6 +10,9 @@ sealed class MainPathRoute(val route: String) {
 	// onboard page
 	object Splash : MainPathRoute("splash")
 
+	// first-launch intro, shown once before login
+	object Onboarding : MainPathRoute("onboarding")
+
 	// privacy policy and terms, shown from Settings and from the Register screen
 	object Legal : MainPathRoute("legal/{doc}") {
 		const val ARG_DOC = "doc"

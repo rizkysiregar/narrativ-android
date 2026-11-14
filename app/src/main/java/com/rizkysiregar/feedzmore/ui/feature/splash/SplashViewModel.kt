@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.rizkysiregar.feedzmore.constants.PrefKeys
 import com.rizkysiregar.feedzmore.data.cache.DataStoreManager
 import com.rizkysiregar.feedzmore.data.cache.JwtTokenHolder
+import com.rizkysiregar.feedzmore.data.cache.OnboardingPrefs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -21,8 +22,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SplashViewModel @Inject constructor(
-	private val dataStore: DataStoreManager, private val tokenHolder: JwtTokenHolder
+	private val dataStore: DataStoreManager,
+	private val tokenHolder: JwtTokenHolder,
+	onboardingPrefs: OnboardingPrefs
 ) : ViewModel() {
+
+	val onboardingSeen: Boolean = onboardingPrefs.isSeen()
 
 	init {
 		// ---  load jwt token authentication --- //
