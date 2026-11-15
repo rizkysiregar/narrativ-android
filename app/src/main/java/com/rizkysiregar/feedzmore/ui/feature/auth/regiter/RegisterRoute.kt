@@ -1,6 +1,7 @@
 package com.rizkysiregar.feedzmore.ui.feature.auth.regiter
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -9,9 +10,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
-import com.rizkysiregar.feedzmore.data.remote.model.request.auth.RegisterRequest
 import com.rizkysiregar.feedzmore.ui.base.BaseScreen
-import com.rizkysiregar.feedzmore.ui.feature.auth.AuthViewModel
+import com.rizkysiregar.feedzmore.ui.feature.auth.reset.OtpVerificationView
 import com.rizkysiregar.feedzmore.ui.main.navigation.routes.MainPathRoute
 import com.rizkysiregar.feedzmore.ui.main.navigation.routes.AuthPathRoutes
 
@@ -25,13 +25,14 @@ import com.rizkysiregar.feedzmore.ui.main.navigation.routes.AuthPathRoutes
 @Composable
 fun RegisterRoute(
 	navController: NavController,
-	authViewModel: AuthViewModel = hiltViewModel(),
+	registerViewModel: RegisterViewModel = hiltViewModel(),
 	onRegisterSuccess: () -> Unit
 ) {
 	val context = LocalContext.current
 
-	// listen of the registration from viewmodel
-	val registerState by authViewModel.registerState.collectAsState()
+	val step by registerViewModel.step.collectAsState()
+	val registerState by registerViewModel.state.collectAsState()
+	val otpDelivery by registerViewModel.otpDelivery.collectAsState()
 
 	LaunchedEffect(registerState) {
 		if (registerState is ResultState.Success) {
@@ -41,34 +42,43 @@ fun RegisterRoute(
 			).show()
 
 			onRegisterSuccess()
-			authViewModel.resetRegisterState()
+			registerViewModel.resetState()
 		}
+	}
+
+	BackHandler(enabled = step == RegisterStep.OTP_VERIFICATION) {
+		registerViewModel.backToForm()
 	}
 
 	BaseScreen(
 		isLoading = registerState is ResultState.Loading,
-		errorMessage = if (registerState is ResultState.Failure) (registerState as ResultState.Failure).message else null,
-		onErrorDismiss = { authViewModel.resetRegisterState() }) {
-		RegisterScreen(
-			onRegisterClick = { finalState ->
-				println("finalState register: $finalState")
-				val request = RegisterRequest(
-					username = finalState.username,
-					password = finalState.password,
-					email = finalState.email,
-					firstName = finalState.firstName,
-					lastName = finalState.lastName
-				)
+		errorMessage = (registerState as? ResultState.Failure)?.message,
+		onErrorDismiss = { registerViewModel.resetState() }) {
+		when (step) {
+			RegisterStep.FORM -> RegisterScreen(
+				onRegisterClick = { finalState -> registerViewModel.submit(finalState) },
+				onNavigateToLogin = {
+					navController.navigate(AuthPathRoutes.Login.route) {
+						popUpTo(AuthPathRoutes.Register.route) { inclusive = true }
+						launchSingleTop = true
+					}
+				},
+				onLegalClick = { document -> navController.navigate(MainPathRoute.Legal.create(document.path)) },
+				initialState = registerViewModel.form
+			)
 
-				authViewModel.register(request)
-			},
-			onNavigateToLogin = {
-				navController.navigate(AuthPathRoutes.Login.route) {
-					popUpTo(AuthPathRoutes.Register.route) { inclusive = true }
-					launchSingleTop = true
-				}
-			},
-			onLegalClick = { document -> navController.navigate(MainPathRoute.Legal.create(document.path)) }
-		)
+			RegisterStep.OTP_VERIFICATION -> OtpVerificationView(
+				onNext = { otp -> registerViewModel.verifyOtp(otp) },
+				onBack = { registerViewModel.backToForm() },
+				otpSendToEmailAddress = otpDelivery?.otpSendToEmailAddress.orEmpty(),
+				expirationTimeInMinute = otpDelivery?.expirationTimeInMinute.orEmpty(),
+				onResend = { registerViewModel.resendOtp() },
+				resendAfterSeconds = RESEND_COOLDOWN_SECONDS,
+				countdownKey = otpDelivery?.sentCount
+			)
+		}
 	}
 }
+
+// the server refuses a new registration OTP for this long after the last one
+private const val RESEND_COOLDOWN_SECONDS = 60L

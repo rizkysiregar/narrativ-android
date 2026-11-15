@@ -69,9 +69,10 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 fun RegisterScreen(
 	onRegisterClick: (RegisterState) -> Unit,
 	onNavigateToLogin: () -> Unit,
-	onLegalClick: (LegalDocument) -> Unit = {}
+	onLegalClick: (LegalDocument) -> Unit = {},
+	initialState: RegisterState = RegisterState()
 ) {
-	var registerState by remember { mutableStateOf(RegisterState()) }
+	var registerState by remember { mutableStateOf(initialState) }
 	var formErrors by remember { mutableStateOf(RegisterFormErrors()) }
 
 	Column(

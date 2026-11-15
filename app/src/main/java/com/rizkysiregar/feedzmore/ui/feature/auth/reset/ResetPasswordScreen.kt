@@ -53,9 +53,8 @@ fun ResetPasswordScreen(
 
 					ResetPasswordStep.OTP_VERIFICATION -> {
 						OtpVerificationView(
-							onNext = onVerifyOtp,
+							onNext = { otp -> onVerifyOtp(ResetPassVerifyOtpRequest(email = email, otp = otp)) },
 							onBack = onBack,
-							email = email,
 							otpSendToEmailAddress = otpSendToEmailAddress,
 							expirationTimeInMinute = expirationTimeInMinute
 						)

@@ -14,11 +14,9 @@ import com.rizkysiregar.feedzmore.data.session.GoogleIdTokenProvider
 import com.rizkysiregar.feedzmore.data.session.SessionManager
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.LoginRequest
-import com.rizkysiregar.feedzmore.data.remote.model.request.auth.RegisterRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.auth.LoginResponse
 import com.rizkysiregar.feedzmore.domain.auth.GoogleLoginUseCase
 import com.rizkysiregar.feedzmore.domain.auth.LoginUseCase
-import com.rizkysiregar.feedzmore.domain.auth.RegisterUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,7 +32,6 @@ import javax.inject.Inject
 class AuthViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
     private val googleLoginUseCase: GoogleLoginUseCase,
-    private val registerUseCase: RegisterUseCase,
     private val authService: AuthorizationService,
     private val dataStore: DataStoreManager,
     private val tokenHolder: JwtTokenHolder,
@@ -42,10 +39,6 @@ class AuthViewModel @Inject constructor(
     private val deviceSyncScheduler: DeviceSyncScheduler,
     private val googleIdTokenProvider: GoogleIdTokenProvider
 ) : ViewModel() {
-
-    // state for register
-    private val _registerState = MutableStateFlow<ResultState<String>?>(null)
-    val registerState: StateFlow<ResultState<String>?> = _registerState
 
     // state for login
     private val _loginState = MutableStateFlow<ResultState<LoginResponse>?>(null)
@@ -56,14 +49,6 @@ class AuthViewModel @Inject constructor(
     val googleLoginState: StateFlow<ResultState<LoginResponse>?> = _googleLoginState
 
 
-    fun register(registerRequest: RegisterRequest) {
-        _registerState.value = ResultState.Loading
-        viewModelScope.launch {
-            registerUseCase(registerRequest).collect { result ->
-                _registerState.value = result
-            }
-        }
-    }
     fun login(username: String, password: String) {
         _loginState.value = ResultState.Loading
         viewModelScope.launch {
@@ -111,10 +96,6 @@ class AuthViewModel @Inject constructor(
 
     fun resetGoogleLoginState() {
         _googleLoginState.value = ResultState.Idle
-    }
-
-    fun resetRegisterState() {
-        _registerState.value = ResultState.Idle
     }
 
     private suspend fun saveSession(data: LoginResponse) {

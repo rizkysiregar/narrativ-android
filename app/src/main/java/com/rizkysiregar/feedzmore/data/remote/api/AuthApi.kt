@@ -5,11 +5,14 @@ import com.rizkysiregar.feedzmore.data.remote.model.request.auth.GoogleLoginRequ
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.LoginRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.RefreshTokenRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.RegisterRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.RegisterVerifyOtpRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.ResetNewPasswordRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.ResetPassVerifyOtpRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.BaseResponse
 import com.rizkysiregar.feedzmore.data.remote.model.response.auth.ForgotPasswordResponse
 import com.rizkysiregar.feedzmore.data.remote.model.response.auth.LoginResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.auth.RegisterOtpResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.auth.RegistrationTokenResponse
 import com.rizkysiregar.feedzmore.data.remote.model.response.auth.ResetPassVerifyOtpResponse
 import okhttp3.Response
 import retrofit2.http.Body
@@ -42,6 +45,16 @@ interface AuthApi {
 	suspend fun googleLogin(
 		@Body request: GoogleLoginRequest
 	): BaseResponse<LoginResponse>
+
+	@POST("auth/register/otp")
+	suspend fun sendRegisterOtp(
+		@Body emailRequest: EmailRequest
+	): BaseResponse<RegisterOtpResponse>
+
+	@POST("auth/register/verify-otp")
+	suspend fun verifyRegisterOtp(
+		@Body request: RegisterVerifyOtpRequest
+	): BaseResponse<RegistrationTokenResponse>
 
 	@POST("auth/register")
 	suspend fun register(

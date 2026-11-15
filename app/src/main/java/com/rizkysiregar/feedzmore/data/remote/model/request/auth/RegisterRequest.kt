@@ -10,5 +10,7 @@ data class RegisterRequest(
 	val password: String,
 	val email: String,
 	val firstName: String,
-	val lastName: String
+	val lastName: String,
+	// proof of the verified email, issued after the registration OTP; null where the server does not verify emails
+	val registrationToken: String? = null
 )
