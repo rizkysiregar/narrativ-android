@@ -7,6 +7,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.work.Configuration
+import com.rizkysiregar.feedzmore.appcheck.AppCheckInstaller
 import com.rizkysiregar.feedzmore.config.RemoteConfigManager
 import com.rizkysiregar.feedzmore.data.remote.DeviceSyncScheduler
 import com.rizkysiregar.feedzmore.notification.UploadNotifications
@@ -32,6 +33,7 @@ class FeedzmoreApplication : Application(), Configuration.Provider {
 
 	override fun onCreate() {
 		super.onCreate()
+		AppCheckInstaller.install()
 		telemetrySettings.apply()
 		UploadNotifications.createChannels(this)
 

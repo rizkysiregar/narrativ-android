@@ -4,6 +4,7 @@ import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.rizkysiregar.feedzmore.BuildConfig
+import com.rizkysiregar.feedzmore.appcheck.AppCheckInterceptor
 import com.rizkysiregar.feedzmore.constants.PrefKeys
 import com.rizkysiregar.feedzmore.data.cache.DataStoreManager
 import com.rizkysiregar.feedzmore.data.cache.JwtTokenHolder
@@ -32,11 +33,13 @@ import javax.inject.Singleton
 class TokenRefresher @Inject constructor(
 	private val dataStore: DataStoreManager,
 	private val tokenHolder: JwtTokenHolder,
-	chuckerInterceptor: ChuckerInterceptor
+	chuckerInterceptor: ChuckerInterceptor,
+	appCheckInterceptor: AppCheckInterceptor
 ) {
 	enum class Result { REFRESHED, REJECTED, FAILED }
 
 	private val client = OkHttpClient.Builder()
+		.addInterceptor(appCheckInterceptor)
 		.addInterceptor(chuckerInterceptor)
 		.connectTimeout(30, TimeUnit.SECONDS)
 		.readTimeout(30, TimeUnit.SECONDS)

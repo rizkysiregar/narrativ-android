@@ -5,6 +5,7 @@ import com.chuckerteam.chucker.api.ChuckerCollector
 import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.chuckerteam.chucker.api.RetentionManager
 import com.rizkysiregar.feedzmore.BuildConfig
+import com.rizkysiregar.feedzmore.appcheck.AppCheckInterceptor
 import com.rizkysiregar.feedzmore.data.remote.AuthInterceptor
 import dagger.Module
 import dagger.Provides
@@ -52,6 +53,7 @@ object NetworkModule {
 	@Singleton
 	fun provideOkHttpClient(
 		authInterceptor: AuthInterceptor,
+		appCheckInterceptor: AppCheckInterceptor,
 		chuckerInterceptor: ChuckerInterceptor
 	): OkHttpClient {
 		val loggingInterceptor = HttpLoggingInterceptor().apply {
@@ -63,6 +65,7 @@ object NetworkModule {
 
 		return OkHttpClient.Builder()
 			.addInterceptor(loggingInterceptor)
+			.addInterceptor(appCheckInterceptor)
 			.addInterceptor(authInterceptor)
 			.addInterceptor(chuckerInterceptor)
 			.connectTimeout(30, TimeUnit.SECONDS)
