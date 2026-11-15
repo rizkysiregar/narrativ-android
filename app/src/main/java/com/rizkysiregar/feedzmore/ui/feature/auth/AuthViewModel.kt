@@ -17,6 +17,8 @@ import com.rizkysiregar.feedzmore.data.remote.model.request.auth.LoginRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.auth.LoginResponse
 import com.rizkysiregar.feedzmore.domain.auth.GoogleLoginUseCase
 import com.rizkysiregar.feedzmore.domain.auth.LoginUseCase
+import com.rizkysiregar.feedzmore.telemetry.AnalyticsEvents
+import com.rizkysiregar.feedzmore.telemetry.AppAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,7 +39,8 @@ class AuthViewModel @Inject constructor(
     private val tokenHolder: JwtTokenHolder,
     private val sessionManager: SessionManager,
     private val deviceSyncScheduler: DeviceSyncScheduler,
-    private val googleIdTokenProvider: GoogleIdTokenProvider
+    private val googleIdTokenProvider: GoogleIdTokenProvider,
+    private val analytics: AppAnalytics
 ) : ViewModel() {
 
     // state for login
@@ -58,6 +61,9 @@ class AuthViewModel @Inject constructor(
                     if (result is ResultState.Success) {
                         // save token and necessary user info into datastore
                         saveSession(result.data)
+                        analytics.log(AnalyticsEvents.LOGIN, AnalyticsEvents.Param.METHOD to "password")
+                    } else if (result is ResultState.Failure) {
+                        analytics.log(AnalyticsEvents.LOGIN_FAILED, AnalyticsEvents.Param.METHOD to "password")
                     }
 
                     _loginState.value = result
@@ -73,6 +79,9 @@ class AuthViewModel @Inject constructor(
                 googleLoginUseCase(idToken).collect { result ->
                     if (result is ResultState.Success) {
                         saveSession(result.data)
+                        analytics.log(AnalyticsEvents.LOGIN, AnalyticsEvents.Param.METHOD to "google")
+                    } else if (result is ResultState.Failure) {
+                        analytics.log(AnalyticsEvents.LOGIN_FAILED, AnalyticsEvents.Param.METHOD to "google")
                     }
                     _googleLoginState.value = result
                 }
@@ -106,6 +115,7 @@ class AuthViewModel @Inject constructor(
         dataStore.put(PrefKeys.isLoggedIn, true)
         tokenHolder.setToken(data.token)
         sessionManager.markAuthenticated()
+        sessionManager.identify(data.userId)
         deviceSyncScheduler.schedule(force = true)
     }
 

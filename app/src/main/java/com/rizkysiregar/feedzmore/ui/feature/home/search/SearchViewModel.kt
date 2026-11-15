@@ -5,6 +5,8 @@ import com.rizkysiregar.feedzmore.data.cache.DataStoreManager
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.remote.model.request.user.SearchUserRequest
 import com.rizkysiregar.feedzmore.domain.user.SearchUsersUseCase
+import com.rizkysiregar.feedzmore.telemetry.AnalyticsEvents
+import com.rizkysiregar.feedzmore.telemetry.AppAnalytics
 import com.rizkysiregar.feedzmore.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -24,7 +26,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SearchViewModel @Inject constructor(
 	dataStore: DataStoreManager,
-	private val searchUsersUseCase: SearchUsersUseCase
+	private val searchUsersUseCase: SearchUsersUseCase,
+	private val analytics: AppAnalytics
 ) : BaseViewModel(dataStore) {
 
 	private val _uiState = MutableStateFlow(SearchUserUiState())
@@ -63,6 +66,7 @@ class SearchViewModel @Inject constructor(
 	}
 
 	private fun search() {
+		analytics.log(AnalyticsEvents.SEARCH)
 		loadGeneration++
 		searchJob?.cancel()
 

@@ -8,6 +8,8 @@ import com.rizkysiregar.feedzmore.data.remote.model.request.auth.RegisterVerifyO
 import com.rizkysiregar.feedzmore.domain.auth.RegisterUseCase
 import com.rizkysiregar.feedzmore.domain.auth.SendRegisterOtpUseCase
 import com.rizkysiregar.feedzmore.domain.auth.VerifyRegisterOtpUseCase
+import com.rizkysiregar.feedzmore.telemetry.AnalyticsEvents
+import com.rizkysiregar.feedzmore.telemetry.AppAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,7 +40,8 @@ data class RegisterOtpDelivery(
 class RegisterViewModel @Inject constructor(
 	private val sendRegisterOtpUseCase: SendRegisterOtpUseCase,
 	private val verifyRegisterOtpUseCase: VerifyRegisterOtpUseCase,
-	private val registerUseCase: RegisterUseCase
+	private val registerUseCase: RegisterUseCase,
+	private val analytics: AppAnalytics
 ) : ViewModel() {
 
 	private val _step = MutableStateFlow(RegisterStep.FORM)
@@ -79,13 +82,18 @@ class RegisterViewModel @Inject constructor(
 				.collect { result ->
 					when (result) {
 						is ResultState.Success -> {
+							analytics.log(AnalyticsEvents.REGISTER_OTP_VERIFIED)
 							verifiedEmail = form.email
 							registrationToken = result.data.registrationToken
 							verifiedAtMillis = System.currentTimeMillis()
 							register(result.data.registrationToken)
 						}
 
-						is ResultState.Failure -> _state.value = result
+						is ResultState.Failure -> {
+							analytics.log(AnalyticsEvents.REGISTER_OTP_FAILED)
+							_state.value = result
+						}
+
 						else -> _state.value = ResultState.Loading
 					}
 				}
@@ -110,6 +118,7 @@ class RegisterViewModel @Inject constructor(
 						if (!delivery.verificationRequired) {
 							register(registrationToken = null)
 						} else {
+							analytics.log(AnalyticsEvents.REGISTER_OTP_SENT)
 							_otpDelivery.value = RegisterOtpDelivery(
 								otpSendToEmailAddress = delivery.otpSendToEmailAddress.orEmpty(),
 								expirationTimeInMinute = delivery.expirationTimeInMinute.orEmpty(),
@@ -139,7 +148,10 @@ class RegisterViewModel @Inject constructor(
 					registrationToken = registrationToken
 				)
 			).collect { result ->
-				if (result is ResultState.Failure) {
+				if (result is ResultState.Success) {
+					analytics.log(AnalyticsEvents.SIGN_UP, AnalyticsEvents.Param.METHOD to "email")
+				} else if (result is ResultState.Failure) {
+					analytics.log(AnalyticsEvents.SIGN_UP_FAILED, AnalyticsEvents.Param.METHOD to "email")
 					// e.g. the username is taken: back to the form to fix it, the verified email is kept
 					_step.value = RegisterStep.FORM
 				}

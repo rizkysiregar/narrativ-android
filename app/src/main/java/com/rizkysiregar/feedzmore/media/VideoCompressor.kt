@@ -4,8 +4,10 @@ import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.util.Log
+import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.transformer.AudioEncoderSettings
 import androidx.media3.transformer.Composition
 import androidx.media3.transformer.DefaultEncoderFactory
@@ -14,6 +16,8 @@ import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.Transformer
 import androidx.media3.transformer.VideoEncoderSettings
+import com.rizkysiregar.feedzmore.telemetry.CrashReporter
+import com.rizkysiregar.feedzmore.telemetry.PerfTrace
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -32,10 +36,15 @@ import kotlin.coroutines.resumeWithException
  */
 @Singleton
 class VideoCompressor @Inject constructor(
-	@ApplicationContext private val context: Context
+	@ApplicationContext private val context: Context,
+	private val crashReporter: CrashReporter
 ) {
 
-	suspend fun compress(inputUri: Uri): File {
+	suspend fun compress(inputUri: Uri): File =
+		PerfTrace.measure(PerfTrace.VIDEO_COMPRESS) { transcode(inputUri) }
+
+    @OptIn(UnstableApi::class)
+    private suspend fun transcode(inputUri: Uri): File {
 		val durationMs = readDurationMs(inputUri)
 			?: throw MediaValidationException("Durasi video tidak dapat dibaca")
 		if (durationMs > MAX_DURATION_MS) {
@@ -80,6 +89,7 @@ class VideoCompressor @Inject constructor(
 							exportException: ExportException
 						) {
 							Log.e(TAG, "Video compression failed", exportException)
+							crashReporter.recordNonFatal(exportException, "video_compress")
 							if (continuation.isActive) {
 								continuation.resumeWithException(
 									MediaValidationException("Gagal memproses video")
