@@ -20,6 +20,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,7 +35,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rizkysiregar.feedzmore.R
-import com.rizkysiregar.feedzmore.data.remote.model.request.auth.ResetPassVerifyOtpRequest
 import com.rizkysiregar.feedzmore.ui.components.OtpInputField
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 import kotlinx.coroutines.delay
@@ -47,17 +47,23 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun OtpVerificationView(
-	onNext: (ResetPassVerifyOtpRequest) -> Unit,
+	onNext: (String) -> Unit,
 	onBack: () -> Unit,
-	email: String,
 	otpSendToEmailAddress: String,
-	expirationTimeInMinute: String
+	expirationTimeInMinute: String,
+	// when set, the countdown ends with a "send code again" button; [resendAfterSeconds] replaces the OTP lifetime
+	// as its length and [countdownKey] restarts it after every send
+	onResend: (() -> Unit)? = null,
+	resendAfterSeconds: Long? = null,
+	countdownKey: Any? = null
 ) {
 	var otpCode by remember { mutableStateOf("") }
-	val durationSeconds = expirationTimeInMinute.toLongOrNull()?.coerceAtLeast(0L)?.times(60L) ?: 0L
-	var remainingSeconds by remember(durationSeconds) { mutableStateOf(durationSeconds) }
+	val durationSeconds = resendAfterSeconds
+		?: expirationTimeInMinute.toLongOrNull()?.coerceAtLeast(0L)?.times(60L)
+		?: 0L
+	var remainingSeconds by remember(durationSeconds, countdownKey) { mutableStateOf(durationSeconds) }
 
-	LaunchedEffect(durationSeconds) {
+	LaunchedEffect(durationSeconds, countdownKey) {
 		while (remainingSeconds > 0L) {
 			delay(1_000L)
 			remainingSeconds--
@@ -130,12 +136,7 @@ fun OtpVerificationView(
 		Spacer(Modifier.height(24.dp))
 		Button(
 			onClick = {
-				onNext(
-					ResetPassVerifyOtpRequest(
-						email = email,
-						otp = otpCode
-					)
-				)
+				onNext(otpCode)
 			},
 			enabled = otpCode.length == 6,
 			modifier = Modifier
@@ -155,7 +156,11 @@ fun OtpVerificationView(
 
 		// resend code or and count down
 		Spacer(Modifier.height(16.dp))
-		Text("Send code again in %02d:%02d".format(remainingSeconds / 60, remainingSeconds % 60))
+		if (onResend != null && remainingSeconds == 0L) {
+			TextButton(onClick = onResend) { Text("Send code again") }
+		} else {
+			Text("Send code again in %02d:%02d".format(remainingSeconds / 60, remainingSeconds % 60))
+		}
 
 
 	}
@@ -169,7 +174,6 @@ private fun OtpVerificationScreenPreview() {
 		OtpVerificationView(
 			onNext = {},
 			onBack = {},
-			email = "rizky@gmail.com",
 			otpSendToEmailAddress = "r****y@gmail.com",
 			expirationTimeInMinute = "1"
 		)

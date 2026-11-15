@@ -6,10 +6,13 @@ import com.rizkysiregar.feedzmore.data.remote.model.request.auth.EmailRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.GoogleLoginRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.LoginRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.RegisterRequest
+import com.rizkysiregar.feedzmore.data.remote.model.request.auth.RegisterVerifyOtpRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.ResetNewPasswordRequest
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.ResetPassVerifyOtpRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.auth.ForgotPasswordResponse
 import com.rizkysiregar.feedzmore.data.remote.model.response.auth.LoginResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.auth.RegisterOtpResponse
+import com.rizkysiregar.feedzmore.data.remote.model.response.auth.RegistrationTokenResponse
 import com.rizkysiregar.feedzmore.data.remote.model.response.auth.ResetPassVerifyOtpResponse
 import com.rizkysiregar.feedzmore.data.repository.AuthRepository
 import com.rizkysiregar.feedzmore.util.flowFromApi
@@ -44,6 +47,16 @@ class AuthRepositoryImpl @Inject constructor(
 	override fun register(registerRequest: RegisterRequest): Flow<ResultState<String>> =
 		flowFromMessageApi {
 			authApi.register(registerRequest)
+		}
+
+	override fun sendRegisterOtp(email: String): Flow<ResultState<RegisterOtpResponse>> =
+		flowFromApi {
+			authApi.sendRegisterOtp(EmailRequest(email))
+		}
+
+	override fun verifyRegisterOtp(request: RegisterVerifyOtpRequest): Flow<ResultState<RegistrationTokenResponse>> =
+		flowFromApi {
+			authApi.verifyRegisterOtp(request)
 		}
 
 	override fun forgotPassword(email: String): Flow<ResultState<ForgotPasswordResponse>> =
