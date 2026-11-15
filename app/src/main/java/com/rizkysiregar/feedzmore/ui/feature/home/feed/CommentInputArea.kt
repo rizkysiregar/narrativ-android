@@ -31,9 +31,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.rizkysiregar.feedzmore.ui.components.EmojiPanel
+import com.rizkysiregar.feedzmore.ui.components.EmojiToggleButton
+import com.rizkysiregar.feedzmore.ui.components.insertEmoji
+import com.rizkysiregar.feedzmore.ui.components.rememberEmojiPanelState
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 
 /**
@@ -50,8 +55,8 @@ private const val COUNTER_WARNING_LEFT = 20
 
 @Composable
 fun CommentInputArea(
-	text: String,
-	onValueChange: (String) -> Unit,
+	text: TextFieldValue,
+	onValueChange: (TextFieldValue) -> Unit,
 	onSend: () -> Unit,
 	modifier: Modifier = Modifier,
 	// username of the author being answered, null for a plain comment
@@ -60,36 +65,52 @@ fun CommentInputArea(
 	isSubmitting: Boolean = false,
 	focusRequester: FocusRequester = remember { FocusRequester() }
 ) {
+	val emojiPanel = rememberEmojiPanelState()
+
 	Surface(
 		tonalElevation = 2.dp,
 		modifier = modifier
 	) {
 		// keyboard first, then the nav bar: only the part of the nav bar the keyboard does not cover is added,
-		// so the input sits directly on top of the keyboard
-		Column(modifier = Modifier.imePadding().navigationBarsPadding()) {
+		// so the input sits directly on top of the keyboard. While the emoji panel is open the panel takes the
+		// keyboard's place, so the keyboard inset is ignored: the input stays where it was instead of jumping
+		Column(
+			modifier = Modifier
+				.then(if (emojiPanel.isOpen) Modifier else Modifier.imePadding())
+				.navigationBarsPadding()
+		) {
 			if (replyingTo != null) {
 				ReplyBanner(username = replyingTo, onCancel = onCancelReply)
+			}
+
+			// the full list has its own recents, the quick row would only take height from the comments
+			if (!emojiPanel.isOpen) {
+				EmojiQuickRow(
+					onEmojiClick = { emoji -> insertEmoji(text, emoji, MAX_COMMENT_LENGTH)?.let(onValueChange) },
+					modifier = Modifier.fillMaxWidth()
+				)
 			}
 
 			Row(
 				modifier = Modifier
 					.fillMaxWidth()
-					.padding(horizontal = 16.dp, vertical = 8.dp),
+					.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
 				verticalAlignment = Alignment.CenterVertically,
 				horizontalArrangement = Arrangement.spacedBy(8.dp)
 			) {
 				TextField(
 					shape = RoundedCornerShape(24.dp),
 					value = text,
-					onValueChange = { if (it.length <= MAX_COMMENT_LENGTH) onValueChange(it) },
+					onValueChange = { if (it.text.length <= MAX_COMMENT_LENGTH) onValueChange(it) },
 					placeholder = {
 						Text(if (replyingTo != null) "Balas @$replyingTo..." else "Tambahkan komentar...")
 					},
-					supportingText = if (text.length >= COUNTER_THRESHOLD) {
+					leadingIcon = { EmojiToggleButton(state = emojiPanel, focusRequester = focusRequester) },
+					supportingText = if (text.text.length >= COUNTER_THRESHOLD) {
 						{
-							val nearLimit = MAX_COMMENT_LENGTH - text.length <= COUNTER_WARNING_LEFT
+							val nearLimit = MAX_COMMENT_LENGTH - text.text.length <= COUNTER_WARNING_LEFT
 							Text(
-								text = "${text.length}/$MAX_COMMENT_LENGTH",
+								text = "${text.text.length}/$MAX_COMMENT_LENGTH",
 								color = if (nearLimit) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
 							)
 						}
@@ -108,7 +129,7 @@ fun CommentInputArea(
 
 				FilledIconButton(
 					onClick = onSend,
-					enabled = text.isNotBlank() && !isSubmitting
+					enabled = text.text.isNotBlank() && !isSubmitting
 				) {
 					if (isSubmitting) {
 						CircularProgressIndicator(
@@ -120,6 +141,14 @@ fun CommentInputArea(
 						Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Kirim")
 					}
 				}
+			}
+
+			if (emojiPanel.isOpen) {
+				EmojiPanel(
+					state = emojiPanel,
+					onEmojiPicked = { emoji -> insertEmoji(text, emoji, MAX_COMMENT_LENGTH)?.let(onValueChange) },
+					modifier = Modifier.fillMaxWidth()
+				)
 			}
 		}
 	}
@@ -160,7 +189,7 @@ private fun ReplyBanner(username: String, onCancel: () -> Unit) {
 private fun CommentInputAreaPreview() {
 	FeedzmoreTheme {
 		CommentInputArea(
-			text = "This is a comment",
+			text = TextFieldValue("This is a comment"),
 			onValueChange = {},
 			onSend = {}
 		)
@@ -172,7 +201,7 @@ private fun CommentInputAreaPreview() {
 private fun CommentInputAreaReplyingPreview() {
 	FeedzmoreTheme {
 		CommentInputArea(
-			text = "Setuju",
+			text = TextFieldValue("Setuju"),
 			onValueChange = {},
 			onSend = {},
 			replyingTo = "budi"
