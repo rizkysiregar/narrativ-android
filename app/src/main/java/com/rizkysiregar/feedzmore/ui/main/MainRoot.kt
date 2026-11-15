@@ -17,6 +17,7 @@ import androidx.navigation.compose.rememberNavController
 import com.rizkysiregar.feedzmore.constants.Constants
 import com.rizkysiregar.feedzmore.data.remote.ApiErrorEvent
 import com.rizkysiregar.feedzmore.ui.feature.common.ErrorDialog
+import com.rizkysiregar.feedzmore.ui.feature.common.ForceUpdateDialog
 import com.rizkysiregar.feedzmore.ui.main.navigation.routes.MainPathRoute
 import com.rizkysiregar.feedzmore.ui.main.navigation.authGraph
 import com.rizkysiregar.feedzmore.ui.main.navigation.homeGraph
@@ -66,6 +67,12 @@ fun MainRoot(
 
 	apiError?.let { error ->
 		ErrorDialog(message = error.message, onDismiss = { apiError = null })
+	}
+
+	val forceUpdateMessage by viewModel.forceUpdateMessage.collectAsStateWithLifecycle()
+	forceUpdateMessage?.let { message ->
+		LaunchedEffect(Unit) { viewModel.onForceUpdateShown() }
+		ForceUpdateDialog(message)
 	}
 
 	NavHost(

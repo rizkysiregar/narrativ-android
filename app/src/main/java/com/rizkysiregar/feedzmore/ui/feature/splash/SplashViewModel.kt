@@ -2,6 +2,7 @@ package com.rizkysiregar.feedzmore.ui.feature.splash
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rizkysiregar.feedzmore.config.RemoteConfigManager
 import com.rizkysiregar.feedzmore.constants.PrefKeys
 import com.rizkysiregar.feedzmore.data.cache.DataStoreManager
 import com.rizkysiregar.feedzmore.data.cache.JwtTokenHolder
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
 /**
@@ -24,10 +26,16 @@ import javax.inject.Inject
 class SplashViewModel @Inject constructor(
 	private val dataStore: DataStoreManager,
 	private val tokenHolder: JwtTokenHolder,
+	private val remoteConfigManager: RemoteConfigManager,
 	onboardingPrefs: OnboardingPrefs
 ) : ViewModel() {
 
 	val onboardingSeen: Boolean = onboardingPrefs.isSeen()
+
+	/** Gives Remote Config a moment to answer so a required update shows before the home screen does. */
+	suspend fun awaitRemoteConfig() {
+		withTimeoutOrNull(REMOTE_CONFIG_WAIT_MS) { remoteConfigManager.awaitFirstRefresh() }
+	}
 
 	init {
 		// ---  load jwt token authentication --- //
@@ -47,5 +55,9 @@ class SplashViewModel @Inject constructor(
 			started = SharingStarted.WhileSubscribed(5000),
 			initialValue = null
 		)
+
+	private companion object {
+		const val REMOTE_CONFIG_WAIT_MS = 3000L
+	}
 
 }

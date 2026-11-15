@@ -30,6 +30,7 @@ object AnalyticsEvents {
 
 	// session
 	const val SESSION_EXPIRED = "session_expired"
+	const val FORCE_UPDATE_SHOWN = "force_update_shown"
 
 	object Param {
 		const val METHOD = "method"
