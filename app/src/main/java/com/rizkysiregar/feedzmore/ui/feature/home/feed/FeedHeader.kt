@@ -22,7 +22,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -30,8 +35,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rizkysiregar.feedzmore.ui.components.rememberReduceMotion
+import kotlinx.coroutines.flow.filter
 import kotlin.math.PI
-import kotlin.math.max
 import kotlin.math.sin
 
 /**
@@ -42,8 +47,11 @@ import kotlin.math.sin
 
 private const val BRAND = "feedzmore"
 private val LetterLift = 6.dp
-private const val WaveDurationMs = 900
-private const val WaveLetterDelay = 0.7f
+private const val WaveCycleMs = 1800
+// per-letter start offset and the share of a cycle each letter spends moving; the last letter
+// starts at 8 * 0.06 and ends at 0.48 + 0.5, inside the cycle
+private const val WaveLetterDelay = 0.06f
+private const val WaveLetterSpan = 0.5f
 
 /**
  * Top bar of the feed: the brand label centered, search at the end.
@@ -85,16 +93,25 @@ private fun AnimatedBrandLabel(
 	modifier: Modifier = Modifier
 ) {
 	val reduceMotion = rememberReduceMotion()
+	val currentRefreshing by rememberUpdatedState(isRefreshing)
 	val wave = remember { Animatable(0f) }
+	var isWaving by remember { mutableStateOf(false) }
 
-	LaunchedEffect(isRefreshing, reduceMotion) {
-		wave.snapTo(0f)
-		if (isRefreshing && !reduceMotion) {
-			while (true) {
-				wave.animateTo(2f * PI.toFloat(), tween(WaveDurationMs, easing = LinearEasing))
+	// The wave stands in for the loading indicator, so once started it always plays out the
+	// current cycle, even when the request finishes sooner, and only then settles.
+	LaunchedEffect(reduceMotion) {
+		if (reduceMotion) return@LaunchedEffect
+		snapshotFlow { currentRefreshing }
+			.filter { it }
+			.collect {
+				isWaving = true
+				do {
+					wave.snapTo(0f)
+					wave.animateTo(1f, tween(WaveCycleMs, easing = LinearEasing))
+				} while (currentRefreshing)
+				isWaving = false
 				wave.snapTo(0f)
 			}
-		}
 	}
 
 	Row(modifier = modifier, horizontalArrangement = Arrangement.Center) {
@@ -105,13 +122,12 @@ private fun AnimatedBrandLabel(
 				fontWeight = FontWeight.Bold,
 				fontSize = 22.sp,
 				modifier = Modifier.graphicsLayer {
-					val lift = if (isRefreshing) {
-						// a crest travelling along the word
-						max(0f, sin(wave.value - index * WaveLetterDelay))
+					val lift = if (isWaving) {
+						// one crest runs along the word per cycle and every letter ends at rest
+						bump((wave.value - index * WaveLetterDelay) / WaveLetterSpan)
 					} else {
 						// letter `index` rises and settles as the pull passes its share of the distance
-						val share = (pullProgress.coerceIn(0f, 1f) * BRAND.length - index).coerceIn(0f, 1f)
-						sin(PI.toFloat() * share)
+						bump(pullProgress.coerceIn(0f, 1f) * BRAND.length - index)
 					}
 					translationY = -LetterLift.toPx() * lift
 					val scale = 1f + 0.12f * lift
@@ -121,6 +137,12 @@ private fun AnimatedBrandLabel(
 			)
 		}
 	}
+}
+
+/** Smooth 0 -> 1 -> 0 hill over [0, 1] with zero slope at both ends, flat outside it. */
+private fun bump(x: Float): Float {
+	val s = sin(PI.toFloat() * x.coerceIn(0f, 1f))
+	return s * s
 }
 
 /** Threads-style entry point: tapping the pill opens the post composer. */
