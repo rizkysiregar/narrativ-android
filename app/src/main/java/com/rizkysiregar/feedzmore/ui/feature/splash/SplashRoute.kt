@@ -12,7 +12,9 @@ import androidx.navigation.NavController
 import com.rizkysiregar.feedzmore.constants.Constants
 import com.rizkysiregar.feedzmore.ui.main.navigation.routes.AuthPathRoutes
 import com.rizkysiregar.feedzmore.ui.main.navigation.routes.MainPathRoute
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 // Long enough for the intro animation to play, even though the DataStore answers in a few ms.
 private const val MIN_SPLASH_MS = 1400L
@@ -33,7 +35,10 @@ fun SplashRoute(
 
 	var minTimeElapsed by remember { mutableStateOf(false) }
 	LaunchedEffect(Unit) {
-		delay(MIN_SPLASH_MS)
+		coroutineScope {
+			launch { delay(MIN_SPLASH_MS) }
+			launch { vm.awaitRemoteConfig() }
+		}
 		minTimeElapsed = true
 	}
 
