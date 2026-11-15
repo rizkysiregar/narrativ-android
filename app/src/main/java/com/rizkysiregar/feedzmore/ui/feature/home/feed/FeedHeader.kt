@@ -1,6 +1,13 @@
 package com.rizkysiregar.feedzmore.ui.feature.home.feed
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -23,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -30,11 +38,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rizkysiregar.feedzmore.ui.components.rememberReduceMotion
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlin.math.PI
 import kotlin.math.sin
@@ -46,6 +57,17 @@ import kotlin.math.sin
  */
 
 private const val BRAND = "feedzmore"
+private const val PromptIntervalMs = 3500L
+private const val PromptTransitionMs = 500
+private val ComposerPrompts = listOf(
+	"Apa yang kamu pikirkan?",
+	"Bagikan momen hari ini…",
+	"Ada cerita seru hari ini?",
+	"Lagi di mana sekarang?",
+	"Foto atau video apa yang mau kamu bagikan?",
+	"Tulis sesuatu untuk komunitasmu…",
+	"Apa yang bikin harimu berwarna?"
+)
 private val LetterLift = 6.dp
 private const val WaveCycleMs = 1800
 // per-letter start offset and the share of a cycle each letter spends moving; the last letter
@@ -145,6 +167,44 @@ private fun bump(x: Float): Float {
 	return s * s
 }
 
+/** Cycles through [ComposerPrompts]; each new line rises in while the old one lifts away. */
+@Composable
+private fun RotatingPlaceholder(modifier: Modifier = Modifier) {
+	val reduceMotion = rememberReduceMotion()
+	var index by remember { mutableIntStateOf(0) }
+
+	LaunchedEffect(Unit) {
+		while (true) {
+			delay(PromptIntervalMs)
+			index = (index + 1) % ComposerPrompts.size
+		}
+	}
+
+	AnimatedContent(
+		targetState = index,
+		modifier = modifier.clipToBounds(),
+		transitionSpec = {
+			if (reduceMotion) {
+				fadeIn(tween(PromptTransitionMs)) togetherWith fadeOut(tween(PromptTransitionMs))
+			} else {
+				(slideInVertically(tween(PromptTransitionMs, easing = FastOutSlowInEasing)) { it } +
+					fadeIn(tween(PromptTransitionMs, delayMillis = PromptTransitionMs / 4))) togetherWith
+					(slideOutVertically(tween(PromptTransitionMs, easing = FastOutSlowInEasing)) { -it } +
+						fadeOut(tween(PromptTransitionMs / 2)))
+			}
+		},
+		label = "composerPrompt"
+	) { promptIndex ->
+		Text(
+			text = ComposerPrompts[promptIndex],
+			style = MaterialTheme.typography.bodyLarge,
+			color = MaterialTheme.colorScheme.onSurfaceVariant,
+			maxLines = 1,
+			overflow = TextOverflow.Ellipsis
+		)
+	}
+}
+
 /** Threads-style entry point: tapping the pill opens the post composer. */
 @Composable
 fun FeedComposerRow(
@@ -163,12 +223,7 @@ fun FeedComposerRow(
 			modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
 			verticalAlignment = Alignment.CenterVertically
 		) {
-			Text(
-				text = "Apa yang kamu pikirkan?",
-				style = MaterialTheme.typography.bodyLarge,
-				color = MaterialTheme.colorScheme.onSurfaceVariant,
-				modifier = Modifier.weight(1f)
-			)
+			RotatingPlaceholder(modifier = Modifier.weight(1f))
 			Icon(
 				imageVector = Icons.Default.Add,
 				contentDescription = "Buat post",
