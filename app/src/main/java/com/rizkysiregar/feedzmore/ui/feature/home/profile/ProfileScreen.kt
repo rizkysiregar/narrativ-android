@@ -53,6 +53,8 @@ import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedUiState
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.PostViewMode
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.PostViewPager
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
+import com.rizkysiregar.feedzmore.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -107,12 +109,12 @@ fun ProfileScreen(
 		snackbarHost = { SnackbarHost(snackbarHostState) },
 		topBar = {
 			TopAppBar(
-				title = { Text("Profile") },
+				title = { Text(stringResource(R.string.profile)) },
 				actions = {
 					IconButton(onClick = onSettingsClick) {
 						Icon(
 							imageVector = Icons.Filled.Settings,
-							contentDescription = "Settings"
+							contentDescription = stringResource(R.string.settings)
 						)
 					}
 				},
@@ -179,11 +181,11 @@ fun ProfileScreen(
 				is ResultState.Failure -> {
 					Column(horizontalAlignment = Alignment.CenterHorizontally) {
 						Text(
-							text = "Error: ${profileState.message}",
+							text = stringResource(R.string.error_with_message, profileState.message),
 							color = MaterialTheme.colorScheme.error
 						)
 						Button(onClick = onRetry) {
-							Text("Retry")
+							Text(stringResource(R.string.retry))
 						}
 					}
 				}
@@ -240,7 +242,7 @@ fun UserProfileInfo(
 		}
 		if (onAvatarClick != null) {
 			Text(
-				text = "Ubah foto",
+				text = stringResource(R.string.change_photo),
 				style = MaterialTheme.typography.labelMedium,
 				color = MaterialTheme.colorScheme.primary,
 				modifier = Modifier.padding(top = 8.dp)
@@ -267,8 +269,8 @@ fun UserProfileInfo(
 					.padding(top = 16.dp),
 				horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center
 			) {
-				FollowMetric(count = status.followerCount, label = "Followers", onClick = onFollowersClick)
-				FollowMetric(count = status.followingCount, label = "Following", onClick = onFollowingClick)
+				FollowMetric(count = status.followerCount, label = stringResource(R.string.followers), onClick = onFollowersClick)
+				FollowMetric(count = status.followingCount, label = stringResource(R.string.following), onClick = onFollowingClick)
 			}
 		}
 	}
@@ -284,13 +286,13 @@ private fun PhotoOptionsSheet(
 ) {
 	ModalBottomSheet(onDismissRequest = onDismiss) {
 		ListItem(
-			headlineContent = { Text(if (hasPhoto) "Ganti foto" else "Pilih foto dari galeri") },
+			headlineContent = { Text(if (hasPhoto) stringResource(R.string.replace_photo) else stringResource(R.string.choose_photo)) },
 			leadingContent = { Icon(Icons.Filled.PhotoLibrary, contentDescription = null) },
 			modifier = Modifier.clickable(onClick = onChange)
 		)
 		if (hasPhoto) {
 			ListItem(
-				headlineContent = { Text("Hapus foto", color = MaterialTheme.colorScheme.error) },
+				headlineContent = { Text(stringResource(R.string.remove_photo), color = MaterialTheme.colorScheme.error) },
 				leadingContent = {
 					Icon(
 						Icons.Filled.Delete,

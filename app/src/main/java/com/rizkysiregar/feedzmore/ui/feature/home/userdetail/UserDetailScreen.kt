@@ -47,6 +47,8 @@ import com.rizkysiregar.feedzmore.ui.components.ProfileAvatar
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.FeedUiState
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.PostViewPager
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
+import com.rizkysiregar.feedzmore.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -82,12 +84,12 @@ fun UserDetailScreen(
 	Scaffold(
 		topBar = {
 			TopAppBar(
-				title = { Text("Detail Pengguna") },
+				title = { Text(stringResource(R.string.user_detail)) },
 				navigationIcon = {
 					IconButton(onClick = onBackClick) {
 						Icon(
 							imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-							contentDescription = "Kembali"
+							contentDescription = stringResource(R.string.back)
 						)
 					}
 				},
@@ -148,10 +150,10 @@ fun UserDetailScreen(
 				is ResultState.Failure -> {
 					Column(horizontalAlignment = Alignment.CenterHorizontally) {
 						Text(
-							text = "Error: ${profileState.message}",
+							text = stringResource(R.string.error_with_message, profileState.message),
 							color = MaterialTheme.colorScheme.error
 						)
-						Button(onClick = onRetry) { Text("Retry") }
+						Button(onClick = onRetry) { Text(stringResource(R.string.retry)) }
 					}
 				}
 
@@ -206,8 +208,8 @@ private fun FollowStatusSection(
 				modifier = Modifier.fillMaxWidth(),
 				horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center
 			) {
-				FollowMetric(count = status.followerCount, label = "Followers", onClick = onFollowersClick)
-				FollowMetric(count = status.followingCount, label = "Following", onClick = onFollowingClick)
+				FollowMetric(count = status.followerCount, label = stringResource(R.string.followers), onClick = onFollowersClick)
+				FollowMetric(count = status.followingCount, label = stringResource(R.string.following), onClick = onFollowingClick)
 			}
 			Spacer(modifier = Modifier.height(12.dp))
 			Button(
@@ -220,7 +222,7 @@ private fun FollowStatusSection(
 				if (isFollowActionLoading) {
 					CircularProgressIndicator(modifier = Modifier.size(18.dp))
 				} else {
-					Text(if (status.isFollowing) "Unfollow" else "Follow")
+					Text(if (status.isFollowing) stringResource(R.string.unfollow) else stringResource(R.string.follow))
 				}
 			}
 		}
@@ -264,13 +266,13 @@ private fun UserInfoCard(user: UserSearchItemResponse) {
 	) {
 		Column(modifier = Modifier.padding(16.dp)) {
 			if (email.isNotEmpty()) {
-				UserInfoRow(icon = Icons.Default.Email, label = "Email", value = email)
+				UserInfoRow(icon = Icons.Default.Email, label = stringResource(R.string.email), value = email)
 			}
 			if (email.isNotEmpty() && phone.isNotEmpty()) {
 				Spacer(modifier = Modifier.height(12.dp))
 			}
 			if (phone.isNotEmpty()) {
-				UserInfoRow(icon = Icons.Default.Phone, label = "Nomor telepon", value = phone)
+				UserInfoRow(icon = Icons.Default.Phone, label = stringResource(R.string.phone_number), value = phone)
 			}
 		}
 	}

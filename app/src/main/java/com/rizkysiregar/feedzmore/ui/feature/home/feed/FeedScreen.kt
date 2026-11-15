@@ -54,6 +54,8 @@ import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import com.rizkysiregar.feedzmore.R
+import androidx.compose.ui.res.stringResource
 
 
 /**
@@ -261,7 +263,7 @@ fun FeedScreen(
 					if (uiState.isError && uiState.items.isNotEmpty()) {
 						item {
 							Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-								Button(onClick = onRetry) { Text("Retry") }
+								Button(onClick = onRetry) { Text(stringResource(R.string.retry)) }
 							}
 						}
 					}
@@ -299,19 +301,19 @@ private fun EmptyFeedContent(onCreateFeed: () -> Unit) {
 				horizontalAlignment = Alignment.CenterHorizontally
 			) {
 				Text(
-					text = "Belum ada cerita",
+					text = stringResource(R.string.feed_empty_title),
 					style = MaterialTheme.typography.titleMedium,
 					fontWeight = FontWeight.Bold
 				)
 				Spacer(modifier = Modifier.height(8.dp))
 				Text(
-					text = "Ikuti pengguna lain untuk melihat dan berbagi momen",
+					text = stringResource(R.string.feed_empty_body),
 					style = MaterialTheme.typography.bodyMedium,
 					color = MaterialTheme.colorScheme.onSurfaceVariant
 				)
 				Spacer(modifier = Modifier.height(16.dp))
 				Button(onClick = onCreateFeed) {
-					Text("Buat feed baru")
+					Text(stringResource(R.string.create_new_feed))
 				}
 			}
 		}
@@ -329,7 +331,7 @@ private fun FeedErrorContent(message: String, onRetry: () -> Unit) {
 	) {
 		Text(text = message)
 		Spacer(modifier = Modifier.height(8.dp))
-		Button(onClick = onRetry) { Text("Retry") }
+		Button(onClick = onRetry) { Text(stringResource(R.string.retry)) }
 	}
 }
 

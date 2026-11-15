@@ -36,6 +36,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
+import com.rizkysiregar.feedzmore.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -78,7 +80,7 @@ fun ForceUpdateDialog(message: String) {
 				Spacer(modifier = Modifier.height(16.dp))
 
 				Text(
-					text = "Update required",
+					text = stringResource(R.string.update_required),
 					style = MaterialTheme.typography.titleMedium,
 					fontWeight = FontWeight.SemiBold
 				)
@@ -104,7 +106,7 @@ fun ForceUpdateDialog(message: String) {
 						.height(48.dp),
 					shape = RoundedCornerShape(12.dp)
 				) {
-					Text("Update")
+					Text(stringResource(R.string.update))
 				}
 			}
 		}

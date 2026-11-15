@@ -41,6 +41,8 @@ import com.rizkysiregar.feedzmore.domain.moderation.ReportTarget
 import com.rizkysiregar.feedzmore.ui.feature.moderation.ContentModerationMenu
 import com.rizkysiregar.feedzmore.ui.feature.moderation.ModerationTarget
 import com.rizkysiregar.feedzmore.util.formatTimeAgo
+import androidx.compose.ui.res.stringResource
+import com.rizkysiregar.feedzmore.R
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -114,7 +116,7 @@ internal fun CommentRow(
 					text = comment.username,
 					style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
 				)
-				val timeAgo = if (comment.isPending) "Mengirim..." else formatTimeAgo(comment.createdAt)
+				val timeAgo = if (comment.isPending) stringResource(R.string.sending) else formatTimeAgo(comment.createdAt)
 				if (timeAgo.isNotEmpty()) {
 					Spacer(modifier = Modifier.width(8.dp))
 					Text(
@@ -145,7 +147,7 @@ internal fun CommentRow(
 						.defaultMinSize(minWidth = 56.dp, minHeight = 40.dp)
 				) {
 					Text(
-						text = "Balas",
+						text = stringResource(R.string.reply),
 						style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
 						color = MaterialTheme.colorScheme.onSurfaceVariant
 					)
@@ -160,7 +162,7 @@ private fun CommentBody(comment: CommentItem) {
 	val content = comment.commentContent
 	if (comment.isTakenDown && content == null) {
 		Text(
-			text = "Komentar ini diturunkan oleh admin.",
+			text = stringResource(R.string.comment_taken_down),
 			style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
 			color = MaterialTheme.colorScheme.onSurfaceVariant
 		)
@@ -185,7 +187,7 @@ private fun CommentBody(comment: CommentItem) {
 	// only the author gets here for a taken down comment: the text plus why it was taken down
 	if (comment.isTakenDown) {
 		Text(
-			text = "Diturunkan oleh admin" + comment.takedownReason?.takeIf { it.isNotBlank() }?.let { ": $it" }.orEmpty(),
+			text = stringResource(R.string.taken_down_by_admin) + comment.takedownReason?.takeIf { it.isNotBlank() }?.let { ": $it" }.orEmpty(),
 			style = MaterialTheme.typography.bodySmall,
 			color = MaterialTheme.colorScheme.error
 		)

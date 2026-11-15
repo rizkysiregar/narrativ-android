@@ -53,6 +53,8 @@ import com.rizkysiregar.feedzmore.data.remote.model.response.user.UserSearchItem
 import com.rizkysiregar.feedzmore.ui.components.ProfileAvatar
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 import kotlinx.coroutines.flow.filterNotNull
+import com.rizkysiregar.feedzmore.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -152,7 +154,7 @@ fun SearchResults(
 							modifier = Modifier.fillMaxWidth(),
 							contentAlignment = Alignment.Center
 						) {
-							Button(onClick = onRetry) { Text("Try again") }
+							Button(onClick = onRetry) { Text(stringResource(R.string.try_again)) }
 						}
 					}
 				}
@@ -177,7 +179,7 @@ fun SearchUserBar(
 		modifier = modifier,
 		singleLine = true,
 		shape = RoundedCornerShape(24.dp),
-		placeholder = { Text("Search users") },
+		placeholder = { Text(stringResource(R.string.search_users)) },
 		leadingIcon = {
 			Icon(
 				imageVector = Icons.Default.Search,
@@ -192,7 +194,7 @@ fun SearchUserBar(
 				}) {
 					Icon(
 						imageVector = Icons.Default.Close,
-						contentDescription = "Clear search"
+						contentDescription = stringResource(R.string.clear_search)
 					)
 				}
 			}
@@ -260,10 +262,10 @@ private fun SearchEmptyContent(query: String) {
 			tint = MaterialTheme.colorScheme.onSurfaceVariant
 		)
 		Spacer(modifier = Modifier.height(12.dp))
-		Text("No users found")
+		Text(stringResource(R.string.no_users_found))
 		Spacer(modifier = Modifier.height(4.dp))
 		Text(
-			text = "No results for \"$query\"",
+			text = stringResource(R.string.no_results_for, query),
 			color = MaterialTheme.colorScheme.onSurfaceVariant
 		)
 	}
@@ -280,7 +282,7 @@ private fun SearchErrorContent(message: String, onRetry: () -> Unit) {
 	) {
 		Text(text = message)
 		Spacer(modifier = Modifier.height(8.dp))
-		Button(onClick = onRetry) { Text("Try again") }
+		Button(onClick = onRetry) { Text(stringResource(R.string.try_again)) }
 	}
 }
 

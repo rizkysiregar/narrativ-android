@@ -38,6 +38,7 @@ import com.rizkysiregar.feedzmore.R
 import com.rizkysiregar.feedzmore.ui.components.OtpInputField
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -93,7 +94,7 @@ fun OtpVerificationView(
 			) {
 				Icon(
 					painter = painterResource(R.drawable.outline_arrow_back_ios_24),
-					contentDescription = "Back",
+					contentDescription = stringResource(R.string.back),
 					modifier = Modifier
 						.size(24.dp)
 						.padding(3.dp)
@@ -103,7 +104,7 @@ fun OtpVerificationView(
 
 			Image(
 				painter = painterResource(R.drawable.star_black),
-				contentDescription = "Header Logo",
+				contentDescription = stringResource(R.string.cd_logo),
 				modifier = Modifier
 					.size(38.dp),
 			)
@@ -114,12 +115,12 @@ fun OtpVerificationView(
 		Spacer(Modifier.height(16.dp))
 		Column {
 			Text(
-				text = "Please check your email",
+				text = stringResource(R.string.otp_check_email),
 				style = MaterialTheme.typography.headlineLarge
 			)
 			Spacer(Modifier.height(8.dp))
 			Text(
-				text = "We’ve sent a code to $otpSendToEmailAddress",
+				text = stringResource(R.string.otp_sent_to, otpSendToEmailAddress),
 				style = MaterialTheme.typography.bodyMedium
 			)
 		}
@@ -149,7 +150,7 @@ fun OtpVerificationView(
 			)
 		) {
 			Text(
-				text = "Verify",
+				text = stringResource(R.string.verify),
 				fontSize = 14.sp
 			)
 		}
@@ -157,9 +158,9 @@ fun OtpVerificationView(
 		// resend code or and count down
 		Spacer(Modifier.height(16.dp))
 		if (onResend != null && remainingSeconds == 0L) {
-			TextButton(onClick = onResend) { Text("Send code again") }
+			TextButton(onClick = onResend) { Text(stringResource(R.string.send_code_again)) }
 		} else {
-			Text("Send code again in %02d:%02d".format(remainingSeconds / 60, remainingSeconds % 60))
+			Text(stringResource(R.string.send_code_again_in, remainingSeconds / 60, remainingSeconds % 60))
 		}
 
 

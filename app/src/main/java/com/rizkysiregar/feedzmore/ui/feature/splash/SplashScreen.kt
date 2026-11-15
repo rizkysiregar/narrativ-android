@@ -46,6 +46,7 @@ import com.rizkysiregar.feedzmore.ui.theme.Like
 import com.rizkysiregar.feedzmore.ui.theme.RoseGold
 import com.rizkysiregar.feedzmore.ui.theme.TextMuted
 import com.rizkysiregar.feedzmore.ui.theme.TextPrimary
+import androidx.compose.ui.res.stringResource
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -137,7 +138,7 @@ fun SplashScreen() {
 				)
 				Spacer(modifier = Modifier.height(4.dp))
 				Text(
-					text = "Moments worth sharing",
+					text = stringResource(R.string.splash_tagline),
 					style = MaterialTheme.typography.bodyMedium,
 					color = TextMuted
 				)

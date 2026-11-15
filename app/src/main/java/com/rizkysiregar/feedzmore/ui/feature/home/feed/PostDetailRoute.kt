@@ -75,6 +75,7 @@ import com.rizkysiregar.feedzmore.media.currentMediaUrlOrNull
 import com.rizkysiregar.feedzmore.media.rememberVideoPlayer
 import com.rizkysiregar.feedzmore.ui.components.InitialAvatar
 import com.rizkysiregar.feedzmore.util.formatPostDate
+import androidx.compose.ui.res.stringResource
 
 const val KEY_POST_JSON = "post_detail_post_json"
 const val KEY_LIKE_HANDLER = "post_detail_like_handler"
@@ -101,7 +102,7 @@ fun PostDetailDestination(
 				.background(MaterialTheme.colorScheme.background),
 			contentAlignment = Alignment.Center
 		) {
-			Text("Post tidak ditemukan", color = MaterialTheme.colorScheme.onBackground)
+			Text(stringResource(R.string.post_not_found), color = MaterialTheme.colorScheme.onBackground)
 		}
 		return
 	}
@@ -223,7 +224,7 @@ fun PostDetailScreen(
 				) {
 					Icon(
 						imageVector = if (isMuted) Icons.Filled.VolumeOff else Icons.Filled.VolumeUp,
-						contentDescription = if (isMuted) "Suarakan" else "Bisukan",
+						contentDescription = stringResource(if (isMuted) R.string.unmute else R.string.mute),
 						tint = MaterialTheme.colorScheme.onBackground
 					)
 				}
@@ -365,7 +366,7 @@ private fun PostDetailHeader(
 		IconButton(onClick = onBackClick) {
 			Icon(
 				imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-				contentDescription = "Kembali",
+				contentDescription = stringResource(R.string.back),
 				tint = MaterialTheme.colorScheme.onBackground
 			)
 		}

@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.rizkysiregar.feedzmore.i18n.AppStrings
+import com.rizkysiregar.feedzmore.R
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -78,7 +80,7 @@ class PostFeedViewModel @Inject constructor(
 			val current = _uiState.value.selectedMedia + added
 			if (current.any { it.uri == uri }) continue
 			if (current.size >= MAX_POST_MEDIA) {
-				error = "You can add up to $MAX_POST_MEDIA photos or videos per post"
+				error = strings.getString(R.string.post_err_max_media, MAX_POST_MEDIA)
 				break
 			}
 			val mimeType = app.contentResolver.getType(uri)
@@ -131,33 +133,35 @@ class PostFeedViewModel @Inject constructor(
 				_navigateHome.emit(Unit)
 			} catch (e: MediaValidationException) {
 				Log.w("PostFlow", "submitPost: media rejected: ${e.message}")
-				_uiState.update { it.copy(validationError = e.message ?: "Invalid media") }
+				_uiState.update { it.copy(validationError = strings.getString(e.messageRes, *e.args.toTypedArray())) }
 			} catch (e: CancellationException) {
 				throw e
 			} catch (e: Exception) {
 				Log.e("PostFlow", "submitPost failed", e)
-				_uiState.update { it.copy(validationError = "Could not prepare the media, please try again") }
+				_uiState.update { it.copy(validationError = strings.getString(R.string.post_err_prepare)) }
 			}
 		}
 	}
 
+	private val strings get() = AppStrings.localized(app)
+
 	private fun validateMedia(uri: Uri, mimeType: String?): String? {
-		if (mimeType == null) return "Unknown media type"
+		if (mimeType == null) return strings.getString(R.string.media_err_unknown_type)
 		val sizeBytes = runCatching {
 			app.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize }
 		}.getOrNull()
 		return when {
 			mimeType.startsWith("image/") -> {
 				when {
-					mimeType !in ALLOWED_IMAGE_TYPES -> "Unsupported image format"
+					mimeType !in ALLOWED_IMAGE_TYPES -> strings.getString(R.string.media_err_image_format)
 					// Static images are compressed before upload; GIFs are sent as-is.
 					mimeType == "image/gif" && sizeBytes != null && sizeBytes > 5L * 1024 * 1024 ->
-						"GIFs can be up to 5MB"
+						strings.getString(R.string.media_err_gif_size)
 					else -> null
 				}
 			}
 			mimeType in ALLOWED_VIDEO_TYPES -> {
-				if (sizeBytes != null && sizeBytes > 50L * 1024 * 1024) return "Videos can be up to 50MB"
+				if (sizeBytes != null && sizeBytes > 50L * 1024 * 1024) return strings.getString(R.string.media_err_video_50)
 				val durationMs = runCatching {
 					val retriever = android.media.MediaMetadataRetriever()
 					app.contentResolver.openAssetFileDescriptor(uri, "r")?.use { afd ->
@@ -167,10 +171,10 @@ class PostFeedViewModel @Inject constructor(
 					retriever.release()
 					d?.toLongOrNull()
 				}.getOrNull()
-				if (durationMs != null && durationMs > 60_000L) "Videos can be up to 60 seconds"
+				if (durationMs != null && durationMs > 60_000L) strings.getString(R.string.media_err_duration_max)
 				else null
 			}
-			else -> "Unsupported media format. Use an image or an mp4/mov/webm video"
+			else -> strings.getString(R.string.media_err_format)
 		}
 	}
 

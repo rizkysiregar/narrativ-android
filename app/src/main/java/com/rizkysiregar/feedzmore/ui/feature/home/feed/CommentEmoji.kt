@@ -18,6 +18,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.rizkysiregar.feedzmore.R
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -45,7 +47,7 @@ fun EmojiQuickRow(
 					.padding(vertical = 4.dp)
 					.size(40.dp)
 					.clip(CircleShape)
-					.clickable(role = Role.Button, onClickLabel = "Tambahkan $emoji") { onEmojiClick(emoji) }
+					.clickable(role = Role.Button, onClickLabel = stringResource(R.string.add_emoji, emoji)) { onEmojiClick(emoji) }
 			) {
 				Text(text = emoji, fontSize = 22.sp, color = MaterialTheme.colorScheme.onSurface)
 			}

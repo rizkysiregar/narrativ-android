@@ -38,6 +38,8 @@ import com.rizkysiregar.feedzmore.ui.theme.AccentSubtle
 import com.rizkysiregar.feedzmore.ui.theme.BorderDefault
 import com.rizkysiregar.feedzmore.ui.theme.Surface1
 import com.rizkysiregar.feedzmore.ui.theme.TextMuted
+import androidx.compose.ui.res.stringResource
+import com.rizkysiregar.feedzmore.R
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -151,14 +153,14 @@ private fun BottomBarTab(
 		when (item.icon) {
 			is IconSource.Vector -> Icon(
 				imageVector = item.icon.imageVector,
-				contentDescription = item.title,
+				contentDescription = stringResource(item.titleRes),
 				tint = tint,
 				modifier = Modifier.size(22.dp)
 			)
 
 			is IconSource.Drawable -> Icon(
 				painter = painterResource(item.icon.resId),
-				contentDescription = item.title,
+				contentDescription = stringResource(item.titleRes),
 				tint = tint,
 				modifier = Modifier.size(22.dp)
 			)

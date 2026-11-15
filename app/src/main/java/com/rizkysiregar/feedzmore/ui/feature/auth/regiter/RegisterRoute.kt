@@ -14,6 +14,7 @@ import com.rizkysiregar.feedzmore.ui.base.BaseScreen
 import com.rizkysiregar.feedzmore.ui.feature.auth.reset.OtpVerificationView
 import com.rizkysiregar.feedzmore.ui.main.navigation.routes.MainPathRoute
 import com.rizkysiregar.feedzmore.ui.main.navigation.routes.AuthPathRoutes
+import com.rizkysiregar.feedzmore.R
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -38,7 +39,7 @@ fun RegisterRoute(
 		if (registerState is ResultState.Success) {
 			println("## register success")
 			Toast.makeText(
-				context, "Registration successful! Please log in.", Toast.LENGTH_SHORT
+				context, context.getString(R.string.registration_success), Toast.LENGTH_SHORT
 			).show()
 
 			onRegisterSuccess()

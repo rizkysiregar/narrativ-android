@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import com.rizkysiregar.feedzmore.R
 import com.rizkysiregar.feedzmore.data.remote.model.request.auth.ResetNewPasswordRequest
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
+import androidx.compose.ui.res.stringResource
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -66,7 +67,7 @@ fun NewPasswordView(
 		) {
 			Image(
 				painter = painterResource(R.drawable.star_black),
-				contentDescription = "Header Logo",
+				contentDescription = stringResource(R.string.cd_logo),
 				modifier = Modifier.size(38.dp)
 			)
 		}
@@ -75,12 +76,12 @@ fun NewPasswordView(
 		Spacer(Modifier.height(16.dp))
 		Column {
 			Text(
-				text = "Reset Password",
+				text = stringResource(R.string.reset_password),
 				style = MaterialTheme.typography.headlineLarge
 			)
 			Spacer(Modifier.height(8.dp))
 			Text(
-				text = "Please type something you’ll remember",
+				text = stringResource(R.string.new_password_hint),
 				style = MaterialTheme.typography.bodyMedium
 			)
 		}
@@ -89,11 +90,11 @@ fun NewPasswordView(
 		// --- Input fields --- //
 		Spacer(Modifier.height(32.dp))
 		Column {
-			Text("New password", style = MaterialTheme.typography.labelSmall)
+			Text(stringResource(R.string.new_password), style = MaterialTheme.typography.labelSmall)
 			OutlinedTextField(
 				value = newPassword,
 				onValueChange = { newPassword = it },
-				label = { Text("At least 6 characters") },
+				label = { Text(stringResource(R.string.password_min_length)) },
 				modifier = Modifier.fillMaxWidth(),
 				singleLine = true,
 				visualTransformation = PasswordVisualTransformation(),
@@ -101,17 +102,17 @@ fun NewPasswordView(
 			)
 
 			Spacer(Modifier.height(16.dp))
-			Text("Confirm new password", style = MaterialTheme.typography.labelSmall)
+			Text(stringResource(R.string.confirm_new_password), style = MaterialTheme.typography.labelSmall)
 			OutlinedTextField(
 				value = confirmNewPassword,
 				onValueChange = { confirmNewPassword = it },
-				label = { Text("Repeat password") },
+				label = { Text(stringResource(R.string.repeat_password)) },
 				modifier = Modifier.fillMaxWidth(),
 				singleLine = true,
 				visualTransformation = PasswordVisualTransformation(),
 				isError = confirmNewPassword.isNotEmpty() && !passwordsMatch,
 				supportingText = if (confirmNewPassword.isNotEmpty() && !passwordsMatch) {
-					{ Text("Passwords do not match") }
+					{ Text(stringResource(R.string.error_passwords_mismatch)) }
 				} else null,
 				keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done)
 			)
@@ -138,7 +139,7 @@ fun NewPasswordView(
 				)
 			) {
 				Text(
-					text = "Reset Password",
+					text = stringResource(R.string.reset_password),
 					fontSize = 14.sp
 				)
 			}

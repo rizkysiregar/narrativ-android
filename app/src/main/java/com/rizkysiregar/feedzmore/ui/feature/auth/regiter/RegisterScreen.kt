@@ -58,6 +58,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rizkysiregar.feedzmore.R
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 
 
 /**
@@ -72,6 +74,7 @@ fun RegisterScreen(
 	onLegalClick: (LegalDocument) -> Unit = {},
 	initialState: RegisterState = RegisterState()
 ) {
+	val context = LocalContext.current
 	var registerState by remember { mutableStateOf(initialState) }
 	var formErrors by remember { mutableStateOf(RegisterFormErrors()) }
 
@@ -93,7 +96,7 @@ fun RegisterScreen(
 		MiddleSection(
 			onLegalClick = onLegalClick,
 			onRegisterClick = {
-				val errors = registerState.validate()
+				val errors = registerState.validate { label -> context.getString(R.string.error_required, context.getString(label)) }
 				formErrors = errors
 				if (!errors.hasErrors) {
 					onRegisterClick(registerState.trimmed())
@@ -120,14 +123,14 @@ private fun TopSection(
 		) {
 			Image(
 				painter = painterResource(R.drawable.star_black),
-				contentDescription = "Header Logo",
+				contentDescription = stringResource(R.string.cd_logo),
 				modifier = Modifier
 					.size(38.dp),
 			)
 		}
 
 		Text(
-			text = "Sign Up",
+			text = stringResource(R.string.sign_up),
 			style = MaterialTheme.typography.headlineLarge,
 		)
 
@@ -142,7 +145,7 @@ private fun TopSection(
 				onValueChange = { newFirstName ->
 					onStateChange(registerState.copy(firstName = newFirstName.removeLineBreaks()))
 				},
-				label = { Text("First Name") },
+				label = { Text(stringResource(R.string.first_name)) },
 				isError = formErrors.firstName != null,
 				supportingText = formErrors.firstName?.let { { Text(it) } },
 				modifier = Modifier.weight(1f),
@@ -154,7 +157,7 @@ private fun TopSection(
 				onValueChange = { newLastName ->
 					onStateChange(registerState.copy(lastName = newLastName.removeLineBreaks()))
 				},
-				label = { Text("Last Name") },
+				label = { Text(stringResource(R.string.last_name)) },
 				isError = formErrors.lastName != null,
 				supportingText = formErrors.lastName?.let { { Text(it) } },
 				modifier = Modifier.weight(1f),
@@ -170,7 +173,7 @@ private fun TopSection(
 			onValueChange = { newEmail ->
 				onStateChange(registerState.copy(email = newEmail.removeLineBreaks()))
 			},
-			label = { Text("Email") },
+			label = { Text(stringResource(R.string.email)) },
 			isError = formErrors.email != null,
 			supportingText = formErrors.email?.let { { Text(it) } },
 			modifier = Modifier.fillMaxWidth(),
@@ -224,7 +227,7 @@ fun MiddleSection(onRegisterClick: () -> Unit, onLegalClick: (LegalDocument) -> 
 			)
 		) {
 			Text(
-				text = "Sign Up",
+				text = stringResource(R.string.sign_up),
 				fontSize = 14.sp
 			)
 		}
@@ -244,7 +247,7 @@ fun MiddleSection(onRegisterClick: () -> Unit, onLegalClick: (LegalDocument) -> 
  */
 @Composable
 private fun LegalConsentText(onLegalClick: (LegalDocument) -> Unit) {
-	val indonesian = LegalDocument.deviceLanguage() == LegalDocument.LANGUAGE_ID
+	val language = LegalDocument.deviceLanguage()
 	val linkStyle = TextLinkStyles(
 		style = SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
 	)
@@ -255,10 +258,10 @@ private fun LegalConsentText(onLegalClick: (LegalDocument) -> Unit) {
 	)
 
 	val text = buildAnnotatedString {
-		append(if (indonesian) "Dengan mendaftar, Anda menyetujui " else "By signing up, you agree to our ")
-		withLink(link(LegalDocument.TERMS)) { append(LegalDocument.TERMS.title(if (indonesian) "id" else "en")) }
-		append(if (indonesian) " dan " else " and ")
-		withLink(link(LegalDocument.PRIVACY_POLICY)) { append(LegalDocument.PRIVACY_POLICY.title(if (indonesian) "id" else "en")) }
+		append(stringResource(R.string.legal_consent_prefix))
+		withLink(link(LegalDocument.TERMS)) { append(LegalDocument.TERMS.title(language)) }
+		append(stringResource(R.string.legal_consent_and))
+		withLink(link(LegalDocument.PRIVACY_POLICY)) { append(LegalDocument.PRIVACY_POLICY.title(language)) }
 		append(".")
 	}
 	Text(
@@ -277,12 +280,12 @@ fun BottomSection(onNavigateToLogin: () -> Unit) {
 		horizontalArrangement = Arrangement.Center
 	) {
 		Text(
-			text = "Already have an account?",
+			text = stringResource(R.string.already_account),
 			style = MaterialTheme.typography.bodySmall
 		)
 		Spacer(modifier = Modifier.width(4.dp))
 		Text(
-			text = "Login here",
+			text = stringResource(R.string.login_here),
 			color = MaterialTheme.colorScheme.onBackground,
 			style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
 			modifier = Modifier.clickable(
@@ -308,14 +311,14 @@ fun UsernameField(
 	OutlinedTextField(
 		value = username,
 		onValueChange = { onUsernameChange(it.removeLineBreaks()) },
-		label = { Text("Username") },
+		label = { Text(stringResource(R.string.username)) },
 		isError = errorMessage != null,
 		supportingText = errorMessage?.let { { Text(it) } },
 		trailingIcon = {
 			if (username.isNotEmpty()) {
 				Icon(
 					imageVector = Icons.Default.Check,
-					contentDescription = "Valid Username"
+					contentDescription = stringResource(R.string.cd_valid_username)
 				)
 			}
 		},
@@ -336,7 +339,7 @@ fun PasswordField(
 	OutlinedTextField(
 		value = password,
 		onValueChange = { onPasswordChange(it.removeLineBreaks()) },
-		label = { Text("Password") },
+		label = { Text(stringResource(R.string.password)) },
 		isError = errorMessage != null,
 		supportingText = errorMessage?.let { { Text(it) } },
 		visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -348,7 +351,7 @@ fun PasswordField(
 					painter = if (isVisible) painterResource(R.drawable.eye_solid_full) else painterResource(
 						R.drawable.eye_slash_solid_full
 					),
-					contentDescription = "Toggle password visibility",
+					contentDescription = stringResource(R.string.cd_toggle_password),
 					modifier = Modifier.size(24.dp)
 				)
 			}
@@ -370,12 +373,12 @@ private data class RegisterFormErrors(
 		get() = listOf(firstName, lastName, username, email, password).any { it != null }
 }
 
-private fun RegisterState.validate(): RegisterFormErrors = RegisterFormErrors(
-	firstName = firstName.requiredError("Nama depan"),
-	lastName = lastName.requiredError("Nama belakang"),
-	username = username.requiredError("Username"),
-	email = email.requiredError("Email"),
-	password = password.requiredError("Password")
+private fun RegisterState.validate(required: (labelRes: Int) -> String): RegisterFormErrors = RegisterFormErrors(
+	firstName = firstName.requiredError(required(R.string.first_name)),
+	lastName = lastName.requiredError(required(R.string.last_name)),
+	username = username.requiredError(required(R.string.username)),
+	email = email.requiredError(required(R.string.email)),
+	password = password.requiredError(required(R.string.password))
 )
 
 private fun RegisterFormErrors.clearResolvedErrors(state: RegisterState): RegisterFormErrors = copy(
@@ -386,8 +389,9 @@ private fun RegisterFormErrors.clearResolvedErrors(state: RegisterState): Regist
 	password = password?.takeIf { state.password.isBlank() }
 )
 
-private fun String.requiredError(label: String): String? =
-	if (isBlank()) "$label wajib diisi" else null
+/** [message] is the full, already translated "X is required". */
+private fun String.requiredError(message: String): String? =
+	if (isBlank()) message else null
 
 private fun RegisterState.trimmed(): RegisterState = copy(
 	firstName = firstName.trim(),
@@ -406,7 +410,7 @@ fun ForgotPasswordText() {
 		horizontalArrangement = Arrangement.End
 	) {
 		Text(
-			text = "Forgot Password?",
+			text = stringResource(R.string.forgot_password),
 			style = MaterialTheme.typography.bodySmall,
 			color = MaterialTheme.colorScheme.onBackground,
 		)
@@ -425,7 +429,7 @@ fun OrLoginWith() {
 	) {
 		HorizontalDivider(modifier = Modifier.weight(1f))
 		Text(
-			text = "Or Login with ",
+			text = stringResource(R.string.or_login_with),
 			style = MaterialTheme.typography.bodySmall
 		)
 		HorizontalDivider(modifier = Modifier.weight(1f))

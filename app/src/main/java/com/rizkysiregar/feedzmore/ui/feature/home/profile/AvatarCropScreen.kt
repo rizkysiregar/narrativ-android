@@ -61,6 +61,8 @@ import kotlinx.coroutines.launch
 import java.io.File
 import kotlin.math.max
 import kotlin.math.min
+import com.rizkysiregar.feedzmore.R
+import androidx.compose.ui.res.stringResource
 
 private const val MAX_ZOOM = 5f
 
@@ -158,10 +160,10 @@ fun AvatarCropScreen(
 			verticalAlignment = Alignment.CenterVertically
 		) {
 			TextButton(onClick = onCancel, enabled = !isCropping) {
-				Text("Batal", color = Color.White)
+				Text(stringResource(R.string.cancel), color = Color.White)
 			}
 			Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-				Text("Sesuaikan foto", color = Color.White)
+				Text(stringResource(R.string.adjust_photo), color = Color.White)
 			}
 			TextButton(
 				enabled = !isCropping,
@@ -177,7 +179,7 @@ fun AvatarCropScreen(
 					}
 				}
 			) {
-				Text("Pilih", color = Color.White)
+				Text(stringResource(R.string.choose), color = Color.White)
 			}
 		}
 
@@ -190,7 +192,7 @@ fun AvatarCropScreen(
 			horizontalAlignment = Alignment.CenterHorizontally
 		) {
 			Text(
-				text = "Geser dan cubit untuk menyesuaikan",
+				text = stringResource(R.string.crop_hint),
 				color = Color.White.copy(alpha = 0.8f),
 				modifier = Modifier.padding(bottom = 16.dp)
 			)
@@ -223,7 +225,7 @@ private fun FilterStrip(image: Bitmap, selected: AvatarFilter, onSelect: (Avatar
 			) {
 				Image(
 					bitmap = thumb,
-					contentDescription = option.label,
+					contentDescription = stringResource(option.labelRes),
 					colorFilter = filterOf(option),
 					contentScale = ContentScale.Crop,
 					modifier = Modifier
@@ -236,7 +238,7 @@ private fun FilterStrip(image: Bitmap, selected: AvatarFilter, onSelect: (Avatar
 						)
 				)
 				Text(
-					text = option.label,
+					text = stringResource(option.labelRes),
 					color = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f),
 					style = MaterialTheme.typography.labelSmall,
 					modifier = Modifier.padding(top = 4.dp)

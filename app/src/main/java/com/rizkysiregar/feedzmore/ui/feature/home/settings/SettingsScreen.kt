@@ -49,6 +49,17 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rizkysiregar.feedzmore.ui.feature.legal.LegalDocument
+import com.rizkysiregar.feedzmore.R
+import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material3.RadioButton
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.Role
+import com.rizkysiregar.feedzmore.i18n.AppLanguage
+import com.rizkysiregar.feedzmore.i18n.AppLocale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,16 +74,17 @@ fun SettingsRoute(
 	val telemetryEnabled by viewModel.telemetryEnabled.collectAsStateWithLifecycle()
 	var showLogoutDialog by rememberSaveable { mutableStateOf(false) }
 	var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
+	var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
 
 	Scaffold(
 		topBar = {
 			TopAppBar(
-				title = { Text("Pengaturan") },
+				title = { Text(stringResource(R.string.settings)) },
 				navigationIcon = {
 					IconButton(onClick = onBackClick) {
 						Icon(
 							imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-							contentDescription = "Kembali"
+							contentDescription = stringResource(R.string.back)
 						)
 					}
 				}
@@ -86,20 +98,27 @@ fun SettingsRoute(
 				.verticalScroll(rememberScrollState())
 		) {
 			SettingsItem(
-				title = "Akun yang diblokir",
+				title = stringResource(R.string.blocked_accounts),
 				icon = { Icon(Icons.Outlined.Block, contentDescription = null) },
 				showChevron = true,
 				onClick = onBlockedUsersClick
 			)
 			HorizontalDivider()
 			SettingsItem(
-				title = "Kebijakan Privasi",
+				title = stringResource(R.string.settings_language),
+				icon = { Icon(Icons.Outlined.Language, contentDescription = null) },
+				showChevron = true,
+				onClick = { showLanguageDialog = true }
+			)
+			HorizontalDivider()
+			SettingsItem(
+				title = stringResource(R.string.privacy_policy),
 				icon = { Icon(Icons.Outlined.PrivacyTip, contentDescription = null) },
 				showChevron = true,
 				onClick = { onLegalClick(LegalDocument.PRIVACY_POLICY) }
 			)
 			SettingsItem(
-				title = "Syarat & Ketentuan",
+				title = stringResource(R.string.terms),
 				icon = { Icon(Icons.Outlined.Description, contentDescription = null) },
 				showChevron = true,
 				onClick = { onLegalClick(LegalDocument.TERMS) }
@@ -107,9 +126,9 @@ fun SettingsRoute(
 			HorizontalDivider()
 			ListItem(
 				modifier = Modifier.clickable { viewModel.setTelemetryEnabled(!telemetryEnabled) },
-				headlineContent = { Text("Bagikan data penggunaan") },
+				headlineContent = { Text(stringResource(R.string.share_usage_data)) },
 				supportingContent = {
-					Text("Bantu kami memperbaiki bug dan meningkatkan aplikasi. Isi postingan dan komentar Anda tidak dikirim.")
+					Text(stringResource(R.string.share_usage_data_hint))
 				},
 				leadingContent = { Icon(Icons.Outlined.Analytics, contentDescription = null) },
 				trailingContent = {
@@ -118,13 +137,13 @@ fun SettingsRoute(
 			)
 			HorizontalDivider()
 			SettingsItem(
-				title = "Keluar",
+				title = stringResource(R.string.log_out),
 				icon = { Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null) },
 				danger = true,
 				onClick = { showLogoutDialog = true }
 			)
 			SettingsItem(
-				title = "Hapus akun",
+				title = stringResource(R.string.delete_account),
 				icon = { Icon(Icons.Filled.DeleteForever, contentDescription = null) },
 				danger = true,
 				onClick = { showDeleteDialog = true }
@@ -132,22 +151,33 @@ fun SettingsRoute(
 		}
 	}
 
+	if (showLanguageDialog) {
+		LanguageDialog(
+			selected = AppLocale.selected(),
+			onSelect = { language ->
+				showLanguageDialog = false
+				viewModel.setLanguage(language)
+			},
+			onDismiss = { showLanguageDialog = false }
+		)
+	}
+
 	if (showLogoutDialog) {
 		AlertDialog(
 			onDismissRequest = { if (!uiState.isBusy) showLogoutDialog = false },
-			title = { Text("Keluar") },
-			text = { Text("Yakin ingin keluar dari akun ini?") },
+			title = { Text(stringResource(R.string.log_out)) },
+			text = { Text(stringResource(R.string.log_out_confirm)) },
 			confirmButton = {
 				TextButton(
 					enabled = !uiState.isBusy,
 					onClick = { viewModel.logout(onDone = onLoggedOut) }
-				) { Text(if (uiState.isBusy) "Keluar..." else "Keluar") }
+				) { Text(if (uiState.isBusy) stringResource(R.string.logging_out) else stringResource(R.string.log_out)) }
 			},
 			dismissButton = {
 				TextButton(
 					enabled = !uiState.isBusy,
 					onClick = { showLogoutDialog = false }
-				) { Text("Batal") }
+				) { Text(stringResource(R.string.cancel)) }
 			}
 		)
 	}
@@ -190,6 +220,39 @@ private fun SettingsItem(
 	)
 }
 
+/** System default, English or Indonesian. The language names are shown in their own language on purpose. */
+@Composable
+private fun LanguageDialog(selected: AppLanguage?, onSelect: (AppLanguage?) -> Unit, onDismiss: () -> Unit) {
+	val options = listOf(
+		null to stringResource(R.string.language_system),
+		AppLanguage.ENGLISH to "English",
+		AppLanguage.INDONESIAN to "Bahasa Indonesia"
+	)
+	AlertDialog(
+		onDismissRequest = onDismiss,
+		title = { Text(stringResource(R.string.settings_language)) },
+		text = {
+			Column {
+				options.forEach { (language, label) ->
+					Row(
+						verticalAlignment = Alignment.CenterVertically,
+						modifier = Modifier
+							.fillMaxWidth()
+							.selectable(selected = language == selected, role = Role.RadioButton, onClick = { onSelect(language) })
+							.padding(vertical = 4.dp)
+					) {
+						RadioButton(selected = language == selected, onClick = null)
+						Spacer(Modifier.width(12.dp))
+						Text(label)
+					}
+				}
+			}
+		},
+		confirmButton = {},
+		dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
+	)
+}
+
 /**
  * Deleting is final, so the dialog says what goes away and asks for proof it is really the owner:
  * the password, or the Google account for someone who signed up with Google and has no password.
@@ -206,18 +269,17 @@ private fun DeleteAccountDialog(
 
 	AlertDialog(
 		onDismissRequest = { if (!isBusy) onDismiss() },
-		title = { Text("Hapus akun?") },
+		title = { Text(stringResource(R.string.delete_account_title)) },
 		text = {
 			Column {
 				Text(
-					"Akun, postingan, dan data pribadi Anda akan dihapus permanen dan tidak bisa dikembalikan. " +
-						"Komentar Anda akan dikosongkan, dan Anda keluar dari semua perangkat."
+					stringResource(R.string.delete_account_body)
 				)
 				Spacer(Modifier.height(16.dp))
 				OutlinedTextField(
 					value = password,
 					onValueChange = { password = it },
-					label = { Text("Kata sandi") },
+					label = { Text(stringResource(R.string.password)) },
 					singleLine = true,
 					enabled = !isBusy,
 					visualTransformation = PasswordVisualTransformation(),
@@ -228,7 +290,7 @@ private fun DeleteAccountDialog(
 				)
 				Spacer(Modifier.height(8.dp))
 				Text(
-					"Masuk dengan Google dan tidak punya kata sandi?",
+					stringResource(R.string.google_no_password),
 					style = MaterialTheme.typography.bodySmall,
 					color = MaterialTheme.colorScheme.onSurfaceVariant,
 					textAlign = TextAlign.Start
@@ -237,7 +299,7 @@ private fun DeleteAccountDialog(
 					enabled = !isBusy,
 					onClick = onConfirmWithGoogle,
 					modifier = Modifier.fillMaxWidth()
-				) { Text("Verifikasi dengan Google") }
+				) { Text(stringResource(R.string.verify_with_google)) }
 			}
 		},
 		confirmButton = {
@@ -248,10 +310,10 @@ private fun DeleteAccountDialog(
 					contentColor = MaterialTheme.colorScheme.onError
 				),
 				onClick = { onConfirmWithPassword(password) }
-			) { Text(if (isBusy) "Menghapus..." else "Hapus akun") }
+			) { Text(if (isBusy) stringResource(R.string.deleting) else stringResource(R.string.delete_account)) }
 		},
 		dismissButton = {
-			TextButton(enabled = !isBusy, onClick = onDismiss) { Text("Batal") }
+			TextButton(enabled = !isBusy, onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
 		}
 	)
 }

@@ -1,5 +1,8 @@
 package com.rizkysiregar.feedzmore.domain.moderation
 
+import androidx.annotation.StringRes
+import com.rizkysiregar.feedzmore.R
+
 /** What a report can be about. [apiName] is what the server expects. */
 enum class ReportTarget(val apiName: String) {
 	POST("POST"),
@@ -8,14 +11,14 @@ enum class ReportTarget(val apiName: String) {
 }
 
 /** Why something is reported. [apiName] is what the server expects; [OTHER] needs a description. */
-enum class ReportReason(val apiName: String, val label: String) {
-	SPAM("SPAM", "Spam"),
-	HARASSMENT("HARASSMENT", "Pelecehan atau perundungan"),
-	HATE_SPEECH("HATE_SPEECH", "Ujaran kebencian"),
-	SEXUAL_CONTENT("SEXUAL_CONTENT", "Konten seksual"),
-	VIOLENCE("VIOLENCE", "Kekerasan"),
-	MISINFORMATION("MISINFORMATION", "Informasi palsu"),
-	OTHER("OTHER", "Lainnya");
+enum class ReportReason(val apiName: String, @StringRes val labelRes: Int) {
+	SPAM("SPAM", R.string.report_reason_spam),
+	HARASSMENT("HARASSMENT", R.string.report_reason_harassment),
+	HATE_SPEECH("HATE_SPEECH", R.string.report_reason_hate_speech),
+	SEXUAL_CONTENT("SEXUAL_CONTENT", R.string.report_reason_sexual),
+	VIOLENCE("VIOLENCE", R.string.report_reason_violence),
+	MISINFORMATION("MISINFORMATION", R.string.report_reason_misinformation),
+	OTHER("OTHER", R.string.report_reason_other);
 
 	val needsDescription: Boolean
 		get() = this == OTHER

@@ -26,6 +26,7 @@ firebaseCrashlyticsPlugin = "3.0.4"
 firebasePerfPlugin = "2.0.1"
 
 [libraries]
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version = "1.7.1" }
 androidx-compose-material = { module = "androidx.compose.material:material", version.ref = "material" }
 androidx-compose-material-icons-core = { module = "androidx.compose.material:material-icons-core" }
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }

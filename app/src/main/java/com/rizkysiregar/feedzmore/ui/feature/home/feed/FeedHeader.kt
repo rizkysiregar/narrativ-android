@@ -49,6 +49,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlin.math.PI
 import kotlin.math.sin
+import com.rizkysiregar.feedzmore.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -60,13 +62,13 @@ private const val BRAND = "feedzmore"
 private const val PromptIntervalMs = 3500L
 private const val PromptTransitionMs = 500
 private val ComposerPrompts = listOf(
-	"Apa yang kamu pikirkan?",
-	"Bagikan momen hari ini…",
-	"Ada cerita seru hari ini?",
-	"Lagi di mana sekarang?",
-	"Foto atau video apa yang mau kamu bagikan?",
-	"Tulis sesuatu untuk komunitasmu…",
-	"Apa yang bikin harimu berwarna?"
+	R.string.composer_prompt_1,
+	R.string.composer_prompt_2,
+	R.string.composer_prompt_3,
+	R.string.composer_prompt_4,
+	R.string.composer_prompt_5,
+	R.string.composer_prompt_6,
+	R.string.composer_prompt_7
 )
 private val LetterLift = 6.dp
 private const val WaveCycleMs = 1800
@@ -103,7 +105,7 @@ fun FeedHeader(
 			onClick = onSearchClick,
 			modifier = Modifier.align(Alignment.CenterEnd)
 		) {
-			Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
+			Icon(imageVector = Icons.Default.Search, contentDescription = stringResource(R.string.search))
 		}
 	}
 }
@@ -196,7 +198,7 @@ private fun RotatingPlaceholder(modifier: Modifier = Modifier) {
 		label = "composerPrompt"
 	) { promptIndex ->
 		Text(
-			text = ComposerPrompts[promptIndex],
+			text = stringResource(ComposerPrompts[promptIndex]),
 			style = MaterialTheme.typography.bodyLarge,
 			color = MaterialTheme.colorScheme.onSurfaceVariant,
 			maxLines = 1,
@@ -226,7 +228,7 @@ fun FeedComposerRow(
 			RotatingPlaceholder(modifier = Modifier.weight(1f))
 			Icon(
 				imageVector = Icons.Default.Add,
-				contentDescription = "Buat post",
+				contentDescription = stringResource(R.string.create_post),
 				tint = MaterialTheme.colorScheme.onSurfaceVariant
 			)
 		}

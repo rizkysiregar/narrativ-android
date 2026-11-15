@@ -10,6 +10,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.compose.ui.res.stringResource
+import com.rizkysiregar.feedzmore.R
 
 @Composable
 fun FollowListRoute(
@@ -26,5 +28,5 @@ fun FollowListRoute(
 		viewModel.load(userId, type)
 	}
 
-	FollowListScreen(items = items, isLoading = isLoading, title = if (type == "followers") "Followers" else "Following", onUserClick = onUserClick, onBackClick = onBackClick)
+	FollowListScreen(items = items, isLoading = isLoading, title = stringResource(if (type == "followers") R.string.followers else R.string.following), onUserClick = onUserClick, onBackClick = onBackClick)
 }

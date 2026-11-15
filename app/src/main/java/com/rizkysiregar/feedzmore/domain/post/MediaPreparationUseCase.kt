@@ -15,6 +15,7 @@ import java.io.File
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.rizkysiregar.feedzmore.R
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -66,12 +67,12 @@ class MediaPreparationUseCase @Inject constructor(
 
 	private suspend fun prepareInternal(uri: Uri, mimeType: String?): PreparedMedia {
 		val resolvedMime = mimeType ?: context.contentResolver.getType(uri)
-			?: throw MediaValidationException("Tipe media tidak dikenali")
+			?: throw MediaValidationException(R.string.media_err_unknown_type)
 
 		return when {
 			resolvedMime.startsWith("image/") -> {
 				if (resolvedMime !in ALLOWED_IMAGE_TYPES) {
-					throw MediaValidationException("Format gambar tidak didukung")
+					throw MediaValidationException(R.string.media_err_image_format)
 				}
 				val file = withContext(Dispatchers.IO) {
 					copyToCache(uri, mimeToExtension(resolvedMime))
@@ -80,7 +81,7 @@ class MediaPreparationUseCase @Inject constructor(
 				if (resolvedMime == "image/gif") {
 					if (file.length() > MAX_IMAGE_BYTES) {
 						file.delete()
-						throw MediaValidationException("Ukuran GIF maksimal 5MB")
+						throw MediaValidationException(R.string.media_err_gif_size)
 					}
 					return PreparedMedia(file.absolutePath, resolvedMime)
 				}
@@ -92,13 +93,13 @@ class MediaPreparationUseCase @Inject constructor(
 				val file = videoCompressor.compress(uri)
 				if (file.length() > MAX_VIDEO_BYTES) {
 					file.delete()
-					throw MediaValidationException("Ukuran video melebihi 50MB, coba video yang lebih pendek")
+					throw MediaValidationException(R.string.media_err_video_size)
 				}
 				PreparedMedia(file.absolutePath, VIDEO_MP4)
 			}
 
 			else -> throw MediaValidationException(
-				"Format media tidak didukung. Gunakan gambar atau video mp4/mov/webm"
+				R.string.media_err_format
 			)
 		}
 	}
@@ -107,7 +108,7 @@ class MediaPreparationUseCase @Inject constructor(
 		val file = File(context.cacheDir, "feed_upload_${UUID.randomUUID()}.$extension")
 		context.contentResolver.openInputStream(uri)?.use { input ->
 			file.outputStream().use { output -> input.copyTo(output) }
-		} ?: throw MediaValidationException("Tidak dapat membaca media")
+		} ?: throw MediaValidationException(R.string.media_err_read)
 		return file
 	}
 

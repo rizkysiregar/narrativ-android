@@ -13,6 +13,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.UUID
 import javax.inject.Inject
+import com.rizkysiregar.feedzmore.R
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -35,7 +36,7 @@ class ProfilePhotoUseCase @Inject constructor(
 	): UserSearchItemResponse {
 		val resolvedMime = mimeType ?: context.contentResolver.getType(uri)
 		if (resolvedMime !in ALLOWED_TYPES) {
-			throw MediaValidationException("Format foto tidak didukung. Gunakan JPG, PNG atau WebP")
+			throw MediaValidationException(R.string.media_err_photo_format)
 		}
 
 		val copied = withContext(Dispatchers.IO) { copyToCache(uri) }
@@ -55,7 +56,7 @@ class ProfilePhotoUseCase @Inject constructor(
 		val file = File(context.cacheDir, "avatar_upload_${UUID.randomUUID()}")
 		context.contentResolver.openInputStream(uri)?.use { input ->
 			file.outputStream().use { output -> input.copyTo(output) }
-		} ?: throw MediaValidationException("Tidak dapat membaca foto")
+		} ?: throw MediaValidationException(R.string.media_err_photo_read)
 		return file
 	}
 

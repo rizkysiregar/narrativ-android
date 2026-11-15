@@ -21,6 +21,11 @@ import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject
+import com.rizkysiregar.feedzmore.i18n.AppLanguage
+import com.rizkysiregar.feedzmore.i18n.AppLocale
+import com.rizkysiregar.feedzmore.i18n.AppStrings
+import com.rizkysiregar.feedzmore.data.remote.DeviceSyncScheduler
+import com.rizkysiregar.feedzmore.R
 
 data class SettingsUiState(
 	/** A logout or an account deletion is running; the buttons wait. */
@@ -35,7 +40,9 @@ class SettingsViewModel @Inject constructor(
 	private val remoteSessionCleaner: RemoteSessionCleaner,
 	private val userRepository: UserRepository,
 	private val googleIdTokenProvider: GoogleIdTokenProvider,
-	private val telemetrySettings: TelemetrySettings
+	private val telemetrySettings: TelemetrySettings,
+	private val appStrings: AppStrings,
+	private val deviceSyncScheduler: DeviceSyncScheduler
 ) : ViewModel() {
 
 	private val _uiState = MutableStateFlow(SettingsUiState())
@@ -45,6 +52,12 @@ class SettingsViewModel @Inject constructor(
 	val telemetryEnabled: StateFlow<Boolean> = telemetrySettings.enabled
 
 	fun setTelemetryEnabled(enabled: Boolean) = telemetrySettings.setEnabled(enabled)
+
+	/** null follows the device. The server learns the new language with the next device sync. */
+	fun setLanguage(language: AppLanguage?) {
+		AppLocale.select(language)
+		deviceSyncScheduler.schedule()
+	}
 
 	/** Ends the session on the server first (best effort), then clears it on this device. */
 	fun logout(onDone: () -> Unit) {
@@ -59,7 +72,7 @@ class SettingsViewModel @Inject constructor(
 
 	fun deleteAccountWithPassword(password: String, onDone: () -> Unit) {
 		if (password.isBlank()) {
-			_uiState.update { it.copy(deleteError = "Kata sandi wajib diisi.") }
+			_uiState.update { it.copy(deleteError = appStrings.get(R.string.error_password_required)) }
 			return
 		}
 		deleteAccount(onDone) { DeleteAccountRequest(password = password) }
@@ -102,7 +115,7 @@ class SettingsViewModel @Inject constructor(
 			} catch (e: GetCredentialCancellationException) {
 				// the user closed the Google account picker
 			} catch (e: GetCredentialException) {
-				_uiState.update { it.copy(deleteError = "Tidak bisa memverifikasi akun Google. Coba lagi.") }
+				_uiState.update { it.copy(deleteError = appStrings.get(R.string.error_google_verify)) }
 			} finally {
 				_uiState.update { it.copy(isBusy = false) }
 			}

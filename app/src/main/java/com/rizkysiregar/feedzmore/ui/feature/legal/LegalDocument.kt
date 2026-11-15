@@ -3,7 +3,8 @@ package com.rizkysiregar.feedzmore.ui.feature.legal
 import com.rizkysiregar.feedzmore.BuildConfig
 import java.net.URI
 import java.net.URISyntaxException
-import java.util.Locale
+import com.rizkysiregar.feedzmore.i18n.AppLanguage
+import com.rizkysiregar.feedzmore.i18n.AppLocale
 
 /**
  * The public pages the backend serves under `legal/`: the same ones the Play Console links to, so the text
@@ -26,10 +27,10 @@ enum class LegalDocument(val path: String, val titleId: String, val titleEn: Str
 
 		fun fromPath(path: String?): LegalDocument? = entries.firstOrNull { it.path == path }
 
-		/** Indonesian for an Indonesian device, English for everything else. */
-		fun deviceLanguage(): String = when (Locale.getDefault().language) {
-			"in", "id" -> LANGUAGE_ID
-			else -> LANGUAGE_EN
+		/** The page in the language of the app. */
+		fun deviceLanguage(): String = when (AppLocale.current()) {
+			AppLanguage.INDONESIAN -> LANGUAGE_ID
+			AppLanguage.ENGLISH -> LANGUAGE_EN
 		}
 
 		/** Whether [url] is one of the legal pages of our own server, the only thing the WebView may show. */

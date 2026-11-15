@@ -23,6 +23,7 @@ import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import com.rizkysiregar.feedzmore.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -43,7 +44,7 @@ fun ProfileAvatar(
 	if (LocalInspectionMode.current && (!imageUrl.isNullOrBlank() || userId.isNotBlank())) {
 		Image(
 			painter = painterResource(id = R.drawable.avatar),
-			contentDescription = "Preview PlaceHolder",
+			contentDescription = stringResource(R.string.cd_avatar_placeholder),
 			modifier = Modifier
 				.size(size)
 				.clip(CircleShape)
@@ -67,7 +68,7 @@ fun ProfileAvatar(
 			}
 			AsyncImage(
 				model = request,
-				contentDescription = "Profile Photo",
+				contentDescription = stringResource(R.string.cd_profile_photo),
 				modifier = Modifier
 					.size(size)
 					.clip(CircleShape)
@@ -79,7 +80,7 @@ fun ProfileAvatar(
 			val diceBearUrl = "https://api.dicebear.com/6.x/avataaars/png?seed=$userId"
 			AsyncImage(
 				model = diceBearUrl,
-				contentDescription = "Avatar",
+				contentDescription = stringResource(R.string.cd_avatar),
 				modifier = Modifier
 					.size(size)
 					.clip(CircleShape)

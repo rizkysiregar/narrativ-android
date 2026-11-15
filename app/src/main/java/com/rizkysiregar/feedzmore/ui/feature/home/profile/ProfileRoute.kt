@@ -24,6 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.feedzmore.ui.feature.home.feed.PostViewMode
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
+import com.rizkysiregar.feedzmore.R
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -76,7 +77,7 @@ fun ProfileRoute(
                 },
                 onLoadFailed = {
                     cropUri = null
-                    Toast.makeText(context, "Foto tidak dapat dibuka", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.error_photo_open), Toast.LENGTH_SHORT).show()
                 }
             )
         }
