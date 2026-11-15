@@ -37,6 +37,8 @@ import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.PostMediaItem
 import com.rizkysiregar.feedzmore.ui.components.ShimmerEffect
+import com.rizkysiregar.feedzmore.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * The media of one post: a single image or video is drawn as is, several are swipeable with a
@@ -157,7 +159,7 @@ fun PostMediaImage(
 ) {
 	SubcomposeAsyncImage(
 		model = ImageRequest.Builder(LocalContext.current).data(imageUrl).build(),
-		contentDescription = "Foto feed",
+		contentDescription = stringResource(R.string.cd_feed_photo),
 		modifier = modifier,
 		contentScale = contentScale,
 		loading = { ShimmerEffect(modifier = Modifier.fillMaxSize()) },
@@ -165,7 +167,7 @@ fun PostMediaImage(
 			Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
 				Icon(
 					imageVector = Icons.Outlined.Info,
-					contentDescription = "Gambar gagal dimuat",
+					contentDescription = stringResource(R.string.cd_image_failed),
 					tint = MaterialTheme.colorScheme.onSurfaceVariant,
 					modifier = Modifier.size(32.dp)
 				)

@@ -7,6 +7,7 @@ import com.chuckerteam.chucker.api.RetentionManager
 import com.rizkysiregar.feedzmore.BuildConfig
 import com.rizkysiregar.feedzmore.appcheck.AppCheckInterceptor
 import com.rizkysiregar.feedzmore.data.remote.AuthInterceptor
+import com.rizkysiregar.feedzmore.data.remote.LanguageInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -53,6 +54,7 @@ object NetworkModule {
 	@Singleton
 	fun provideOkHttpClient(
 		authInterceptor: AuthInterceptor,
+		languageInterceptor: LanguageInterceptor,
 		appCheckInterceptor: AppCheckInterceptor,
 		chuckerInterceptor: ChuckerInterceptor
 	): OkHttpClient {
@@ -66,6 +68,7 @@ object NetworkModule {
 		return OkHttpClient.Builder()
 			.addInterceptor(loggingInterceptor)
 			.addInterceptor(appCheckInterceptor)
+			.addInterceptor(languageInterceptor)
 			.addInterceptor(authInterceptor)
 			.addInterceptor(chuckerInterceptor)
 			.connectTimeout(30, TimeUnit.SECONDS)

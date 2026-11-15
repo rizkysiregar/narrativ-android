@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.rizkysiregar.feedzmore.R
+import androidx.annotation.StringRes
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -16,18 +17,18 @@ import com.rizkysiregar.feedzmore.R
 
 sealed class BottomNavScreen(
 	val route: String,
-	val title: String,
+	@StringRes val titleRes: Int,
 	val icon: IconSource
 ) {
-	object Feed : BottomNavScreen("feed", "Feed", IconSource.Vector(Icons.Default.Home))
-	object Explore : BottomNavScreen("explore", "Explore", IconSource.Vector(Icons.Default.Explore))
+	object Feed : BottomNavScreen("feed", R.string.tab_feed, IconSource.Vector(Icons.Default.Home))
+	object Explore : BottomNavScreen("explore", R.string.tab_explore, IconSource.Vector(Icons.Default.Explore))
 	object PostFeed : BottomNavScreen(
 		"post_feed",
-		"Post Feed",
+		R.string.tab_post,
 		IconSource.Drawable(R.drawable.square_plus_regular_full)
 	)
 
-	object Profile : BottomNavScreen("profile", "Profile", IconSource.Vector(Icons.Default.Person))
+	object Profile : BottomNavScreen("profile", R.string.tab_profile, IconSource.Vector(Icons.Default.Person))
 }
 
 sealed class IconSource {

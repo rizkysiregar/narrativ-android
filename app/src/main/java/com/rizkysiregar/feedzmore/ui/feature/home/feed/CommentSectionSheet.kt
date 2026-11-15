@@ -56,6 +56,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.CommentItem
 import kotlinx.coroutines.flow.collectLatest
+import androidx.compose.ui.res.stringResource
+import com.rizkysiregar.feedzmore.R
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -154,7 +156,7 @@ fun CommentSectionContent(
 	Column(modifier = modifier) {
 		// Header
 		Text(
-			text = "Komentar",
+			text = stringResource(R.string.comments),
 			style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
 			modifier = Modifier
 				.fillMaxWidth()
@@ -173,7 +175,7 @@ fun CommentSectionContent(
 					horizontalAlignment = Alignment.CenterHorizontally
 				) {
 					Text(errorMessage.orEmpty())
-					Button(onClick = viewModel::loadMore) { Text("Coba lagi") }
+					Button(onClick = viewModel::loadMore) { Text(stringResource(R.string.try_again)) }
 				}
 			} else if (comments.isEmpty() && !isLoading) {
 				EmptyCommentsView(onWriteClick = { inputFocusRequester.requestFocus() })
@@ -209,7 +211,7 @@ fun CommentSectionContent(
 					}
 					if (errorMessage != null && comments.isNotEmpty()) {
 						item(key = "error") {
-							Button(onClick = viewModel::loadMore) { Text("Coba lagi") }
+							Button(onClick = viewModel::loadMore) { Text(stringResource(R.string.try_again)) }
 						}
 					}
 				}
@@ -278,14 +280,14 @@ private fun CommentListRowContent(
 
 		is CommentListRow.RepliesToggle -> ThreadControl(threadLine, modifier) {
 			RepliesActionText(
-				text = if (row.expanded) "Sembunyikan balasan" else "Lihat ${row.replyCount} balasan",
+				text = if (row.expanded) stringResource(R.string.comment_hide_replies) else stringResource(R.string.comment_view_replies, row.replyCount),
 				onClick = { onToggleReplies(row.rootId) }
 			)
 		}
 
 		is CommentListRow.RepliesMore -> ThreadControl(threadLine, modifier) {
 			RepliesActionText(
-				text = if (row.remaining != null) "Lihat ${row.remaining} balasan lainnya" else "Lihat balasan lainnya",
+				text = if (row.remaining != null) stringResource(R.string.comment_view_more_replies_n, row.remaining) else stringResource(R.string.comment_view_more_replies),
 				onClick = { onLoadMoreReplies(row.rootId) }
 			)
 		}
@@ -296,7 +298,7 @@ private fun CommentListRowContent(
 
 		is CommentListRow.RepliesError -> ThreadControl(threadLine, modifier) {
 			RepliesActionText(
-				text = "Gagal memuat balasan. Coba lagi",
+				text = stringResource(R.string.comment_replies_error),
 				onClick = { onLoadMoreReplies(row.rootId) },
 				isError = true
 			)
@@ -341,23 +343,22 @@ private fun RepliesActionText(text: String, onClick: () -> Unit, isError: Boolea
 
 @Composable
 private fun DeleteCommentDialog(comment: CommentItem, onConfirm: () -> Unit, onDismiss: () -> Unit) {
-	val what = if (comment.isReply) "Balasan" else "Komentar"
 	AlertDialog(
 		onDismissRequest = onDismiss,
-		title = { Text("Hapus ${what.lowercase()}?") },
+		title = { Text(stringResource(if (comment.isReply) R.string.delete_reply_title else R.string.delete_comment_title)) },
 		text = {
 			Text(
 				if (!comment.isReply && comment.replyCount > 0) {
-					"Komentar ini beserta ${comment.replyCount} balasannya akan dihapus permanen."
+					stringResource(R.string.delete_comment_with_replies, comment.replyCount)
 				} else {
-					"$what ini akan dihapus permanen."
+					stringResource(if (comment.isReply) R.string.delete_reply_body else R.string.delete_comment_body)
 				}
 			)
 		},
 		confirmButton = {
-			TextButton(onClick = onConfirm) { Text("Hapus", color = MaterialTheme.colorScheme.error) }
+			TextButton(onClick = onConfirm) { Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error) }
 		},
-		dismissButton = { TextButton(onClick = onDismiss) { Text("Batal") } }
+		dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
 	)
 }
 
@@ -369,16 +370,16 @@ fun EmptyCommentsView(onWriteClick: () -> Unit = {}) {
 		horizontalAlignment = Alignment.CenterHorizontally
 	) {
 		Text(
-			text = "Belum ada komentar",
+			text = stringResource(R.string.comments_empty_title),
 			style = MaterialTheme.typography.titleMedium,
 			color = MaterialTheme.colorScheme.onSurface
 		)
 		Text(
-			text = "Jadilah yang pertama memulai obrolan!",
+			text = stringResource(R.string.comments_empty_body),
 			style = MaterialTheme.typography.bodyMedium,
 			color = MaterialTheme.colorScheme.onSurfaceVariant,
 			modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
 		)
-		OutlinedButton(onClick = onWriteClick) { Text("Tulis komentar") }
+		OutlinedButton(onClick = onWriteClick) { Text(stringResource(R.string.write_comment)) }
 	}
 }

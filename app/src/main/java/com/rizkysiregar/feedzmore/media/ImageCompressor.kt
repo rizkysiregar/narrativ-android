@@ -14,6 +14,7 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.max
+import com.rizkysiregar.feedzmore.R
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -41,14 +42,14 @@ class ImageCompressor @Inject constructor(
 	): CompressedImage = withContext(Dispatchers.Default) {
 		val bounds = readBounds(source)
 		val longestSide = max(bounds.outWidth, bounds.outHeight)
-		if (longestSide <= 0) throw MediaValidationException("Gambar tidak dapat dibaca")
+		if (longestSide <= 0) throw MediaValidationException(R.string.media_err_image_read)
 
 		if (source.length() <= skipBytes && longestSide <= maxDimension) {
 			return@withContext CompressedImage(source, mimeType)
 		}
 
 		var bitmap = decodeScaled(source, bounds, maxDimension)
-			?: throw MediaValidationException("Gambar tidak dapat dibaca")
+			?: throw MediaValidationException(R.string.media_err_image_read)
 		bitmap = applyOrientation(bitmap, readOrientation(source))
 
 		val hasAlpha = bitmap.hasAlpha() && mimeType != JPEG
@@ -80,7 +81,7 @@ class ImageCompressor @Inject constructor(
 
 		output.delete()
 		source.delete()
-		throw MediaValidationException("Gambar terlalu besar dan tidak dapat dikompres, coba gambar lain")
+		throw MediaValidationException(R.string.media_err_image_big)
 	}
 
 	/**

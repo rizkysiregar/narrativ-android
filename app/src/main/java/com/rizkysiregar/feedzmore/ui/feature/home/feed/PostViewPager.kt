@@ -71,10 +71,13 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import androidx.annotation.StringRes
+import androidx.compose.ui.res.stringResource
+import com.rizkysiregar.feedzmore.R
 
-enum class PostViewMode(val icon: ImageVector, val label: String) {
-	GRID(Icons.Outlined.GridView, "Tampilan grid"),
-	LIST(Icons.Outlined.ViewAgenda, "Tampilan list")
+enum class PostViewMode(val icon: ImageVector, @StringRes val labelRes: Int) {
+	GRID(Icons.Outlined.GridView, R.string.view_grid),
+	LIST(Icons.Outlined.ViewAgenda, R.string.view_list)
 }
 
 private const val GRID_LOAD_AHEAD = 6
@@ -184,7 +187,7 @@ fun PostViewModeTabs(pagerState: PagerState, modifier: Modifier = Modifier) {
 				) {
 					Icon(
 						imageVector = mode.icon,
-						contentDescription = mode.label,
+						contentDescription = stringResource(mode.labelRes),
 						tint = tint,
 						modifier = Modifier.size(22.dp)
 					)
@@ -256,7 +259,7 @@ private fun PostGridPage(
 		}
 
 		item(span = { GridItemSpan(maxLineSpan) }) {
-			PageStatus(feed = feed, emptyMessage = "Belum ada foto atau video", onRetry = onRetry)
+			PageStatus(feed = feed, emptyMessage = stringResource(R.string.no_media_yet), onRetry = onRetry)
 		}
 	}
 }
@@ -302,7 +305,7 @@ private fun PostListPage(
 		}
 
 		item {
-			PageStatus(feed = feed, emptyMessage = "Belum ada postingan", onRetry = onRetry)
+			PageStatus(feed = feed, emptyMessage = stringResource(R.string.no_posts_yet), onRetry = onRetry)
 		}
 	}
 }
@@ -320,14 +323,14 @@ private fun PageStatus(feed: FeedUiState, emptyMessage: String, onRetry: () -> U
 			feed.isError -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
 				if (feed.items.isEmpty()) {
 					Text(
-						text = feed.errorMessage ?: "Gagal memuat postingan",
+						text = feed.errorMessage ?: stringResource(R.string.error_load_posts),
 						style = MaterialTheme.typography.bodyMedium,
 						color = MaterialTheme.colorScheme.onSurfaceVariant,
 						textAlign = TextAlign.Center
 					)
 					Spacer(Modifier.height(8.dp))
 				}
-				Button(onClick = onRetry) { Text("Coba lagi") }
+				Button(onClick = onRetry) { Text(stringResource(R.string.try_again)) }
 			}
 
 			feed.isLoadingMore || (feed.isRefreshing && feed.items.isEmpty()) ->

@@ -29,6 +29,8 @@ import net.openid.appauth.AuthorizationService
 import net.openid.appauth.AuthorizationServiceConfiguration
 import net.openid.appauth.ResponseTypeValues
 import javax.inject.Inject
+import com.rizkysiregar.feedzmore.i18n.AppStrings
+import com.rizkysiregar.feedzmore.R
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
@@ -40,7 +42,8 @@ class AuthViewModel @Inject constructor(
     private val sessionManager: SessionManager,
     private val deviceSyncScheduler: DeviceSyncScheduler,
     private val googleIdTokenProvider: GoogleIdTokenProvider,
-    private val analytics: AppAnalytics
+    private val analytics: AppAnalytics,
+    private val appStrings: AppStrings
 ) : ViewModel() {
 
     // state for login
@@ -88,10 +91,10 @@ class AuthViewModel @Inject constructor(
             } catch (gce: GetCredentialException) {
                 println("error.gce: ${gce.message}")
                 _googleLoginState.value =
-                    ResultState.Failure(gce.message ?: "Google Sign-In failed")
+                    ResultState.Failure(gce.message ?: appStrings.get(R.string.error_google_sign_in))
             } catch (e: Exception) {
                 println("error.e: ${e.message}")
-                _googleLoginState.value = ResultState.Failure(e.message ?: "Something went wrong")
+                _googleLoginState.value = ResultState.Failure(e.message ?: appStrings.get(R.string.error_generic))
             }
         }
     }

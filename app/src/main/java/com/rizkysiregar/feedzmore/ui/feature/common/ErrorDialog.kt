@@ -36,6 +36,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
+import com.rizkysiregar.feedzmore.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -128,7 +130,7 @@ private fun ErrorDialogContent(
 				Spacer(modifier = Modifier.height(16.dp))
 
 				Text(
-					text = "Oops!",
+					text = stringResource(R.string.oops),
 					style = MaterialTheme.typography.titleMedium,
 					fontWeight = FontWeight.SemiBold
 				)
@@ -167,7 +169,7 @@ private fun ErrorDialogContent(
 fun ErrorDialogPreview() {
 	FeedzmoreTheme {
 		ErrorDialog(
-			message = "Nama pengguna ini sudah digunakan. Coba nama lain yang unik, ya!",
+			message = "This username is already taken. Try another one!",
 			onDismiss = {}
 		)
 	}

@@ -27,6 +27,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import com.rizkysiregar.feedzmore.R
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -46,9 +47,9 @@ class VideoCompressor @Inject constructor(
     @OptIn(UnstableApi::class)
     private suspend fun transcode(inputUri: Uri): File {
 		val durationMs = readDurationMs(inputUri)
-			?: throw MediaValidationException("Durasi video tidak dapat dibaca")
+			?: throw MediaValidationException(R.string.media_err_duration_read)
 		if (durationMs > MAX_DURATION_MS) {
-			throw MediaValidationException("Durasi video maksimal 60 detik")
+			throw MediaValidationException(R.string.media_err_duration_max)
 		}
 
 		val durationSeconds = (durationMs / 1000.0).coerceAtLeast(1.0)
@@ -92,7 +93,7 @@ class VideoCompressor @Inject constructor(
 							crashReporter.recordNonFatal(exportException, "video_compress")
 							if (continuation.isActive) {
 								continuation.resumeWithException(
-									MediaValidationException("Gagal memproses video")
+									MediaValidationException(R.string.media_err_video_process)
 								)
 							}
 						}

@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rizkysiregar.feedzmore.R
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
+import androidx.compose.ui.res.stringResource
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -78,7 +79,7 @@ fun EmailEntryView(
 			) {
 				Icon(
 					painter = painterResource(R.drawable.outline_arrow_back_ios_24),
-					contentDescription = "Back",
+					contentDescription = stringResource(R.string.back),
 					modifier = Modifier
 						.size(24.dp)
 						.padding(3.dp)
@@ -87,7 +88,7 @@ fun EmailEntryView(
 
 			Image(
 				painter = painterResource(R.drawable.star_black),
-				contentDescription = "Header Logo",
+				contentDescription = stringResource(R.string.cd_logo),
 				modifier = Modifier
 					.size(38.dp),
 			)
@@ -98,12 +99,12 @@ fun EmailEntryView(
 		Spacer(Modifier.height(16.dp))
 		Column {
 			Text(
-				text = "Forgot Password?",
+				text = stringResource(R.string.forgot_password),
 				style = MaterialTheme.typography.headlineLarge
 			)
 			Spacer(Modifier.height(8.dp))
 			Text(
-				text = "Don’t worry! It happens. Please enter the email associated with your account.",
+				text = stringResource(R.string.forgot_password_hint),
 				style = MaterialTheme.typography.bodyMedium
 			)
 		}
@@ -112,18 +113,18 @@ fun EmailEntryView(
 		// --- Inout field --- //
 		Spacer(Modifier.height(32.dp))
 		Column {
-			Text("Email Address", style = MaterialTheme.typography.labelSmall)
+			Text(stringResource(R.string.email_address), style = MaterialTheme.typography.labelSmall)
 			OutlinedTextField(
 				value = email,
 				onValueChange = {
 					email = it.filterNot(Char::isWhitespace).take(254)
 				},
-				label = { Text("Enter your Email Address") },
+				label = { Text(stringResource(R.string.enter_email_address)) },
 				modifier = Modifier.fillMaxWidth(),
 				singleLine = true,
 				isError = email.isNotEmpty() && !isValidEmail,
 				supportingText = if (email.isNotEmpty() && !isValidEmail) {
-					{ Text("Enter a valid email address") }
+					{ Text(stringResource(R.string.error_invalid_email)) }
 				} else null,
 				keyboardOptions = KeyboardOptions(
 					keyboardType = KeyboardType.Email,
@@ -147,7 +148,7 @@ fun EmailEntryView(
 				)
 			) {
 				Text(
-					text = "Send Code",
+					text = stringResource(R.string.send_code),
 					fontSize = 14.sp
 				)
 			}

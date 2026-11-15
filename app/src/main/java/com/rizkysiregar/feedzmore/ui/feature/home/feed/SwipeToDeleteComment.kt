@@ -24,6 +24,8 @@ import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.rizkysiregar.feedzmore.R
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -47,10 +49,11 @@ internal fun SwipeToDeleteComment(
 		}
 	)
 
+	val deleteLabel = stringResource(R.string.delete_comment)
 	SwipeToDismissBox(
 		state = state,
 		modifier = modifier.semantics {
-			customActions = listOf(CustomAccessibilityAction("Hapus komentar") { latestRequest(); true })
+			customActions = listOf(CustomAccessibilityAction(deleteLabel) { latestRequest(); true })
 		},
 		enableDismissFromStartToEnd = false,
 		backgroundContent = {
@@ -70,7 +73,7 @@ internal fun SwipeToDeleteComment(
 					) {
 						Icon(
 							imageVector = Icons.Default.Delete,
-							contentDescription = "Hapus komentar",
+							contentDescription = stringResource(R.string.delete_comment),
 							tint = MaterialTheme.colorScheme.onErrorContainer,
 							modifier = Modifier.padding(end = 20.dp)
 						)

@@ -44,6 +44,7 @@ import coil3.request.ImageRequest
 import com.rizkysiregar.feedzmore.R
 import com.rizkysiregar.feedzmore.media.currentMediaUrlOrNull
 import com.rizkysiregar.feedzmore.ui.components.ShimmerEffect
+import androidx.compose.ui.res.stringResource
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -166,7 +167,7 @@ fun VideoFeedPlayer(
 			) {
 				Icon(
 					imageVector = if (muted) Icons.Filled.VolumeOff else Icons.Filled.VolumeUp,
-					contentDescription = if (muted) "Suarakan" else "Bisukan",
+					contentDescription = stringResource(if (muted) R.string.unmute else R.string.mute),
 					tint = MaterialTheme.colorScheme.onBackground
 				)
 			}
@@ -190,7 +191,7 @@ private fun VideoPoster(
 				model = ImageRequest.Builder(LocalContext.current)
 					.data(thumbnailUrl)
 					.build(),
-				contentDescription = "Thumbnail video",
+				contentDescription = stringResource(R.string.cd_video_thumbnail),
 				modifier = Modifier.fillMaxSize(),
 				contentScale = ContentScale.Crop,
 				loading = { ShimmerEffect(modifier = Modifier.fillMaxSize()) },
@@ -205,7 +206,7 @@ private fun VideoPoster(
 		if (showPlayIcon) {
 			Icon(
 				imageVector = Icons.Filled.PlayCircle,
-				contentDescription = "Putar video",
+				contentDescription = stringResource(R.string.cd_play_video),
 				tint = MaterialTheme.colorScheme.onBackground,
 				modifier = Modifier
 					.align(Alignment.Center)

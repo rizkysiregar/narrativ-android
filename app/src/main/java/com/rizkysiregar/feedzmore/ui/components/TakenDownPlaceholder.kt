@@ -17,6 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.rizkysiregar.feedzmore.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Stands in for the media of a post that was taken down by moderation.
@@ -37,13 +39,13 @@ fun TakenDownPlaceholder(
 	) {
 		Icon(
 			imageVector = Icons.Outlined.VisibilityOff,
-			contentDescription = "Post taken down",
+			contentDescription = stringResource(R.string.cd_post_taken_down),
 			tint = MaterialTheme.colorScheme.onSurfaceVariant,
 			modifier = Modifier.size(if (compact) 24.dp else 36.dp)
 		)
 		if (!compact) {
 			Text(
-				text = "Post unavailable",
+				text = stringResource(R.string.post_unavailable),
 				style = MaterialTheme.typography.titleSmall,
 				color = MaterialTheme.colorScheme.onSurface
 			)

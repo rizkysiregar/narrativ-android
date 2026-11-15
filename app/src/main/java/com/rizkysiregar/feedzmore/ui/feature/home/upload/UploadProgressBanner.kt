@@ -30,6 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.rizkysiregar.feedzmore.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -65,12 +67,12 @@ fun UploadProgressBanner(
 				CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
 				Column(modifier = Modifier.weight(1f)) {
 					Text(
-						text = "Sending your post",
+						text = stringResource(R.string.notif_sending),
 						style = MaterialTheme.typography.titleSmall
 					)
 					Spacer(Modifier.height(2.dp))
 					Text(
-						text = first.stageLabel.ifBlank { "Waiting for connection..." },
+						text = first.stageLabel.ifBlank { stringResource(R.string.stage_waiting) },
 						style = MaterialTheme.typography.bodySmall,
 						color = MaterialTheme.colorScheme.onSurfaceVariant,
 						maxLines = 1
@@ -83,7 +85,7 @@ fun UploadProgressBanner(
 				}
 				Icon(
 					imageVector = Icons.Default.Close,
-					contentDescription = "Cancel upload",
+					contentDescription = stringResource(R.string.cancel_upload),
 					modifier = Modifier
 						.size(20.dp)
 						.clip(RoundedCornerShape(10.dp))

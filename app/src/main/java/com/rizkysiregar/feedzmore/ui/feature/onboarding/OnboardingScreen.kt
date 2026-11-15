@@ -90,27 +90,30 @@ import com.rizkysiregar.feedzmore.ui.theme.TextPrimary
 import com.rizkysiregar.feedzmore.ui.theme.TextSecondary
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import com.rizkysiregar.feedzmore.R
+import androidx.compose.ui.res.stringResource
+import androidx.annotation.StringRes
 
 private data class OnboardingPage(
-	val title: String,
-	val body: String,
+	@StringRes val titleRes: Int,
+	@StringRes val bodyRes: Int,
 	val glow: Color
 )
 
 private val pages = listOf(
 	OnboardingPage(
-		title = "Share moments, not just posts",
-		body = "Post photos and videos and let your people feel the moment with you.",
+		titleRes = R.string.onb_title_1,
+		bodyRes = R.string.onb_body_1,
 		glow = Accent500
 	),
 	OnboardingPage(
-		title = "Discover what's new",
-		body = "Explore fresh creators and stories from all around the community.",
+		titleRes = R.string.onb_title_2,
+		bodyRes = R.string.onb_body_2,
 		glow = Like
 	),
 	OnboardingPage(
-		title = "Stay close to your people",
-		body = "Follow friends, like and comment, and never miss a reply.",
+		titleRes = R.string.onb_title_3,
+		bodyRes = R.string.onb_body_3,
 		glow = RoseGold
 	)
 )
@@ -163,7 +166,7 @@ fun OnboardingScreen(
 					enabled = !isLast,
 					modifier = Modifier.alpha(skipAlpha)
 				) {
-					Text("Skip", color = TextSecondary)
+					Text(stringResource(R.string.skip), color = TextSecondary)
 				}
 			}
 
@@ -198,7 +201,7 @@ fun OnboardingScreen(
 				colors = ButtonDefaults.buttonColors(containerColor = Accent500, contentColor = OnAccent)
 			) {
 				Text(
-					text = if (isLast) "Get started" else "Next",
+					text = if (isLast) stringResource(R.string.get_started) else stringResource(R.string.next),
 					style = MaterialTheme.typography.titleMedium,
 					fontWeight = FontWeight.SemiBold
 				)
@@ -214,12 +217,12 @@ fun OnboardingScreen(
 				if (isLast) {
 					Row(verticalAlignment = Alignment.CenterVertically) {
 						Text(
-							text = "Already have an account?",
+							text = stringResource(R.string.already_account),
 							style = MaterialTheme.typography.bodyMedium,
 							color = TextSecondary
 						)
 						TextButton(onClick = onLogin) {
-							Text("Log in", color = Accent400, fontWeight = FontWeight.SemiBold)
+							Text(stringResource(R.string.log_in), color = Accent400, fontWeight = FontWeight.SemiBold)
 						}
 					}
 				}
@@ -272,7 +275,7 @@ private fun PageContent(
 		) {
 			Spacer(modifier = Modifier.height(24.dp))
 			Text(
-				text = page.title,
+				text = stringResource(page.titleRes),
 				style = MaterialTheme.typography.headlineMedium,
 				fontWeight = FontWeight.Bold,
 				color = TextPrimary,
@@ -280,7 +283,7 @@ private fun PageContent(
 			)
 			Spacer(modifier = Modifier.height(12.dp))
 			Text(
-				text = page.body,
+				text = stringResource(page.bodyRes),
 				style = MaterialTheme.typography.bodyLarge,
 				color = TextSecondary,
 				textAlign = TextAlign.Center
@@ -302,7 +305,7 @@ private fun NotificationAction(enabled: Boolean, onClick: () -> Unit) {
 		) {
 			Icon(Icons.Filled.Check, contentDescription = null, tint = Success, modifier = Modifier.size(18.dp))
 			Spacer(modifier = Modifier.width(8.dp))
-			Text("Notifications are on", style = MaterialTheme.typography.bodyMedium, color = Success)
+			Text(stringResource(R.string.notifications_on), style = MaterialTheme.typography.bodyMedium, color = Success)
 		}
 	} else {
 		OutlinedButton(
@@ -318,17 +321,18 @@ private fun NotificationAction(enabled: Boolean, onClick: () -> Unit) {
 				modifier = Modifier.size(18.dp)
 			)
 			Spacer(modifier = Modifier.width(8.dp))
-			Text("Turn on notifications", color = TextPrimary)
+			Text(stringResource(R.string.turn_on_notifications), color = TextPrimary)
 		}
 	}
 }
 
 @Composable
 private fun PageIndicator(current: Int, count: Int) {
+	val pageDescription = stringResource(R.string.cd_page_of, current + 1, count)
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
-			.semantics { contentDescription = "Page ${current + 1} of $count" },
+			.semantics { contentDescription = pageDescription },
 		horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
 	) {
 		repeat(count) { i ->
@@ -542,7 +546,7 @@ private fun PeopleIllustration(side: Dp) {
 			Avatar(size = side * 0.46f, ringed = true)
 			Spacer(modifier = Modifier.height(14.dp))
 			Text(
-				text = "Follow",
+				text = stringResource(R.string.follow),
 				style = MaterialTheme.typography.labelLarge,
 				fontWeight = FontWeight.SemiBold,
 				color = OnAccent,
@@ -560,7 +564,7 @@ private fun PeopleIllustration(side: Dp) {
 			modifier = Modifier.offset(x = side * 0.27f, y = side * -0.3f + bobC)
 		)
 		Chip(
-			label = "Love this!",
+			label = stringResource(R.string.chip_love_this),
 			icon = Icons.Filled.ChatBubble,
 			iconTint = Accent400,
 			modifier = Modifier.offset(x = side * -0.3f, y = side * 0.42f + bobB)

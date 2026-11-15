@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rizkysiregar.feedzmore.R
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
+import androidx.compose.ui.res.stringResource
 
 
 @Composable
@@ -105,7 +106,7 @@ fun TopSection(
 		) {
 			Image(
 				painter = painterResource(R.drawable.star_black),
-				contentDescription = "Header Logo",
+				contentDescription = stringResource(R.string.cd_logo),
 				modifier = Modifier
 					.size(38.dp),
 			)
@@ -114,7 +115,7 @@ fun TopSection(
 		Spacer(modifier = Modifier.height(24.dp))
 
 		Text(
-			text = "Log In",
+			text = stringResource(R.string.login),
 			style = MaterialTheme.typography.headlineLarge,
 		)
 
@@ -150,7 +151,7 @@ fun MiddleSection(onLoginClick: () -> Unit, onGoogleLoginClick: () -> Unit) {
 			)
 		) {
 			Text(
-				text = "Log In",
+				text = stringResource(R.string.login),
 				fontSize = 14.sp
 			)
 		}
@@ -173,12 +174,12 @@ fun BottomSection(onNavigateToRegister: () -> Unit) {
 		horizontalArrangement = Arrangement.Center
 	) {
 		Text(
-			text = "Don't have an account?",
+			text = stringResource(R.string.no_account),
 			style = MaterialTheme.typography.bodySmall
 		)
 		Spacer(modifier = Modifier.width(4.dp))
 		Text(
-			text = "Sign Up",
+			text = stringResource(R.string.sign_up),
 			color = MaterialTheme.colorScheme.onBackground,
 			style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
 			modifier = Modifier.clickable(
@@ -205,14 +206,14 @@ fun UsernameField(
 	OutlinedTextField(
 		value = username,
 		onValueChange = { onUsernameChange(it.removeLineBreaks()) },
-		label = { Text("Username") },
+		label = { Text(stringResource(R.string.username)) },
 		isError = errorMessage != null,
 		supportingText = errorMessage?.let { { Text(it) } },
 		trailingIcon = {
 			if (username.isNotEmpty()) {
 				Icon(
 					imageVector = Icons.Default.Check,
-					contentDescription = "Valid Username"
+					contentDescription = stringResource(R.string.cd_valid_username)
 				)
 			}
 		},
@@ -233,7 +234,7 @@ fun PasswordField(
 	OutlinedTextField(
 		value = password,
 		onValueChange = { onPasswordChange(it.removeLineBreaks()) },
-		label = { Text("Password") },
+		label = { Text(stringResource(R.string.password)) },
 		isError = errorMessage != null,
 		supportingText = errorMessage?.let { { Text(it) } },
 		visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -245,7 +246,7 @@ fun PasswordField(
 					painter = if (isVisible) painterResource(R.drawable.eye_solid_full) else painterResource(
 						R.drawable.eye_slash_solid_full
 					),
-					contentDescription = "Toggle password visibility",
+					contentDescription = stringResource(R.string.cd_toggle_password),
 					modifier = Modifier.size(24.dp)
 				)
 			}
@@ -267,7 +268,7 @@ fun ForgotPasswordText(onForgotPasswordClick: () -> Unit) {
 	) {
 		TextButton(onClick = onForgotPasswordClick) {
 			Text(
-				text = "Forgot Password?",
+				text = stringResource(R.string.forgot_password),
 				style = MaterialTheme.typography.bodySmall,
 				color = MaterialTheme.colorScheme.onBackground
 			)
@@ -287,7 +288,7 @@ fun OrLoginWith() {
 	) {
 		HorizontalDivider(modifier = Modifier.weight(1f))
 		Text(
-			text = "Or Login with ",
+			text = stringResource(R.string.or_login_with),
 			style = MaterialTheme.typography.bodySmall
 		)
 		HorizontalDivider(modifier = Modifier.weight(1f))

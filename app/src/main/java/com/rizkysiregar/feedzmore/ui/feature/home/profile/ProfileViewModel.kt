@@ -25,6 +25,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.rizkysiregar.feedzmore.i18n.AppStrings
+import com.rizkysiregar.feedzmore.R
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -39,7 +41,8 @@ class ProfileViewModel @Inject constructor(
 	private val sessionManager: SessionManager,
 	private val fetchUserProfileUseCase: FetchUserProfileUseCase,
 	private val getFollowStatusUseCase: com.rizkysiregar.feedzmore.domain.user.GetFollowStatusUseCase,
-	private val profilePhotoUseCase: ProfilePhotoUseCase
+	private val profilePhotoUseCase: ProfilePhotoUseCase,
+	private val appStrings: AppStrings
 ) : BaseViewModel(dataStore) {
 
 	// clear user data aka logout
@@ -64,7 +67,7 @@ class ProfileViewModel @Inject constructor(
 
 	/** Uploads the file produced by the crop step and deletes it afterwards. */
 	fun onPhotoCropped(file: File) {
-		updatePhoto("Foto profil diperbarui") {
+		updatePhoto(appStrings.get(R.string.profile_photo_updated)) {
 			try {
 				profilePhotoUseCase.upload(Uri.fromFile(file), "image/jpeg")
 			} finally {
@@ -74,7 +77,7 @@ class ProfileViewModel @Inject constructor(
 	}
 
 	fun removePhoto() {
-		updatePhoto("Foto profil dihapus") { profilePhotoUseCase.remove() }
+		updatePhoto(appStrings.get(R.string.profile_photo_removed)) { profilePhotoUseCase.remove() }
 	}
 
 	private fun updatePhoto(successMessage: String, action: suspend () -> UserSearchItemResponse) {
@@ -87,11 +90,11 @@ class ProfileViewModel @Inject constructor(
 			} catch (e: CancellationException) {
 				throw e
 			} catch (e: MediaValidationException) {
-				_photoMessages.tryEmit(e.message ?: "Foto tidak dapat digunakan")
+				_photoMessages.tryEmit(appStrings.get(e.messageRes, *e.args.toTypedArray()))
 			} catch (e: UploadHttpException) {
-				_photoMessages.tryEmit("Gagal mengunggah foto, coba lagi")
+				_photoMessages.tryEmit(appStrings.get(R.string.profile_err_upload))
 			} catch (e: Exception) {
-				_photoMessages.tryEmit("Gagal memperbarui foto profil, coba lagi")
+				_photoMessages.tryEmit(appStrings.get(R.string.profile_err_update))
 			} finally {
 				_isUpdatingPhoto.value = false
 			}
@@ -112,7 +115,7 @@ class ProfileViewModel @Inject constructor(
 			val userId = dataStore.get(PrefKeys.userId, "").first()
 
 			if (userId.isEmpty()) {
-				_profileState.value = ResultState.Failure("User ID not found")
+				_profileState.value = ResultState.Failure(appStrings.get(R.string.error_user_id_missing))
 				return@launch
 			}
 

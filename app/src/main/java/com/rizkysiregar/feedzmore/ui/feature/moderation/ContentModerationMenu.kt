@@ -44,6 +44,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rizkysiregar.feedzmore.domain.moderation.REPORT_DESCRIPTION_MAX_LENGTH
 import com.rizkysiregar.feedzmore.domain.moderation.ReportReason
 import com.rizkysiregar.feedzmore.domain.moderation.ReportTarget
+import androidx.compose.ui.res.stringResource
+import com.rizkysiregar.feedzmore.R
 
 /** What a report or block is about. [authorId] is null when the server did not send it (then no menu shows). */
 data class ModerationTarget(
@@ -74,11 +76,13 @@ fun ContentModerationMenu(
 	var showReport by rememberSaveable { mutableStateOf(false) }
 	var showBlock by rememberSaveable { mutableStateOf(false) }
 
-	val subject = when (target.type) {
-		ReportTarget.POST -> "postingan"
-		ReportTarget.COMMENT -> "komentar"
-		ReportTarget.USER -> "akun"
-	}
+	val subject = stringResource(
+		when (target.type) {
+			ReportTarget.POST -> R.string.subject_post
+			ReportTarget.COMMENT -> R.string.subject_comment
+			ReportTarget.USER -> R.string.subject_account
+		}
+	)
 
 	fun toast(message: String) = Toast.makeText(context, message, Toast.LENGTH_LONG).show()
 
@@ -86,14 +90,14 @@ fun ContentModerationMenu(
 		IconButton(onClick = { menuOpen = true }, modifier = Modifier.size(iconSize + 16.dp)) {
 			Icon(
 				imageVector = Icons.Filled.MoreVert,
-				contentDescription = "Opsi $subject",
+				contentDescription = stringResource(R.string.options_for, subject),
 				tint = MaterialTheme.colorScheme.onSurfaceVariant,
 				modifier = Modifier.size(iconSize)
 			)
 		}
 		DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
 			DropdownMenuItem(
-				text = { Text("Laporkan $subject") },
+				text = { Text(stringResource(R.string.report_subject, subject)) },
 				leadingIcon = { Icon(Icons.Outlined.Flag, contentDescription = null) },
 				onClick = {
 					menuOpen = false
@@ -101,7 +105,7 @@ fun ContentModerationMenu(
 				}
 			)
 			DropdownMenuItem(
-				text = { Text("Blokir @${target.authorUsername}") },
+				text = { Text(stringResource(R.string.block_user, target.authorUsername)) },
 				leadingIcon = { Icon(Icons.Outlined.Block, contentDescription = null) },
 				onClick = {
 					menuOpen = false
@@ -120,7 +124,7 @@ fun ContentModerationMenu(
 				viewModel.report(target.type, target.targetId, reason, description) { result ->
 					when (result) {
 						ModerationResult.Success ->
-							toast("Terima kasih, laporan Anda sudah kami terima.")
+							toast(context.getString(R.string.report_thanks))
 						is ModerationResult.Failure -> result.message?.let(::toast)
 					}
 				}
@@ -131,12 +135,9 @@ fun ContentModerationMenu(
 	if (showBlock) {
 		AlertDialog(
 			onDismissRequest = { showBlock = false },
-			title = { Text("Blokir @${target.authorUsername}?") },
+			title = { Text(stringResource(R.string.block_user_title, target.authorUsername)) },
 			text = {
-				Text(
-					"Anda dan @${target.authorUsername} tidak akan saling melihat postingan maupun komentar, " +
-						"dan saling berhenti mengikuti. Anda bisa membuka blokir kapan saja dari Pengaturan."
-				)
+				Text(stringResource(R.string.block_body, target.authorUsername))
 			},
 			confirmButton = {
 				TextButton(onClick = {
@@ -144,15 +145,15 @@ fun ContentModerationMenu(
 					viewModel.block(authorId) { result ->
 						when (result) {
 							ModerationResult.Success -> {
-								toast("@${target.authorUsername} diblokir.")
+								toast(context.getString(R.string.user_blocked, target.authorUsername))
 								onBlocked()
 							}
 							is ModerationResult.Failure -> result.message?.let(::toast)
 						}
 					}
-				}) { Text("Blokir", color = MaterialTheme.colorScheme.error) }
+				}) { Text(stringResource(R.string.block), color = MaterialTheme.colorScheme.error) }
 			},
-			dismissButton = { TextButton(onClick = { showBlock = false }) { Text("Batal") } }
+			dismissButton = { TextButton(onClick = { showBlock = false }) { Text(stringResource(R.string.cancel)) } }
 		)
 	}
 }
@@ -170,7 +171,7 @@ private fun ReportDialog(
 
 	AlertDialog(
 		onDismissRequest = onDismiss,
-		title = { Text("Laporkan $subject") },
+		title = { Text(stringResource(R.string.report_subject, subject)) },
 		text = {
 			Column(
 				modifier = Modifier
@@ -178,7 +179,7 @@ private fun ReportDialog(
 					.verticalScroll(rememberScrollState())
 			) {
 				Text(
-					"Pilih alasan yang paling sesuai.",
+					stringResource(R.string.report_pick_reason),
 					style = MaterialTheme.typography.bodySmall,
 					color = MaterialTheme.colorScheme.onSurfaceVariant
 				)
@@ -196,7 +197,7 @@ private fun ReportDialog(
 						horizontalArrangement = Arrangement.spacedBy(4.dp)
 					) {
 						RadioButton(selected = option == reason, onClick = null)
-						Text(option.label, modifier = Modifier.padding(vertical = 10.dp))
+						Text(stringResource(option.labelRes), modifier = Modifier.padding(vertical = 10.dp))
 					}
 				}
 				if (reason != null) {
@@ -204,7 +205,7 @@ private fun ReportDialog(
 					OutlinedTextField(
 						value = description,
 						onValueChange = { description = it.take(REPORT_DESCRIPTION_MAX_LENGTH) },
-						label = { Text(if (reason.needsDescription) "Jelaskan (wajib)" else "Keterangan (opsional)") },
+						label = { Text(stringResource(if (reason.needsDescription) R.string.report_describe_required else R.string.report_describe_optional)) },
 						supportingText = { Text("${description.length}/$REPORT_DESCRIPTION_MAX_LENGTH") },
 						minLines = 2,
 						maxLines = 4,
@@ -217,8 +218,8 @@ private fun ReportDialog(
 			TextButton(
 				enabled = canSubmit,
 				onClick = { reason?.let { onSubmit(it, description.takeIf(String::isNotBlank)) } }
-			) { Text("Kirim laporan") }
+			) { Text(stringResource(R.string.send_report)) }
 		},
-		dismissButton = { TextButton(onClick = onDismiss) { Text("Batal") } }
+		dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
 	)
 }

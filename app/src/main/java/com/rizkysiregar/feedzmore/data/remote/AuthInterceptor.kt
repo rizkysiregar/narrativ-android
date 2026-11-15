@@ -89,7 +89,7 @@ class AuthInterceptor @Inject constructor(
 	 */
 	private fun extractErrorMessage(
 		response: Response,
-		fallback: String = DEFAULT_SESSION_EXPIRED_MESSAGE
+		fallback: String = ApiMessages.SESSION_EXPIRED
 	): String =
 		runCatching {
 			JSONObject(response.peekBody(MAX_ERROR_BODY_BYTES).string())
@@ -101,7 +101,5 @@ class AuthInterceptor @Inject constructor(
 		const val HTTP_UNAUTHORIZED = 401
 		const val HTTP_NOT_FOUND = 404
 		const val MAX_ERROR_BODY_BYTES = 64L * 1024L
-		const val DEFAULT_SESSION_EXPIRED_MESSAGE =
-			"Sesi Anda telah berakhir. Silakan masuk kembali."
 	}
 }

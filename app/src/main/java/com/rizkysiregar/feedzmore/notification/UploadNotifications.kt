@@ -19,6 +19,7 @@ import com.rizkysiregar.feedzmore.ui.theme.Error
 import com.rizkysiregar.feedzmore.ui.theme.Success
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
+import com.rizkysiregar.feedzmore.i18n.AppStrings
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -30,23 +31,23 @@ object UploadNotifications {
 	const val CHANNEL_PROGRESS = "upload_progress"
 	const val CHANNEL_RESULT = "upload_result"
 
-	private const val TITLE_PROGRESS = "Sending your post"
 	private const val MIN_PERCENT_STEP = 2
 
 	// last stage and percent posted per progress notification, to skip updates nobody would see
 	private val lastPosted = ConcurrentHashMap<Int, Pair<String, Int>>()
 
-	fun createChannels(context: Context) {
+	fun createChannels(appContext: Context) {
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+		val context = AppStrings.localized(appContext)
 		val manager = context.getSystemService(NotificationManager::class.java) ?: return
 
 		manager.createNotificationChannel(
 			NotificationChannel(
 				CHANNEL_PROGRESS,
-				"Upload progress",
+				context.getString(R.string.notif_channel_progress),
 				NotificationManager.IMPORTANCE_LOW
 			).apply {
-				description = "Shows the progress of a post being uploaded"
+				description = context.getString(R.string.notif_channel_progress_desc)
 				setShowBadge(false)
 			}
 		)
@@ -54,10 +55,10 @@ object UploadNotifications {
 		manager.createNotificationChannel(
 			NotificationChannel(
 				CHANNEL_RESULT,
-				"Upload result",
+				context.getString(R.string.notif_channel_result),
 				NotificationManager.IMPORTANCE_DEFAULT
 			).apply {
-				description = "The final result of a post upload"
+				description = context.getString(R.string.notif_channel_result_desc)
 			}
 		)
 	}
@@ -68,16 +69,17 @@ object UploadNotifications {
 		stageLabel: String,
 		percent: Int
 	): Notification {
+		val titleProgress = AppStrings.localized(context).getString(R.string.notif_sending)
 		val progress = percent.coerceIn(0, PROGRESS_MAX)
 		val percentText = "$progress%"
 
 		val collapsed = RemoteViews(context.packageName, R.layout.notification_upload_collapsed).apply {
-			setTextViewText(R.id.title, TITLE_PROGRESS)
+			setTextViewText(R.id.title, titleProgress)
 			setTextViewText(R.id.percent, percentText)
 			setImageViewBitmap(R.id.bar, UploadBarRenderer.render(progress, UploadBarRenderer.HEIGHT_COLLAPSED_PX))
 		}
 		val expanded = RemoteViews(context.packageName, R.layout.notification_upload_expanded).apply {
-			setTextViewText(R.id.title, TITLE_PROGRESS)
+			setTextViewText(R.id.title, titleProgress)
 			setTextViewText(R.id.percent, percentText)
 			setTextViewText(R.id.caption, caption.ifBlank { stageLabel })
 			setViewVisibility(R.id.caption, if (caption.isBlank()) View.GONE else View.VISIBLE)
@@ -89,7 +91,7 @@ object UploadNotifications {
 			.setSmallIcon(R.drawable.ic_stat_plane)
 			.setColor(Accent500.toArgb())
 			// the plain fields stay filled for surfaces that do not draw custom views (lock screen, wearables)
-			.setContentTitle(TITLE_PROGRESS)
+			.setContentTitle(titleProgress)
 			.setContentText(caption.ifBlank { stageLabel })
 			.setStyle(NotificationCompat.DecoratedCustomViewStyle())
 			.setCustomContentView(collapsed)
@@ -102,8 +104,9 @@ object UploadNotifications {
 	}
 
 	fun buildResult(context: Context, caption: String, success: Boolean): Notification {
-		val title = if (success) "Post shared" else "Couldn't share your post"
-		val text = caption.ifBlank { if (success) "It's live in your feed" else "Please try again" }
+		val strings = AppStrings.localized(context)
+		val title = strings.getString(if (success) R.string.notif_posted else R.string.notif_failed)
+		val text = caption.ifBlank { strings.getString(if (success) R.string.notif_live else R.string.notif_try_again) }
 
 		val card = RemoteViews(context.packageName, R.layout.notification_upload_result).apply {
 			setImageViewResource(R.id.badge, if (success) R.drawable.ic_notif_success else R.drawable.ic_notif_error)

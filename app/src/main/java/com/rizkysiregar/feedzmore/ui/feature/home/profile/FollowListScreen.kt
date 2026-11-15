@@ -27,6 +27,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import com.rizkysiregar.feedzmore.R
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,7 +45,7 @@ fun FollowListScreen(
 				title = { Text(title) },
 				navigationIcon = {
 					IconButton(onClick = onBackClick) {
-						Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
+						Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
 					}
 				}
 			)

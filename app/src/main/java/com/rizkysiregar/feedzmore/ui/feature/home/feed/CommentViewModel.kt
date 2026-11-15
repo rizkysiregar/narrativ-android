@@ -31,6 +31,8 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
+import com.rizkysiregar.feedzmore.i18n.AppStrings
+import com.rizkysiregar.feedzmore.R
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -71,7 +73,8 @@ class CommentViewModel @Inject constructor(
 	private val addCommentUseCase: AddCommentUseCase,
 	private val deleteCommentUseCase: DeleteCommentUseCase,
 	private val dataStore: DataStoreManager,
-	private val analytics: AppAnalytics
+	private val analytics: AppAnalytics,
+	private val appStrings: AppStrings
 ) : ViewModel() {
 
 	// state for fetch comments
@@ -275,7 +278,7 @@ class CommentViewModel @Inject constructor(
 				when (val result = deleteCommentUseCase(UUID.fromString(comment.id)).awaitResult()) {
 					is ResultState.Success -> {
 						removeLocally(comment)
-						eventChannel.send(CommentEvent.ShowMessage(if (comment.isReply) "Balasan dihapus" else "Komentar dihapus"))
+						eventChannel.send(CommentEvent.ShowMessage(appStrings.get(if (comment.isReply) R.string.reply_deleted else R.string.comment_deleted)))
 					}
 
 					is ResultState.Failure -> eventChannel.send(CommentEvent.ShowMessage(result.message))

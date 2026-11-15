@@ -55,6 +55,7 @@ import com.rizkysiregar.feedzmore.ui.components.InitialAvatar
 import com.rizkysiregar.feedzmore.ui.components.TakenDownPlaceholder
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 import com.rizkysiregar.feedzmore.util.formatPostDate
+import androidx.compose.ui.res.stringResource
 
 private const val CAPTION_ONLY_MAX_LINES = 10
 private const val CAPTION_WITH_MEDIA_MAX_LINES = 4
@@ -226,7 +227,7 @@ private fun ExpandableCaption(caption: String, captionOnly: Boolean) {
 		)
 		if (overflows || expanded) {
 			Text(
-				text = if (expanded) "Sembunyikan" else "Lihat selengkapnya",
+				text = if (expanded) stringResource(R.string.show_less) else stringResource(R.string.show_more),
 				style = MaterialTheme.typography.labelMedium,
 				color = MaterialTheme.colorScheme.onSurfaceVariant,
 				modifier = Modifier.padding(top = 4.dp)
@@ -253,7 +254,7 @@ private fun FeedActions(
 		ActionButton(onClick = onLikeClick) {
 			Icon(
 				imageVector = if (item.liked) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-				contentDescription = if (item.liked) "Batalkan suka" else "Suka",
+				contentDescription = if (item.liked) stringResource(R.string.cd_unlike) else stringResource(R.string.cd_like),
 				tint = likeColor,
 				modifier = Modifier.size(20.dp).scale(likeScale)
 			)
@@ -267,7 +268,7 @@ private fun FeedActions(
 		ActionButton(onClick = onCommentClick) {
 			Icon(
 				painter = painterResource(R.drawable.comment_regular_full),
-				contentDescription = "Komentar",
+				contentDescription = stringResource(R.string.comments),
 				tint = MaterialTheme.colorScheme.onSurfaceVariant,
 				modifier = Modifier.size(18.dp)
 			)

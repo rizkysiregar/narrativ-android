@@ -36,6 +36,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.emoji2.emojipicker.EmojiPickerView
+import com.rizkysiregar.feedzmore.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -112,7 +114,7 @@ fun EmojiToggleButton(
 	) {
 		Icon(
 			imageVector = if (state.isOpen) Icons.Outlined.Keyboard else Icons.Outlined.EmojiEmotions,
-			contentDescription = if (state.isOpen) "Tampilkan keyboard" else "Tampilkan semua emoji"
+			contentDescription = stringResource(if (state.isOpen) R.string.show_keyboard else R.string.show_all_emoji)
 		)
 	}
 }

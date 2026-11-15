@@ -12,6 +12,7 @@ import androidx.navigation.NavController
 import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.ui.base.BaseScreen
 import com.rizkysiregar.feedzmore.ui.main.navigation.routes.AuthPathRoutes
+import com.rizkysiregar.feedzmore.R
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -46,7 +47,7 @@ fun ResetPasswordRoute(
 
 			Toast.makeText(
 				context,
-				"Password reset successful! Please login with you new password!",
+				context.getString(R.string.password_reset_success),
 				Toast.LENGTH_LONG
 			).show()
 

@@ -40,6 +40,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import com.rizkysiregar.feedzmore.ui.theme.BgBase
+import com.rizkysiregar.feedzmore.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * A legal page inside the app. The WebView is locked down: no JavaScript (the pages are static), no file or
@@ -70,7 +72,7 @@ fun LegalScreen(
 					IconButton(onClick = onBackClick) {
 						Icon(
 							imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-							contentDescription = if (language == LegalDocument.LANGUAGE_ID) "Kembali" else "Back"
+							contentDescription = stringResource(R.string.back)
 						)
 					}
 				}
@@ -129,18 +131,14 @@ fun LegalScreen(
 					verticalArrangement = Arrangement.Center
 				) {
 					Text(
-						text = if (language == LegalDocument.LANGUAGE_ID) {
-							"Halaman tidak bisa dimuat. Periksa koneksi Anda."
-						} else {
-							"The page could not be loaded. Check your connection."
-						},
+						text = stringResource(R.string.error_page_load),
 						textAlign = TextAlign.Center,
 						color = MaterialTheme.colorScheme.onSurfaceVariant
 					)
 					TextButton(onClick = {
 						hasFailed = false
 						webView?.loadUrl(url)
-					}) { Text(if (language == LegalDocument.LANGUAGE_ID) "Coba lagi" else "Try again") }
+					}) { Text(stringResource(R.string.try_again)) }
 				}
 			}
 		}

@@ -16,7 +16,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.tasks.await
 import retrofit2.Retrofit
-import java.util.Locale
+import com.rizkysiregar.feedzmore.i18n.AppLocale
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -93,7 +93,7 @@ class DeviceRegistrar @Inject constructor(
 		appVersion = appVersion(),
 		osVersion = Build.VERSION.RELEASE,
 		deviceModel = "${Build.MANUFACTURER} ${Build.MODEL}",
-		locale = Locale.getDefault().toLanguageTag(),
+		locale = AppLocale.current().tag,
 		timezone = TimeZone.getDefault().id
 	)
 

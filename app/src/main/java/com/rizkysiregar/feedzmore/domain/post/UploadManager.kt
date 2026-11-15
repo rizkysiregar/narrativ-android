@@ -21,6 +21,8 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.rizkysiregar.feedzmore.i18n.AppStrings
+import com.rizkysiregar.feedzmore.R
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -35,6 +37,7 @@ class UploadManager @Inject constructor(
 ) {
 
 	private val workManager = WorkManager.getInstance(context)
+	private val appStrings = AppStrings(context)
 
 	private val _completions = MutableSharedFlow<Unit>(extraBufferCapacity = 4)
 	val completions: SharedFlow<Unit> = _completions.asSharedFlow()
@@ -89,7 +92,7 @@ class UploadManager @Inject constructor(
 		return PendingUpload(
 			id = id,
 			caption = caption,
-			stageLabel = progress.getString(PostUploadWorker.KEY_STAGE) ?: "Menunggu koneksi",
+			stageLabel = progress.getString(PostUploadWorker.KEY_STAGE) ?: appStrings.get(R.string.stage_waiting),
 			progress = progress.getInt(PostUploadWorker.KEY_PERCENT, 0),
 			state = state
 		)

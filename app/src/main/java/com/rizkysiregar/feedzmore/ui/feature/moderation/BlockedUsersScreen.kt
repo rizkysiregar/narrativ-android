@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rizkysiregar.feedzmore.ui.components.ProfileAvatar
+import com.rizkysiregar.feedzmore.R
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,10 +44,10 @@ fun BlockedUsersRoute(
 	Scaffold(
 		topBar = {
 			TopAppBar(
-				title = { Text("Akun yang diblokir") },
+				title = { Text(stringResource(R.string.blocked_accounts)) },
 				navigationIcon = {
 					IconButton(onClick = onBackClick) {
-						Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
+						Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
 					}
 				}
 			)
@@ -61,12 +63,12 @@ fun BlockedUsersRoute(
 					horizontalAlignment = Alignment.CenterHorizontally,
 					verticalArrangement = Arrangement.spacedBy(8.dp)
 				) {
-					Text("Gagal memuat daftar.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-					TextButton(onClick = viewModel::load) { Text("Coba lagi") }
+					Text(stringResource(R.string.error_load_list), color = MaterialTheme.colorScheme.onSurfaceVariant)
+					TextButton(onClick = viewModel::load) { Text(stringResource(R.string.try_again)) }
 				}
 
 				state.users.isEmpty() -> Text(
-					text = "Anda belum memblokir siapa pun.",
+					text = stringResource(R.string.no_blocked_users),
 					color = MaterialTheme.colorScheme.onSurfaceVariant,
 					textAlign = TextAlign.Center,
 					modifier = Modifier.align(Alignment.Center).padding(24.dp)
@@ -88,7 +90,7 @@ fun BlockedUsersRoute(
 								OutlinedButton(
 									enabled = user.id !in state.unblocking,
 									onClick = { viewModel.unblock(user) }
-								) { Text("Buka blokir") }
+								) { Text(stringResource(R.string.unblock)) }
 							},
 							colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface)
 						)

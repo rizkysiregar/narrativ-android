@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import javax.inject.Inject
+import com.rizkysiregar.feedzmore.i18n.AppStrings
+import com.rizkysiregar.feedzmore.R
 
 /**
  * Outcome of a report or a block. [message] is only set when the global error dialog did not already
@@ -32,7 +34,8 @@ sealed interface ModerationResult {
 class ModerationViewModel @Inject constructor(
 	private val moderationRepository: ModerationRepository,
 	dataStore: DataStoreManager,
-	private val analytics: AppAnalytics
+	private val analytics: AppAnalytics,
+	private val appStrings: AppStrings
 ) : ViewModel() {
 
 	/** Who is looking, so a user is never offered to report or block their own content. */
@@ -56,7 +59,7 @@ class ModerationViewModel @Inject constructor(
 						AnalyticsEvents.Param.REASON to reason.apiName
 					)
 				}
-				result.toModerationResult(notFoundMessage = "Konten ini sudah tidak tersedia.")?.let(onResult)
+				result.toModerationResult(notFoundMessage = appStrings.get(R.string.error_content_unavailable))?.let(onResult)
 			}
 		}
 	}
@@ -65,7 +68,7 @@ class ModerationViewModel @Inject constructor(
 		viewModelScope.launch {
 			moderationRepository.blockUser(userId).collect { result ->
 				if (result is ResultState.Success) analytics.log(AnalyticsEvents.USER_BLOCKED)
-				result.toModerationResult(notFoundMessage = "Akun ini sudah tidak tersedia.")?.let(onResult)
+				result.toModerationResult(notFoundMessage = appStrings.get(R.string.error_account_unavailable))?.let(onResult)
 			}
 		}
 	}

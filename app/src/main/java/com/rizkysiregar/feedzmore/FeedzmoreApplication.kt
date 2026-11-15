@@ -15,6 +15,7 @@ import com.rizkysiregar.feedzmore.telemetry.TelemetrySettings
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.rizkysiregar.feedzmore.data.remote.ApiMessages
 
 @HiltAndroidApp
 class FeedzmoreApplication : Application(), Configuration.Provider {
@@ -33,6 +34,7 @@ class FeedzmoreApplication : Application(), Configuration.Provider {
 
 	override fun onCreate() {
 		super.onCreate()
+		ApiMessages.init(this)
 		AppCheckInstaller.install()
 		telemetrySettings.apply()
 		UploadNotifications.createChannels(this)

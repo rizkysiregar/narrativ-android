@@ -40,6 +40,8 @@ import com.rizkysiregar.feedzmore.ui.components.EmojiToggleButton
 import com.rizkysiregar.feedzmore.ui.components.insertEmoji
 import com.rizkysiregar.feedzmore.ui.components.rememberEmojiPanelState
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
+import androidx.compose.ui.res.stringResource
+import com.rizkysiregar.feedzmore.R
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -103,7 +105,7 @@ fun CommentInputArea(
 					value = text,
 					onValueChange = { if (it.text.length <= MAX_COMMENT_LENGTH) onValueChange(it) },
 					placeholder = {
-						Text(if (replyingTo != null) "Balas @$replyingTo..." else "Tambahkan komentar...")
+						Text(if (replyingTo != null) stringResource(R.string.reply_to, replyingTo) else stringResource(R.string.add_comment))
 					},
 					leadingIcon = { EmojiToggleButton(state = emojiPanel, focusRequester = focusRequester) },
 					supportingText = if (text.text.length >= COUNTER_THRESHOLD) {
@@ -138,7 +140,7 @@ fun CommentInputArea(
 							color = MaterialTheme.colorScheme.onPrimary
 						)
 					} else {
-						Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Kirim")
+						Icon(Icons.AutoMirrored.Filled.Send, contentDescription = stringResource(R.string.send))
 					}
 				}
 			}
@@ -156,6 +158,7 @@ fun CommentInputArea(
 
 @Composable
 private fun ReplyBanner(username: String, onCancel: () -> Unit) {
+	val replyingToLabel = stringResource(R.string.replying_to)
 	Surface(color = MaterialTheme.colorScheme.surfaceVariant) {
 		Row(
 			modifier = Modifier
@@ -165,7 +168,7 @@ private fun ReplyBanner(username: String, onCancel: () -> Unit) {
 		) {
 			Text(
 				text = buildAnnotatedString {
-					append("Membalas ")
+					append(replyingToLabel)
 					withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("@$username") }
 				},
 				style = MaterialTheme.typography.bodySmall,
@@ -175,7 +178,7 @@ private fun ReplyBanner(username: String, onCancel: () -> Unit) {
 			IconButton(onClick = onCancel, modifier = Modifier.size(36.dp)) {
 				Icon(
 					Icons.Default.Close,
-					contentDescription = "Batalkan balasan",
+					contentDescription = stringResource(R.string.cancel_reply),
 					modifier = Modifier.size(18.dp)
 				)
 			}

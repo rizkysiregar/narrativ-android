@@ -1,6 +1,8 @@
 package com.rizkysiregar.feedzmore.media
 
 import android.graphics.ColorMatrix
+import androidx.annotation.StringRes
+import com.rizkysiregar.feedzmore.R
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -8,11 +10,11 @@ import android.graphics.ColorMatrix
  * Description: Basic colour presets for profile photos. Each is a 4x5 colour matrix so the same
  * preset drives the live preview, the thumbnails and the exported crop.
  */
-enum class AvatarFilter(val label: String, val matrix: FloatArray) {
-	ORIGINAL("Asli", ColorMatrix().array),
-	MONO("Hitam Putih", ColorMatrix().apply { setSaturation(0f) }.array),
+enum class AvatarFilter(@StringRes val labelRes: Int, val matrix: FloatArray) {
+	ORIGINAL(R.string.filter_original, ColorMatrix().array),
+	MONO(R.string.filter_mono, ColorMatrix().apply { setSaturation(0f) }.array),
 	SEPIA(
-		"Sepia",
+		R.string.filter_sepia,
 		floatArrayOf(
 			0.393f, 0.769f, 0.189f, 0f, 0f,
 			0.349f, 0.686f, 0.168f, 0f, 0f,
@@ -20,11 +22,11 @@ enum class AvatarFilter(val label: String, val matrix: FloatArray) {
 			0f, 0f, 0f, 1f, 0f
 		)
 	),
-	VIVID("Cerah", build(saturation = 1.4f, contrast = 1.1f, brightness = 8f)),
-	WARM("Hangat", build(saturation = 1.1f, red = 1.1f, blue = 0.9f)),
-	COOL("Dingin", build(saturation = 1.05f, red = 0.9f, blue = 1.12f)),
-	FADE("Pudar", build(saturation = 0.75f, contrast = 0.85f, brightness = 24f)),
-	DRAMATIC("Dramatis", build(saturation = 0.6f, contrast = 1.35f));
+	VIVID(R.string.filter_vivid, build(saturation = 1.4f, contrast = 1.1f, brightness = 8f)),
+	WARM(R.string.filter_warm, build(saturation = 1.1f, red = 1.1f, blue = 0.9f)),
+	COOL(R.string.filter_cool, build(saturation = 1.05f, red = 0.9f, blue = 1.12f)),
+	FADE(R.string.filter_fade, build(saturation = 0.75f, contrast = 0.85f, brightness = 24f)),
+	DRAMATIC(R.string.filter_dramatic, build(saturation = 0.6f, contrast = 1.35f));
 
 	val isOriginal: Boolean get() = this == ORIGINAL
 }

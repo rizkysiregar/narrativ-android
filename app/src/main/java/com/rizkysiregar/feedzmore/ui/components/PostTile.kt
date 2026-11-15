@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.FeedContentItem
+import com.rizkysiregar.feedzmore.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Square grid cell of a post: the first media (a video through its thumbnail), a badge when the post
@@ -44,7 +46,7 @@ fun PostTileContent(post: FeedContentItem, modifier: Modifier = Modifier) {
 			) {
 				Icon(
 					imageVector = Icons.Filled.PlayCircle,
-					contentDescription = "Video",
+					contentDescription = stringResource(R.string.video),
 					tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
 					modifier = Modifier.size(32.dp)
 				)
@@ -54,13 +56,13 @@ fun PostTileContent(post: FeedContentItem, modifier: Modifier = Modifier) {
 				model = ImageRequest.Builder(LocalContext.current)
 					.data(if (first.isVideo) first.thumbnailUrl else first.url.orEmpty())
 					.build(),
-				contentDescription = "Feed Image",
+				contentDescription = stringResource(R.string.cd_feed_image),
 				modifier = Modifier.fillMaxSize(),
 				contentScale = ContentScale.Crop,
 				loading = { ShimmerEffect(modifier = Modifier.fillMaxSize()) },
 				error = {
 					Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-						Icon(imageVector = Icons.Outlined.Info, contentDescription = "Error")
+						Icon(imageVector = Icons.Outlined.Info, contentDescription = stringResource(R.string.cd_error))
 					}
 				}
 			)
@@ -69,7 +71,7 @@ fun PostTileContent(post: FeedContentItem, modifier: Modifier = Modifier) {
 		if (post.mediaItems.size > 1) {
 			Icon(
 				imageVector = Icons.Filled.Collections,
-				contentDescription = "${post.mediaItems.size} media",
+				contentDescription = stringResource(R.string.cd_media_count, post.mediaItems.size),
 				tint = MaterialTheme.colorScheme.onBackground,
 				modifier = Modifier
 					.align(Alignment.TopEnd)

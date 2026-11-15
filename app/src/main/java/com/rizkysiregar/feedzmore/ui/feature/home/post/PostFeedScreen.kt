@@ -101,6 +101,8 @@ import com.rizkysiregar.feedzmore.ui.components.rememberEmojiPanelState
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 import com.rizkysiregar.feedzmore.ui.theme.Warning
 import kotlinx.coroutines.delay
+import com.rizkysiregar.feedzmore.R
+import androidx.compose.ui.res.stringResource
 
 /** Warn about the caption limit once this few characters are left. */
 private const val CAPTION_WARNING_THRESHOLD = 20
@@ -108,10 +110,10 @@ private val MediaThumbSize = 112.dp
 private val CaptionMinHeight = 160.dp
 private const val PROMPT_INTERVAL_MILLIS = 3500L
 private val CaptionPrompts = listOf(
-	"What's on your mind?",
-	"Share something with your friends…",
-	"What happened today?",
-	"Got a story to tell?"
+	R.string.caption_prompt_1,
+	R.string.caption_prompt_2,
+	R.string.caption_prompt_3,
+	R.string.caption_prompt_4
 )
 
 /**
@@ -280,16 +282,16 @@ fun PostFeedScreen(
 	if (showDiscardDialog) {
 		AlertDialog(
 			onDismissRequest = { showDiscardDialog = false },
-			title = { Text("Discard post?") },
-			text = { Text("Your caption and media will be lost.") },
+			title = { Text(stringResource(R.string.discard_post_title)) },
+			text = { Text(stringResource(R.string.discard_post_body)) },
 			confirmButton = {
 				TextButton(onClick = {
 					showDiscardDialog = false
 					onClose()
-				}) { Text("Discard", color = MaterialTheme.colorScheme.error) }
+				}) { Text(stringResource(R.string.discard), color = MaterialTheme.colorScheme.error) }
 			},
 			dismissButton = {
-				TextButton(onClick = { showDiscardDialog = false }) { Text("Keep editing") }
+				TextButton(onClick = { showDiscardDialog = false }) { Text(stringResource(R.string.keep_editing)) }
 			}
 		)
 	}
@@ -310,7 +312,7 @@ private fun ComposerTopBar(
 		verticalAlignment = Alignment.CenterVertically
 	) {
 		IconButton(onClick = onClose) {
-			Icon(Icons.Default.Close, contentDescription = "Close")
+			Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close))
 		}
 		Spacer(Modifier.weight(1f))
 		Button(
@@ -327,7 +329,7 @@ private fun ComposerTopBar(
 					color = MaterialTheme.colorScheme.onPrimary
 				)
 			} else {
-				Text("Post", fontWeight = FontWeight.SemiBold)
+				Text(stringResource(R.string.post_button), fontWeight = FontWeight.SemiBold)
 			}
 		}
 	}
@@ -409,7 +411,7 @@ private fun RotatingPlaceholder() {
 	}
 	Crossfade(targetState = index, label = "caption-prompt") { current ->
 		Text(
-			text = CaptionPrompts[current],
+			text = stringResource(CaptionPrompts[current]),
 			style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp, lineHeight = 26.sp)
 		)
 	}
@@ -433,7 +435,7 @@ private fun SelectedMediaStrip(
 					// Coil cannot draw a video frame here, so a video is shown as a play icon
 					Icon(
 						Icons.Default.PlayCircle,
-						contentDescription = "Video ${index + 1}",
+						contentDescription = stringResource(R.string.cd_video_n, index + 1),
 						modifier = Modifier
 							.align(Alignment.Center)
 							.size(36.dp)
@@ -441,7 +443,7 @@ private fun SelectedMediaStrip(
 				} else {
 					AsyncImage(
 						model = item.uri,
-						contentDescription = "Photo ${index + 1}",
+						contentDescription = stringResource(R.string.cd_photo_n, index + 1),
 						modifier = Modifier.fillMaxSize(),
 						contentScale = ContentScale.Crop
 					)
@@ -457,7 +459,7 @@ private fun SelectedMediaStrip(
 				) {
 					Icon(
 						Icons.Default.Close,
-						contentDescription = "Remove media ${index + 1}",
+						contentDescription = stringResource(R.string.cd_remove_media_n, index + 1),
 						modifier = Modifier.padding(5.dp)
 					)
 				}
@@ -488,16 +490,16 @@ private fun ComposerToolbar(
 		verticalAlignment = Alignment.CenterVertically
 	) {
 		IconButton(onClick = onPhotoClick, enabled = canAddMedia, colors = buttonColors) {
-			Icon(Icons.Outlined.Image, contentDescription = "Add photos")
+			Icon(Icons.Outlined.Image, contentDescription = stringResource(R.string.cd_add_photos))
 		}
 		IconButton(onClick = onVideoClick, enabled = canAddMedia, colors = buttonColors) {
-			Icon(Icons.Outlined.Videocam, contentDescription = "Add a video")
+			Icon(Icons.Outlined.Videocam, contentDescription = stringResource(R.string.cd_add_video))
 		}
 		EmojiToggleButton(state = emojiPanel, focusRequester = captionFocus, colors = buttonColors)
 		Spacer(Modifier.weight(1f))
 		if (mediaCount > 0) {
 			Text(
-				text = "$mediaCount/$MAX_POST_MEDIA media",
+				text = stringResource(R.string.media_count_of, mediaCount, MAX_POST_MEDIA),
 				style = MaterialTheme.typography.labelMedium,
 				color = MaterialTheme.colorScheme.onSurfaceVariant
 			)

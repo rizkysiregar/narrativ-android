@@ -13,6 +13,8 @@ import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.ui.base.BaseScreen
 import com.rizkysiregar.feedzmore.ui.feature.auth.AuthViewModel
 import com.rizkysiregar.feedzmore.ui.main.navigation.routes.AuthPathRoutes
+import androidx.compose.ui.res.stringResource
+import com.rizkysiregar.feedzmore.R
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -60,6 +62,9 @@ fun LoginRoute(
 		else -> null
 	}
 
+	val usernameRequired = stringResource(R.string.error_username_required)
+	val passwordRequired = stringResource(R.string.error_password_required)
+
 	BaseScreen(
 		isLoading,
 		errorMessage,
@@ -83,8 +88,8 @@ fun LoginRoute(
 			},
 			onLoginClick = {
 				val validUsername = username.trim()
-				usernameError = if (validUsername.isEmpty()) "Username wajib diisi" else null
-				passwordError = if (password.isBlank()) "Password wajib diisi" else null
+				usernameError = if (validUsername.isEmpty()) usernameRequired else null
+				passwordError = if (password.isBlank()) passwordRequired else null
 
 				if (usernameError == null && passwordError == null) {
 					viewModel.login(validUsername, password)

@@ -25,6 +25,9 @@ import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.File
 import java.io.IOException
+import androidx.annotation.StringRes
+import com.rizkysiregar.feedzmore.i18n.AppStrings
+import com.rizkysiregar.feedzmore.R
 
 /**
  * Author: Habib Rizky Almajid Siregar
@@ -42,7 +45,8 @@ class PostUploadWorker @AssistedInject constructor(
 	private val presignedUploader: PresignedUploader,
 	private val uploadManager: UploadManager,
 	private val analytics: AppAnalytics,
-	private val crashReporter: CrashReporter
+	private val crashReporter: CrashReporter,
+	private val appStrings: AppStrings
 ) : CoroutineWorker(appContext, params) {
 
 	override suspend fun getForegroundInfo(): ForegroundInfo =
@@ -51,7 +55,7 @@ class PostUploadWorker @AssistedInject constructor(
 			UploadNotifications.buildProgress(
 				context = applicationContext,
 				caption = inputData.getString(KEY_CAPTION).orEmpty(),
-				stageLabel = STAGE_REQUESTING,
+				stageLabel = stageRequesting,
 				percent = 0
 			),
 			ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
@@ -65,19 +69,19 @@ class PostUploadWorker @AssistedInject constructor(
 
 		if (filePaths.size != contentTypes.size) {
 			Log.w(TAG, "doWork: stop, file and content type counts differ")
-			return Result.failure(errorData("Tipe media tidak dikenal"))
+			return Result.failure(errorData(R.string.upload_err_unknown_media))
 		}
 		if (filePaths.isEmpty() && caption.isBlank()) {
 			Log.w(TAG, "doWork: stop, no media and no caption")
-			return Result.failure(errorData("Post tidak boleh kosong"))
+			return Result.failure(errorData(R.string.upload_err_empty_post))
 		}
 		val files = filePaths.map(::File)
 		if (files.any { !it.exists() }) {
 			Log.w(TAG, "doWork: stop, a media file is missing")
-			return Result.failure(errorData("File media tidak ditemukan"))
+			return Result.failure(errorData(R.string.upload_err_file_missing))
 		}
 
-		val progress = MutableStateFlow(UploadProgress(STAGE_UPLOADING, 0))
+		val progress = MutableStateFlow(UploadProgress(stageUploading, 0))
 		val progressScope = CoroutineScope(Dispatchers.Default)
 		val progressJob = progressScope.launch {
 			progress.collect { publishProgress(caption, it.label, it.percent) }
@@ -92,7 +96,7 @@ class PostUploadWorker @AssistedInject constructor(
 			} catch (e: Exception) {
 				Log.w(TAG, "doWork: could not move to the foreground, uploading in the background", e)
 			}
-			publishProgress(caption, STAGE_REQUESTING, 0)
+			publishProgress(caption, stageRequesting, 0)
 
 			val objectKeys = files.mapIndexed { index, file ->
 				val label = uploadingLabel(index, files.size)
@@ -103,7 +107,7 @@ class PostUploadWorker @AssistedInject constructor(
 				}
 			}
 
-			publishProgress(caption, STAGE_FINALIZING, 100)
+			publishProgress(caption, stageFinalizing, 100)
 			Log.i(TAG, "doWork: calling POST /posts with ${objectKeys.size} media keys")
 			postRepository.createPost(caption, objectKeys)
 			Log.i(TAG, "doWork: POST /posts done")
@@ -119,15 +123,15 @@ class PostUploadWorker @AssistedInject constructor(
 		} catch (e: UploadHttpException) {
 			reportUploadFailure(e, stage = "storage", errorCode = e.code)
 			notifyResult(caption, success = false)
-			Result.failure(errorData("Upload media gagal (${e.code})"))
+			Result.failure(errorData(R.string.upload_err_media_failed, e.code))
 		} catch (e: IOException) {
 			if (runAttemptCount < MAX_RETRY_ATTEMPTS) {
-				publishProgress(caption, STAGE_RETRYING, 0)
+				publishProgress(caption, stageRetrying, 0)
 				Result.retry()
 			} else {
 				reportUploadFailure(e, stage = "network")
 				notifyResult(caption, success = false)
-				Result.failure(errorData("Koneksi bermasalah saat mengunggah"))
+				Result.failure(errorData(R.string.upload_err_connection))
 			}
 		} catch (e: CancellationException) {
 			throw e
@@ -135,7 +139,7 @@ class PostUploadWorker @AssistedInject constructor(
 			Log.e(TAG, "doWork failed", e)
 			reportUploadFailure(e, stage = "unexpected")
 			notifyResult(caption, success = false)
-			Result.failure(errorData(e.message ?: "Upload gagal"))
+			Result.failure(workDataOf(KEY_ERROR to (e.message ?: appStrings.get(R.string.upload_err_failed))))
 		} finally {
 			progressJob.cancel()
 		}
@@ -159,7 +163,7 @@ class PostUploadWorker @AssistedInject constructor(
 			} catch (e: UploadHttpException) {
 				if (e.code == 403 && !refreshed) {
 					refreshed = true
-					publishProgress(caption, STAGE_REQUESTING, 0)
+					publishProgress(caption, stageRequesting, 0)
 					uploadUrl = postRepository.createUploadUrl(contentType)
 					continue
 				}
@@ -173,7 +177,13 @@ class PostUploadWorker @AssistedInject constructor(
 		(((index + fraction.coerceIn(0f, 1f)) / total) * 99).toInt().coerceIn(0, 99)
 
 	private fun uploadingLabel(index: Int, total: Int): String =
-		if (total > 1) "$STAGE_UPLOADING ${index + 1}/$total" else STAGE_UPLOADING
+		if (total > 1) "$stageUploading ${index + 1}/$total" else stageUploading
+
+	// worded when used, so they follow the language at that moment
+	private val stageRequesting get() = appStrings.get(R.string.stage_preparing)
+	private val stageUploading get() = appStrings.get(R.string.stage_uploading)
+	private val stageFinalizing get() = appStrings.get(R.string.stage_finishing)
+	private val stageRetrying get() = appStrings.get(R.string.stage_retrying)
 
 	private data class UploadProgress(val label: String, val percent: Int)
 
@@ -193,21 +203,21 @@ class PostUploadWorker @AssistedInject constructor(
 		}
 		return when (e.code()) {
 			in 500..599 -> if (runAttemptCount < MAX_RETRY_ATTEMPTS) {
-				publishProgress(caption, STAGE_RETRYING, 0)
+				publishProgress(caption, stageRetrying, 0)
 				Result.retry()
 			} else {
 				notifyResult(caption, success = false)
-				Result.failure(errorData("Server sedang bermasalah, coba lagi nanti"))
+				Result.failure(errorData(R.string.upload_err_server))
 			}
 
 			429 -> {
 				notifyResult(caption, success = false)
-				Result.failure(errorData("Terlalu banyak permintaan, coba lagi nanti"))
+				Result.failure(errorData(R.string.upload_err_rate_limit))
 			}
 
 			else -> {
 				notifyResult(caption, success = false)
-				Result.failure(errorData("Upload ditolak (${e.code()})"))
+				Result.failure(errorData(R.string.upload_err_rejected, e.code()))
 			}
 		}
 	}
@@ -243,7 +253,7 @@ class PostUploadWorker @AssistedInject constructor(
 
 	private fun resultNotificationId(): Int = id.hashCode() + 1
 
-	private fun errorData(message: String) = workDataOf(KEY_ERROR to message)
+	private fun errorData(@StringRes message: Int, vararg args: Any) = workDataOf(KEY_ERROR to appStrings.get(message, *args))
 
 	companion object {
 		private const val TAG = "PostFlow"
@@ -253,11 +263,6 @@ class PostUploadWorker @AssistedInject constructor(
 		const val KEY_STAGE = "stage"
 		const val KEY_PERCENT = "percent"
 		const val KEY_ERROR = "error"
-
-		const val STAGE_REQUESTING = "Preparing"
-		const val STAGE_UPLOADING = "Uploading"
-		const val STAGE_FINALIZING = "Finishing up"
-		const val STAGE_RETRYING = "Retrying"
 
 		private const val MAX_RETRY_ATTEMPTS = 3
 	}
