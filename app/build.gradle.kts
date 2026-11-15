@@ -15,6 +15,8 @@ plugins {
 	alias(libs.plugins.hilt.plugin)
 	alias(libs.plugins.ksp)
 	alias(libs.plugins.google.services)
+	alias(libs.plugins.firebase.crashlytics)
+	alias(libs.plugins.firebase.perf)
 }
 
 // Release signing comes from keystore.properties (see keystore.properties.example) or, on CI, from
@@ -129,9 +131,12 @@ android {
 
 dependencies {
 
-	// --- Firebase Cloud Messaging ---
+	// --- Firebase: push, crash reporting, analytics, performance ---
 	implementation(platform(libs.firebase.bom))
 	implementation(libs.firebase.messaging)
+	implementation(libs.firebase.analytics)
+	implementation(libs.firebase.crashlytics)
+	implementation(libs.firebase.perf)
 
 	// --- Core + Compose ---
 	implementation(libs.androidx.core.ktx)

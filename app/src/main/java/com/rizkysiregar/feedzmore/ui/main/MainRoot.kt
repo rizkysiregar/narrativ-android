@@ -2,6 +2,7 @@ package com.rizkysiregar.feedzmore.ui.main
 
 import android.widget.Toast
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -10,6 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.rizkysiregar.feedzmore.constants.Constants
@@ -37,6 +39,14 @@ fun MainRoot(
 	val navController = rememberNavController()
 	val context = LocalContext.current
 	val sessionExpiredMessage = viewModel.sessionExpiredMessage.collectAsStateWithLifecycle()
+
+	DisposableEffect(navController) {
+		val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
+			destination.route?.let(viewModel::onScreenViewed)
+		}
+		navController.addOnDestinationChangedListener(listener)
+		onDispose { navController.removeOnDestinationChangedListener(listener) }
+	}
 
 	LaunchedEffect(sessionExpiredMessage.value) {
 		sessionExpiredMessage.value?.let { message ->

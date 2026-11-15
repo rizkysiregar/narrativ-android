@@ -8,6 +8,8 @@ import com.rizkysiregar.feedzmore.data.remote.model.ResultState
 import com.rizkysiregar.feedzmore.data.repository.ModerationRepository
 import com.rizkysiregar.feedzmore.domain.moderation.ReportReason
 import com.rizkysiregar.feedzmore.domain.moderation.ReportTarget
+import com.rizkysiregar.feedzmore.telemetry.AnalyticsEvents
+import com.rizkysiregar.feedzmore.telemetry.AppAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -29,7 +31,8 @@ sealed interface ModerationResult {
 @HiltViewModel
 class ModerationViewModel @Inject constructor(
 	private val moderationRepository: ModerationRepository,
-	dataStore: DataStoreManager
+	dataStore: DataStoreManager,
+	private val analytics: AppAnalytics
 ) : ViewModel() {
 
 	/** Who is looking, so a user is never offered to report or block their own content. */
@@ -46,6 +49,13 @@ class ModerationViewModel @Inject constructor(
 	) {
 		viewModelScope.launch {
 			moderationRepository.report(target, targetId, reason, description).collect { result ->
+				if (result is ResultState.Success) {
+					analytics.log(
+						AnalyticsEvents.CONTENT_REPORTED,
+						AnalyticsEvents.Param.TARGET to target.apiName,
+						AnalyticsEvents.Param.REASON to reason.apiName
+					)
+				}
 				result.toModerationResult(notFoundMessage = "Konten ini sudah tidak tersedia.")?.let(onResult)
 			}
 		}
@@ -54,6 +64,7 @@ class ModerationViewModel @Inject constructor(
 	fun block(userId: String, onResult: (ModerationResult) -> Unit) {
 		viewModelScope.launch {
 			moderationRepository.blockUser(userId).collect { result ->
+				if (result is ResultState.Success) analytics.log(AnalyticsEvents.USER_BLOCKED)
 				result.toModerationResult(notFoundMessage = "Akun ini sudah tidak tersedia.")?.let(onResult)
 			}
 		}

@@ -13,6 +13,8 @@ import com.rizkysiregar.feedzmore.domain.profile.FetchUserProfileUseCase
 import com.rizkysiregar.feedzmore.domain.post.PickedMedia
 import com.rizkysiregar.feedzmore.domain.post.UploadManager
 import com.rizkysiregar.feedzmore.media.MediaValidationException
+import com.rizkysiregar.feedzmore.telemetry.AnalyticsEvents
+import com.rizkysiregar.feedzmore.telemetry.AppAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -38,7 +40,8 @@ class PostFeedViewModel @Inject constructor(
 	private val mediaPreparationUseCase: MediaPreparationUseCase,
 	private val uploadManager: UploadManager,
 	private val dataStore: DataStoreManager,
-	private val fetchUserProfileUseCase: FetchUserProfileUseCase
+	private val fetchUserProfileUseCase: FetchUserProfileUseCase,
+	private val analytics: AppAnalytics
 ) : ViewModel() {
 
 	// UI State for watching property changes
@@ -118,6 +121,12 @@ class PostFeedViewModel @Inject constructor(
 			try {
 				val prepared = mediaPreparationUseCase.prepareAll(state.selectedMedia)
 				uploadManager.enqueue(media = prepared, caption = state.caption)
+				analytics.log(
+					AnalyticsEvents.POST_SUBMITTED,
+					AnalyticsEvents.Param.MEDIA_COUNT to state.selectedMedia.size,
+					AnalyticsEvents.Param.HAS_VIDEO to state.selectedMedia.any { it.mimeType?.startsWith("video/") == true },
+					AnalyticsEvents.Param.HAS_CAPTION to state.caption.isNotBlank()
+				)
 				Log.i("PostFlow", "submitPost: enqueued, going home")
 				_navigateHome.emit(Unit)
 			} catch (e: MediaValidationException) {

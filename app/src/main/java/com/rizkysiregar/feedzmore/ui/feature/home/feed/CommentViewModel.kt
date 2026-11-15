@@ -14,6 +14,8 @@ import com.rizkysiregar.feedzmore.domain.feed.AddCommentUseCase
 import com.rizkysiregar.feedzmore.domain.feed.DeleteCommentUseCase
 import com.rizkysiregar.feedzmore.domain.feed.GetCommentUseCase
 import com.rizkysiregar.feedzmore.domain.feed.GetRepliesUseCase
+import com.rizkysiregar.feedzmore.telemetry.AnalyticsEvents
+import com.rizkysiregar.feedzmore.telemetry.AppAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -68,7 +70,8 @@ class CommentViewModel @Inject constructor(
 	private val getRepliesUseCase: GetRepliesUseCase,
 	private val addCommentUseCase: AddCommentUseCase,
 	private val deleteCommentUseCase: DeleteCommentUseCase,
-	private val dataStore: DataStoreManager
+	private val dataStore: DataStoreManager,
+	private val analytics: AppAnalytics
 ) : ViewModel() {
 
 	// state for fetch comments
@@ -215,12 +218,14 @@ class CommentViewModel @Inject constructor(
 			)
 			when (val result = addCommentUseCase(request).awaitResult()) {
 				is ResultState.Success -> {
+					analytics.log(AnalyticsEvents.COMMENT_ADDED, AnalyticsEvents.Param.IS_REPLY to (target != null))
 					replacePending(pending, pending.copy(isPending = false))
 					_isSubmitting.value = false
 					showNewComment(postId, target)
 				}
 
 				else -> {
+					analytics.log(AnalyticsEvents.COMMENT_FAILED, AnalyticsEvents.Param.IS_REPLY to (target != null))
 					removePending(pending, wasExpanded)
 					_replyTarget.value = target
 					_isSubmitting.value = false

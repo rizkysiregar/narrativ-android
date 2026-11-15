@@ -11,6 +11,10 @@ import androidx.work.workDataOf
 import com.rizkysiregar.feedzmore.data.repository.PostRepository
 import com.rizkysiregar.feedzmore.domain.post.UploadManager
 import com.rizkysiregar.feedzmore.notification.UploadNotifications
+import com.rizkysiregar.feedzmore.telemetry.AnalyticsEvents
+import com.rizkysiregar.feedzmore.telemetry.AppAnalytics
+import com.rizkysiregar.feedzmore.telemetry.CrashReporter
+import com.rizkysiregar.feedzmore.telemetry.PerfTrace
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
@@ -36,7 +40,9 @@ class PostUploadWorker @AssistedInject constructor(
 	@Assisted params: WorkerParameters,
 	private val postRepository: PostRepository,
 	private val presignedUploader: PresignedUploader,
-	private val uploadManager: UploadManager
+	private val uploadManager: UploadManager,
+	private val analytics: AppAnalytics,
+	private val crashReporter: CrashReporter
 ) : CoroutineWorker(appContext, params) {
 
 	override suspend fun getForegroundInfo(): ForegroundInfo =
@@ -103,6 +109,7 @@ class PostUploadWorker @AssistedInject constructor(
 			Log.i(TAG, "doWork: POST /posts done")
 
 			files.forEach { it.delete() }
+			analytics.log(AnalyticsEvents.POST_UPLOAD_SUCCEEDED, AnalyticsEvents.Param.MEDIA_COUNT to files.size)
 			notifyResult(caption, success = true)
 			uploadManager.notifyUploadCompleted()
 			Result.success()
@@ -110,6 +117,7 @@ class PostUploadWorker @AssistedInject constructor(
 			Log.w(TAG, "doWork: server answered ${e.code()}")
 			handleHttpError(e, caption)
 		} catch (e: UploadHttpException) {
+			reportUploadFailure(e, stage = "storage", errorCode = e.code)
 			notifyResult(caption, success = false)
 			Result.failure(errorData("Upload media gagal (${e.code})"))
 		} catch (e: IOException) {
@@ -117,6 +125,7 @@ class PostUploadWorker @AssistedInject constructor(
 				publishProgress(caption, STAGE_RETRYING, 0)
 				Result.retry()
 			} else {
+				reportUploadFailure(e, stage = "network")
 				notifyResult(caption, success = false)
 				Result.failure(errorData("Koneksi bermasalah saat mengunggah"))
 			}
@@ -124,6 +133,7 @@ class PostUploadWorker @AssistedInject constructor(
 			throw e
 		} catch (e: Exception) {
 			Log.e(TAG, "doWork failed", e)
+			reportUploadFailure(e, stage = "unexpected")
 			notifyResult(caption, success = false)
 			Result.failure(errorData(e.message ?: "Upload gagal"))
 		} finally {
@@ -142,7 +152,9 @@ class PostUploadWorker @AssistedInject constructor(
 		var refreshed = false
 		while (true) {
 			try {
-				presignedUploader.upload(uploadUrl.presignedUrl, file, contentType, onProgress)
+				PerfTrace.measure(PerfTrace.MEDIA_UPLOAD, mapOf("content_type" to contentType)) {
+					presignedUploader.upload(uploadUrl.presignedUrl, file, contentType, onProgress)
+				}
 				return uploadUrl.objectKey
 			} catch (e: UploadHttpException) {
 				if (e.code == 403 && !refreshed) {
@@ -165,8 +177,21 @@ class PostUploadWorker @AssistedInject constructor(
 
 	private data class UploadProgress(val label: String, val percent: Int)
 
-	private suspend fun handleHttpError(e: HttpException, caption: String): Result =
-		when (e.code()) {
+	/** Counts a terminal failure in analytics and records it as a non-fatal with the stage that broke. */
+	private fun reportUploadFailure(e: Throwable, stage: String, errorCode: Int? = null) {
+		analytics.log(
+			AnalyticsEvents.POST_UPLOAD_FAILED,
+			AnalyticsEvents.Param.STAGE to stage,
+			AnalyticsEvents.Param.ERROR_CODE to (errorCode ?: 0)
+		)
+		crashReporter.recordNonFatal(e, "post_upload", "stage" to stage, "attempt" to runAttemptCount.toString())
+	}
+
+	private suspend fun handleHttpError(e: HttpException, caption: String): Result {
+		if (e.code() !in 500..599 || runAttemptCount >= MAX_RETRY_ATTEMPTS) {
+			reportUploadFailure(e, stage = "api", errorCode = e.code())
+		}
+		return when (e.code()) {
 			in 500..599 -> if (runAttemptCount < MAX_RETRY_ATTEMPTS) {
 				publishProgress(caption, STAGE_RETRYING, 0)
 				Result.retry()
@@ -185,6 +210,7 @@ class PostUploadWorker @AssistedInject constructor(
 				Result.failure(errorData("Upload ditolak (${e.code()})"))
 			}
 		}
+	}
 
 	private suspend fun publishProgress(caption: String, stage: String, percent: Int) {
 		setProgress(

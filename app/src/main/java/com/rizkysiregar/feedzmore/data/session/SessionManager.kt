@@ -2,6 +2,9 @@ package com.rizkysiregar.feedzmore.data.session
 
 import com.rizkysiregar.feedzmore.data.cache.DataStoreManager
 import com.rizkysiregar.feedzmore.data.cache.JwtTokenHolder
+import com.rizkysiregar.feedzmore.telemetry.AnalyticsEvents
+import com.rizkysiregar.feedzmore.telemetry.AppAnalytics
+import com.rizkysiregar.feedzmore.telemetry.CrashReporter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -23,7 +26,9 @@ import javax.inject.Singleton
 @Singleton
 class SessionManager @Inject constructor(
 	private val dataStore: DataStoreManager,
-	private val tokenHolder: JwtTokenHolder
+	private val tokenHolder: JwtTokenHolder,
+	private val analytics: AppAnalytics,
+	private val crashReporter: CrashReporter
 ) {
 	private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 	private val invalidationInProgress = AtomicBoolean(false)
@@ -36,6 +41,8 @@ class SessionManager @Inject constructor(
 
 		// Stop subsequent parallel requests from sending an already rejected token.
 		tokenHolder.setToken(null)
+		analytics.log(AnalyticsEvents.SESSION_EXPIRED)
+		clearTelemetryUser()
 
 		scope.launch {
 			dataStore.clearAll()
@@ -46,9 +53,21 @@ class SessionManager @Inject constructor(
 	/** Clears local credentials for an explicit user logout. */
 	fun logout() {
 		tokenHolder.setToken(null)
+		clearTelemetryUser()
 		scope.launch {
 			dataStore.clearAll()
 		}
+	}
+
+	/** Links analytics and crash reports to the signed-in user; the opaque id only. */
+	fun identify(userId: String) {
+		analytics.setUserId(userId)
+		crashReporter.setUserId(userId)
+	}
+
+	private fun clearTelemetryUser() {
+		analytics.setUserId(null)
+		crashReporter.setUserId(null)
 	}
 
 	/** Resets expiry state after a new successful login. */
