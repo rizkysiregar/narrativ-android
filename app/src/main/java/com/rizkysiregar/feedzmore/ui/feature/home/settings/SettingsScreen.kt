@@ -15,6 +15,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.outlined.Analytics
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.PrivacyTip
@@ -31,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -58,6 +60,7 @@ fun SettingsRoute(
 	onLoggedOut: () -> Unit
 ) {
 	val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+	val telemetryEnabled by viewModel.telemetryEnabled.collectAsStateWithLifecycle()
 	var showLogoutDialog by rememberSaveable { mutableStateOf(false) }
 	var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -100,6 +103,18 @@ fun SettingsRoute(
 				icon = { Icon(Icons.Outlined.Description, contentDescription = null) },
 				showChevron = true,
 				onClick = { onLegalClick(LegalDocument.TERMS) }
+			)
+			HorizontalDivider()
+			ListItem(
+				modifier = Modifier.clickable { viewModel.setTelemetryEnabled(!telemetryEnabled) },
+				headlineContent = { Text("Bagikan data penggunaan") },
+				supportingContent = {
+					Text("Bantu kami memperbaiki bug dan meningkatkan aplikasi. Isi postingan dan komentar Anda tidak dikirim.")
+				},
+				leadingContent = { Icon(Icons.Outlined.Analytics, contentDescription = null) },
+				trailingContent = {
+					Switch(checked = telemetryEnabled, onCheckedChange = viewModel::setTelemetryEnabled)
+				}
 			)
 			HorizontalDivider()
 			SettingsItem(

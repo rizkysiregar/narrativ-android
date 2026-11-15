@@ -10,6 +10,7 @@ import androidx.work.Configuration
 import com.rizkysiregar.feedzmore.config.RemoteConfigManager
 import com.rizkysiregar.feedzmore.data.remote.DeviceSyncScheduler
 import com.rizkysiregar.feedzmore.notification.UploadNotifications
+import com.rizkysiregar.feedzmore.telemetry.TelemetrySettings
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -26,8 +27,12 @@ class FeedzmoreApplication : Application(), Configuration.Provider {
 	@Inject
 	lateinit var remoteConfigManager: RemoteConfigManager
 
+	@Inject
+	lateinit var telemetrySettings: TelemetrySettings
+
 	override fun onCreate() {
 		super.onCreate()
+		telemetrySettings.apply()
 		UploadNotifications.createChannels(this)
 
 		// Every time the app comes to the foreground, silently sync device info and refresh Remote Config

@@ -10,6 +10,7 @@ import com.rizkysiregar.feedzmore.data.repository.UserRepository
 import com.rizkysiregar.feedzmore.data.session.GoogleIdTokenProvider
 import com.rizkysiregar.feedzmore.data.session.RemoteSessionCleaner
 import com.rizkysiregar.feedzmore.data.session.SessionManager
+import com.rizkysiregar.feedzmore.telemetry.TelemetrySettings
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,11 +34,17 @@ class SettingsViewModel @Inject constructor(
 	private val sessionManager: SessionManager,
 	private val remoteSessionCleaner: RemoteSessionCleaner,
 	private val userRepository: UserRepository,
-	private val googleIdTokenProvider: GoogleIdTokenProvider
+	private val googleIdTokenProvider: GoogleIdTokenProvider,
+	private val telemetrySettings: TelemetrySettings
 ) : ViewModel() {
 
 	private val _uiState = MutableStateFlow(SettingsUiState())
 	val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+
+	/** Whether usage data and crash reports are shared; on until the user turns it off. */
+	val telemetryEnabled: StateFlow<Boolean> = telemetrySettings.enabled
+
+	fun setTelemetryEnabled(enabled: Boolean) = telemetrySettings.setEnabled(enabled)
 
 	/** Ends the session on the server first (best effort), then clears it on this device. */
 	fun logout(onDone: () -> Unit) {

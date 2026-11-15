@@ -27,6 +27,10 @@ class CrashReporter @Inject constructor() {
 		crashlytics.log(message)
 	}
 
+	fun setCollectionEnabled(enabled: Boolean) {
+		crashlytics.isCrashlyticsCollectionEnabled = enabled
+	}
+
 	/** Only the opaque user id, never the username or email. Pass null on logout. */
 	fun setUserId(userId: String?) {
 		crashlytics.setUserId(userId.orEmpty())

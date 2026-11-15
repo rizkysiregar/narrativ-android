@@ -41,6 +41,10 @@ class AppAnalytics @Inject constructor(
 		)
 	}
 
+	fun setCollectionEnabled(enabled: Boolean) {
+		analytics.setAnalyticsCollectionEnabled(enabled)
+	}
+
 	/** Pass null on logout so the next person on this device is not linked to the previous one. */
 	fun setUserId(userId: String?) {
 		analytics.setUserId(userId)
