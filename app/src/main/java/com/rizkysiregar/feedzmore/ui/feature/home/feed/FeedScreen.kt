@@ -76,6 +76,7 @@ fun FeedScreen(
 	onLikeClick: (String) -> Unit,
 	onCreateFeed: () -> Unit,
 	onSearchClick: () -> Unit = {},
+	onAuthorClick: ((userId: String, username: String) -> Unit)? = null,
 	player: ExoPlayer? = null,
 	onVideoClick: (FeedContentItem) -> Unit = {},
 	onAuthorBlocked: (() -> Unit)? = null
@@ -236,7 +237,8 @@ fun FeedScreen(
 							player = player,
 							initialPage = pageByPost[item.id] ?: 0,
 							onPageChange = { page -> pageByPost[item.id] = page },
-							onAuthorBlocked = onAuthorBlocked
+							onAuthorBlocked = onAuthorBlocked,
+							onAuthorClick = onAuthorClick
 						)
 					}
 

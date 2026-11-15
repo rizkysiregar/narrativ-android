@@ -77,7 +77,9 @@ fun FeedItemCard(
 	initialPage: Int = 0,
 	onPageChange: (Int) -> Unit = {},
 	// set where the card may be reported or its author blocked; runs after the author was blocked
-	onAuthorBlocked: (() -> Unit)? = null
+	onAuthorBlocked: (() -> Unit)? = null,
+	// set where the author may be opened; receives the author's id and username
+	onAuthorClick: ((userId: String, username: String) -> Unit)? = null
 ) {
 	val likeScale by animateFloatAsState(
 		targetValue = if (item.liked) 1.12f else 1f,
@@ -98,7 +100,7 @@ fun FeedItemCard(
 		elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
 	) {
 		Column(modifier = Modifier.padding(start = 16.dp, top = 14.dp, end = 16.dp, bottom = 6.dp)) {
-			FeedAuthorHeader(item = item, onAuthorBlocked = onAuthorBlocked)
+			FeedAuthorHeader(item = item, onAuthorBlocked = onAuthorBlocked, onAuthorClick = onAuthorClick)
 
 			if (item.isTakenDown) {
 				Spacer(Modifier.height(12.dp))
@@ -146,12 +148,28 @@ fun FeedItemCard(
 }
 
 @Composable
-private fun FeedAuthorHeader(item: FeedContentItem, onAuthorBlocked: (() -> Unit)?) {
+private fun FeedAuthorHeader(
+	item: FeedContentItem,
+	onAuthorBlocked: (() -> Unit)?,
+	onAuthorClick: ((userId: String, username: String) -> Unit)?
+) {
+	// an older server may not send the author's id, then there is nowhere to go
+	val openAuthor = item.userId?.let { id -> onAuthorClick?.let { { it(id, item.username) } } }
+	val authorClick = if (openAuthor != null) {
+		Modifier.clickable(
+			interactionSource = remember { MutableInteractionSource() },
+			indication = null,
+			onClick = openAuthor
+		)
+	} else {
+		Modifier
+	}
+
 	Row(
 		modifier = Modifier.fillMaxWidth(),
 		verticalAlignment = Alignment.CenterVertically
 	) {
-		InitialAvatar(name = item.username, size = 38.dp)
+		InitialAvatar(name = item.username, size = 38.dp, modifier = authorClick)
 		Spacer(Modifier.width(10.dp))
 		Text(
 			text = item.username,
@@ -159,7 +177,7 @@ private fun FeedAuthorHeader(item: FeedContentItem, onAuthorBlocked: (() -> Unit
 			fontWeight = FontWeight.SemiBold,
 			maxLines = 1,
 			overflow = TextOverflow.Ellipsis,
-			modifier = Modifier.weight(1f, fill = false)
+			modifier = Modifier.weight(1f, fill = false).then(authorClick)
 		)
 		if (item.createdAt.isNotBlank()) {
 			Text(

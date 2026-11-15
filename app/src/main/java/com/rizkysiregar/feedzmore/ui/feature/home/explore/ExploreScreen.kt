@@ -104,7 +104,10 @@ fun ExploreScreenContent(
 					onRetryGrid = onRetryGrid,
 					onRetryList = onRetryList,
 					modifier = pagerModifier,
-					onAuthorBlocked = onAuthorBlocked
+					onAuthorBlocked = onAuthorBlocked,
+					onAuthorClick = { userId, username ->
+						onUserClick(userId, username)
+					}
 				)
 
 				if (isSearching) {
@@ -149,6 +152,10 @@ fun ExploreScreenContent(
 						onCommentClick = onCommentClick,
 						// posts with a video open the full screen detail instead, so this card holds images only
 						isActiveVideo = false,
+						onAuthorClick = { userId, username ->
+							onDismissDetail()
+							onUserClick(userId, username)
+						},
 						onAuthorBlocked = onAuthorBlocked?.let { refresh ->
 							{
 								onDismissDetail()

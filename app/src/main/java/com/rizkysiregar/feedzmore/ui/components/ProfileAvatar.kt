@@ -101,7 +101,8 @@ fun ProfileAvatar(
 @Composable
 fun InitialAvatar(
 	name: String,
-	size: Dp
+	size: Dp,
+	modifier: Modifier = Modifier
 ) {
 	val initial = name
 		.trim()
@@ -112,7 +113,7 @@ fun InitialAvatar(
 
 	Box(
 		contentAlignment = Alignment.Center,
-		modifier = Modifier
+		modifier = modifier
 			.size(size)
 			.clip(CircleShape)
 			.background(MaterialTheme.colorScheme.primary)

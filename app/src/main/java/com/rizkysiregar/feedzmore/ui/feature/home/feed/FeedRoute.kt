@@ -79,6 +79,9 @@ fun FeedRoute(
 		},
 		player = viewModel.player,
 		onAuthorBlocked = viewModel::refresh,
+		onAuthorClick = { userId, username ->
+			navController.navigate(HomePathRoute.UserDetail.create(userId, username))
+		},
 		onVideoClick = { post ->
 			navController.currentBackStackEntry?.savedStateHandle?.set(
 				KEY_POST_JSON,
