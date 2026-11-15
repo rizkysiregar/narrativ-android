@@ -82,7 +82,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -90,7 +92,12 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import coil3.compose.AsyncImage
 import com.rizkysiregar.feedzmore.domain.post.PickedMedia
+import com.rizkysiregar.feedzmore.ui.components.EmojiPanel
+import com.rizkysiregar.feedzmore.ui.components.EmojiPanelState
+import com.rizkysiregar.feedzmore.ui.components.EmojiToggleButton
 import com.rizkysiregar.feedzmore.ui.components.ProfileAvatar
+import com.rizkysiregar.feedzmore.ui.components.insertEmoji
+import com.rizkysiregar.feedzmore.ui.components.rememberEmojiPanelState
 import com.rizkysiregar.feedzmore.ui.theme.FeedzmoreTheme
 import com.rizkysiregar.feedzmore.ui.theme.Warning
 import kotlinx.coroutines.delay
@@ -150,6 +157,10 @@ fun PostFeedScreen(
 	val canAddMedia = uiState.selectedMedia.size < MAX_POST_MEDIA && !isPreparing
 
 	val captionFocus = remember { FocusRequester() }
+	val emojiPanel = rememberEmojiPanelState()
+	// the view model owns the text; the selection lives here so an emoji can go in at the cursor
+	var captionValue by remember { mutableStateOf(TextFieldValue(uiState.caption, TextRange(uiState.caption.length))) }
+	if (captionValue.text != uiState.caption) captionValue = captionValue.copy(text = uiState.caption)
 	// opens the keyboard straight away: writing is the point of this page
 	LaunchedEffect(Unit) { captionFocus.requestFocus() }
 
@@ -165,7 +176,8 @@ fun PostFeedScreen(
 			.fillMaxSize()
 			.statusBarsPadding()
 			.navigationBarsPadding()
-			.imePadding()
+			// the emoji panel takes the keyboard's place, so the keyboard inset is skipped while it is open
+			.then(if (emojiPanel.isOpen) Modifier else Modifier.imePadding())
 	) {
 		ComposerTopBar(
 			canPost = uiState.canSubmit && !isPreparing && !isLaunching,
@@ -222,8 +234,11 @@ fun PostFeedScreen(
 			}
 			Spacer(Modifier.height(14.dp))
 			CaptionCard(
-				caption = uiState.caption,
-				onCaptionChange = onCaptionChange,
+				caption = captionValue,
+				onCaptionChange = {
+					captionValue = it
+					onCaptionChange(it.text)
+				},
 				media = uiState.selectedMedia,
 				onRemoveMedia = onRemoveMedia,
 				focusRequester = captionFocus
@@ -235,6 +250,8 @@ fun PostFeedScreen(
 			caption = uiState.caption,
 			mediaCount = uiState.selectedMedia.size,
 			canAddMedia = canAddMedia,
+			emojiPanel = emojiPanel,
+			captionFocus = captionFocus,
 			onPhotoClick = {
 				photoPickerLauncher.launch(
 					PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
@@ -246,6 +263,18 @@ fun PostFeedScreen(
 				)
 			}
 		)
+		if (emojiPanel.isOpen) {
+			EmojiPanel(
+				state = emojiPanel,
+				onEmojiPicked = { emoji ->
+					insertEmoji(captionValue, emoji, MAX_CAPTION_LENGTH)?.let {
+						captionValue = it
+						onCaptionChange(it.text)
+					}
+				},
+				modifier = Modifier.fillMaxWidth()
+			)
+		}
 	}
 
 	if (showDiscardDialog) {
@@ -310,8 +339,8 @@ private fun ComposerTopBar(
  */
 @Composable
 private fun CaptionCard(
-	caption: String,
-	onCaptionChange: (String) -> Unit,
+	caption: TextFieldValue,
+	onCaptionChange: (TextFieldValue) -> Unit,
 	media: List<PickedMedia>,
 	onRemoveMedia: (Int) -> Unit,
 	focusRequester: FocusRequester
@@ -443,6 +472,8 @@ private fun ComposerToolbar(
 	caption: String,
 	mediaCount: Int,
 	canAddMedia: Boolean,
+	emojiPanel: EmojiPanelState,
+	captionFocus: FocusRequester,
 	onPhotoClick: () -> Unit,
 	onVideoClick: () -> Unit
 ) {
@@ -462,6 +493,7 @@ private fun ComposerToolbar(
 		IconButton(onClick = onVideoClick, enabled = canAddMedia, colors = buttonColors) {
 			Icon(Icons.Outlined.Videocam, contentDescription = "Add a video")
 		}
+		EmojiToggleButton(state = emojiPanel, focusRequester = captionFocus, colors = buttonColors)
 		Spacer(Modifier.weight(1f))
 		if (mediaCount > 0) {
 			Text(
