@@ -210,6 +210,9 @@ dependencies {
 	implementation(libs.media3.transformer)
 	implementation(libs.androidx.exifinterface)
 
+	// full emoji list in the comment input
+	implementation(libs.androidx.emoji2.emojipicker)
+
 
 	// Credential Manager for Google Sign-In
 	implementation("androidx.credentials:credentials:1.6.0")

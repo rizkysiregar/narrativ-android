@@ -10,6 +10,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.google.gson.Gson
+import com.rizkysiregar.feedzmore.ui.main.navigation.BottomNavScreen
 import com.rizkysiregar.feedzmore.ui.main.navigation.routes.HomePathRoute
 import kotlinx.coroutines.flow.collectLatest
 
@@ -69,8 +70,18 @@ fun FeedRoute(
         listState = listState,
 		onLikeClick = viewModel::toggleLike,
 		onCreateFeed = onCreateFeed,
+		onSearchClick = {
+			navController.navigate(BottomNavScreen.Explore.route) {
+				launchSingleTop = true
+				restoreState = true
+				popUpTo(navController.graph.startDestinationId) { saveState = true }
+			}
+		},
 		player = viewModel.player,
 		onAuthorBlocked = viewModel::refresh,
+		onAuthorClick = { userId, username ->
+			navController.navigate(HomePathRoute.UserDetail.create(userId, username))
+		},
 		onVideoClick = { post ->
 			navController.currentBackStackEntry?.savedStateHandle?.set(
 				KEY_POST_JSON,

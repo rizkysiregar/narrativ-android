@@ -50,6 +50,8 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.rizkysiregar.feedzmore.data.remote.model.response.feed.CommentItem
@@ -101,7 +103,7 @@ fun CommentSectionContent(
 	val listState = rememberLazyListState()
 	val snackbarHostState = remember { SnackbarHostState() }
 	val inputFocusRequester = remember { FocusRequester() }
-	var commentText by rememberSaveable { mutableStateOf("") }
+	var commentText by rememberSaveable(stateSaver = TextFieldValue.Saver) { mutableStateOf(TextFieldValue("")) }
 	var pendingDelete by remember { mutableStateOf<CommentItem?>(null) }
 	val focusManager = LocalFocusManager.current
 	val keyboardController = LocalSoftwareKeyboardController.current
@@ -130,11 +132,11 @@ fun CommentSectionContent(
 			when (event) {
 				is CommentEvent.ShowMessage -> snackbarHostState.showSnackbar(event.message)
 				CommentEvent.Sent -> {
-					commentText = ""
+					commentText = TextFieldValue("")
 					focusManager.clearFocus()
 					keyboardController?.hide()
 				}
-				is CommentEvent.SendFailed -> commentText = event.text
+				is CommentEvent.SendFailed -> commentText = TextFieldValue(event.text, TextRange(event.text.length))
 				CommentEvent.ScrollToBottom -> {
 					withFrameNanos { } // let the new row be composed first
 					val last = latestRows.lastIndex
@@ -231,7 +233,7 @@ fun CommentSectionContent(
 		CommentInputArea(
 			text = commentText,
 			onValueChange = { commentText = it },
-			onSend = { viewModel.addComment(postId, commentText) },
+			onSend = { viewModel.addComment(postId, commentText.text) },
 			replyingTo = replyTarget?.username,
 			onCancelReply = viewModel::cancelReply,
 			isSubmitting = isSubmitting,

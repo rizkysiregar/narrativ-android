@@ -18,7 +18,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Button
@@ -76,6 +75,8 @@ fun FeedScreen(
 	listState: LazyListState = rememberLazyListState(),
 	onLikeClick: (String) -> Unit,
 	onCreateFeed: () -> Unit,
+	onSearchClick: () -> Unit = {},
+	onAuthorClick: ((userId: String, username: String) -> Unit)? = null,
 	player: ExoPlayer? = null,
 	onVideoClick: (FeedContentItem) -> Unit = {},
 	onAuthorBlocked: (() -> Unit)? = null
@@ -181,10 +182,20 @@ fun FeedScreen(
 			.collect { id -> activeVideoPostId = id }
 	}
 
-	Box(
+	Column(
 		modifier = Modifier
 			.fillMaxSize()
 			.background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.22f))
+	) {
+	FeedHeader(
+		pullProgress = pullState.progress,
+		isRefreshing = uiState.isRefreshing,
+		onSearchClick = onSearchClick
+	)
+	Box(
+		modifier = Modifier
+			.fillMaxWidth()
+			.weight(1f)
 			.pullRefresh(pullState)
 	) {
 		when {
@@ -204,7 +215,7 @@ fun FeedScreen(
 					verticalArrangement = Arrangement.spacedBy(16.dp)
 				) {
 					item(contentType = "feed_header") {
-						FeedListHeader()
+						FeedComposerRow(onClick = onCreateFeed)
 					}
 
 					items(
@@ -226,7 +237,8 @@ fun FeedScreen(
 							player = player,
 							initialPage = pageByPost[item.id] ?: 0,
 							onPageChange = { page -> pageByPost[item.id] = page },
-							onAuthorBlocked = onAuthorBlocked
+							onAuthorBlocked = onAuthorBlocked,
+							onAuthorClick = onAuthorClick
 						)
 					}
 
@@ -263,35 +275,7 @@ fun FeedScreen(
 				onDismiss = { showCommentSheet = false }
 			)
 		}
-
-		PullRefreshIndicator(
-			refreshing = uiState.isRefreshing,
-			state = pullState,
-			modifier = Modifier.align(Alignment.TopCenter)
-		)
 	}
-}
-
-@Composable
-private fun FeedListHeader() {
-	Row(
-		modifier = Modifier
-			.fillMaxWidth()
-			.padding(horizontal = 4.dp, vertical = 4.dp),
-		verticalAlignment = Alignment.CenterVertically
-	) {
-		Column(modifier = Modifier.weight(1f)) {
-			Text(
-				text = "Feed untuk Anda",
-				style = MaterialTheme.typography.headlineSmall,
-				fontWeight = FontWeight.Bold
-			)
-			Text(
-				text = "Cerita terbaru dari komunitasmu",
-				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.onSurfaceVariant
-			)
-		}
 	}
 }
 
