@@ -13,6 +13,10 @@ object PerfTrace {
 	const val MEDIA_UPLOAD = "media_upload"
 	const val POST_UPLOAD = "post_upload"
 
+	fun setCollectionEnabled(enabled: Boolean) {
+		FirebasePerformance.getInstance().isPerformanceCollectionEnabled = enabled
+	}
+
 	suspend fun <T> measure(
 		name: String,
 		attributes: Map<String, String> = emptyMap(),
