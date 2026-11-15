@@ -131,13 +131,15 @@ android {
 
 dependencies {
 
-	// --- Firebase: push, crash reporting, analytics, performance, remote config ---
+	// --- Firebase: push, crash reporting, analytics, performance, remote config, app check ---
 	implementation(platform(libs.firebase.bom))
 	implementation(libs.firebase.messaging)
 	implementation(libs.firebase.analytics)
 	implementation(libs.firebase.crashlytics)
 	implementation(libs.firebase.perf)
 	implementation(libs.firebase.config)
+	implementation(libs.firebase.appcheck.playintegrity)
+	debugImplementation(libs.firebase.appcheck.debug)
 
 	// --- Core + Compose ---
 	implementation(libs.androidx.core.ktx)
