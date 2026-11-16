@@ -6,5 +6,5 @@ package com.rizkysiregar.narrativ.constants
  * Description: Software Engineer
  */
 object OAuthConfig {
-	const val WEB_CLIENT_ID = "1023550390414-g9rql6rv1lpkmob8ndmuq6n09qmqhjpe.apps.googleusercontent.com"
+	const val WEB_CLIENT_ID = "88005068433-3aui5t25hvmv17qdg445fn2b2tlhipn2.apps.googleusercontent.com"
 }

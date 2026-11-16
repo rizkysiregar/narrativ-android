@@ -1,36 +1,26 @@
 {
   "project_info": {
-    "project_number": "1023550390414",
-    "project_id": "feedzmore",
-    "storage_bucket": "feedzmore.firebasestorage.app"
+    "project_number": "1036351360011",
+    "project_id": "narrativ-development",
+    "storage_bucket": "narrativ-development.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1023550390414:android:dfa168a5b95101012e89df",
+        "mobilesdk_app_id": "1:1036351360011:android:477d61a530e46b1d460b0e",
         "android_client_info": {
           "package_name": "com.rizkysiregar.narrativ"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "1023550390414-g9rql6rv1lpkmob8ndmuq6n09qmqhjpe.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyA8iLpxtM_0AwBGm4FohLsTFwG1ieP7-qU"
+          "current_key": "AIzaSyCGxxzBUOGJTGrEvpP8oQNEJPpx0FPf1sY"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "1023550390414-g9rql6rv1lpkmob8ndmuq6n09qmqhjpe.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }
