@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "feedzmore-android-native"
+rootProject.name = "narrativ-android-native"
 include(":app")
