@@ -6,6 +6,12 @@ import com.rizkysiregar.narrativ.data.session.CredentialManagerGoogleIdTokenProv
 import com.rizkysiregar.narrativ.data.session.FirebaseRemoteSessionCleaner
 import com.rizkysiregar.narrativ.data.session.GoogleIdTokenProvider
 import com.rizkysiregar.narrativ.data.session.RemoteSessionCleaner
+import com.rizkysiregar.narrativ.domain.post.AndroidMediaInspector
+import com.rizkysiregar.narrativ.domain.post.FileMediaPreparationUseCase
+import com.rizkysiregar.narrativ.domain.post.MediaInspector
+import com.rizkysiregar.narrativ.domain.post.MediaPreparationUseCase
+import com.rizkysiregar.narrativ.domain.post.UploadManager
+import com.rizkysiregar.narrativ.domain.post.WorkUploadManager
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -28,4 +34,15 @@ abstract class ServicesModule {
 	@Binds
 	@Singleton
 	abstract fun bindGoogleIdTokenProvider(impl: CredentialManagerGoogleIdTokenProvider): GoogleIdTokenProvider
+
+	@Binds
+	abstract fun bindMediaInspector(impl: AndroidMediaInspector): MediaInspector
+
+	@Binds
+	@Singleton
+	abstract fun bindMediaPreparation(impl: FileMediaPreparationUseCase): MediaPreparationUseCase
+
+	@Binds
+	@Singleton
+	abstract fun bindUploadManager(impl: WorkUploadManager): UploadManager
 }

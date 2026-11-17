@@ -1,6 +1,5 @@
 package com.rizkysiregar.narrativ.ui.feature.home.post
 
-import android.app.Application
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -9,6 +8,7 @@ import com.rizkysiregar.narrativ.constants.PrefKeys
 import com.rizkysiregar.narrativ.data.cache.DataStoreManager
 import com.rizkysiregar.narrativ.data.remote.model.ResultState
 import com.rizkysiregar.narrativ.domain.post.MediaPreparationUseCase
+import com.rizkysiregar.narrativ.domain.post.MediaValidator
 import com.rizkysiregar.narrativ.domain.profile.FetchUserProfileUseCase
 import com.rizkysiregar.narrativ.domain.post.PickedMedia
 import com.rizkysiregar.narrativ.domain.post.UploadManager
@@ -38,12 +38,13 @@ import com.rizkysiregar.narrativ.R
 
 @HiltViewModel
 class PostFeedViewModel @Inject constructor(
-	private val app: Application,
+	private val mediaValidator: MediaValidator,
 	private val mediaPreparationUseCase: MediaPreparationUseCase,
 	private val uploadManager: UploadManager,
 	private val dataStore: DataStoreManager,
 	private val fetchUserProfileUseCase: FetchUserProfileUseCase,
-	private val analytics: AppAnalytics
+	private val analytics: AppAnalytics,
+	private val strings: AppStrings
 ) : ViewModel() {
 
 	// UI State for watching property changes
@@ -80,15 +81,14 @@ class PostFeedViewModel @Inject constructor(
 			val current = _uiState.value.selectedMedia + added
 			if (current.any { it.uri == uri }) continue
 			if (current.size >= MAX_POST_MEDIA) {
-				error = strings.getString(R.string.post_err_max_media, MAX_POST_MEDIA)
+				error = strings.get(R.string.post_err_max_media, MAX_POST_MEDIA)
 				break
 			}
-			val mimeType = app.contentResolver.getType(uri)
-			val invalid = validateMedia(uri, mimeType)
-			if (invalid != null) {
-				error = invalid
+			val check = mediaValidator.check(uri)
+			if (check.errorRes != null) {
+				error = strings.get(check.errorRes)
 			} else {
-				added += PickedMedia(uri, mimeType)
+				added += PickedMedia(uri, check.mimeType)
 			}
 		}
 		_uiState.update {
@@ -133,48 +133,13 @@ class PostFeedViewModel @Inject constructor(
 				_navigateHome.emit(Unit)
 			} catch (e: MediaValidationException) {
 				Log.w("PostFlow", "submitPost: media rejected: ${e.message}")
-				_uiState.update { it.copy(validationError = strings.getString(e.messageRes, *e.args.toTypedArray())) }
+				_uiState.update { it.copy(validationError = strings.get(e.messageRes, *e.args.toTypedArray())) }
 			} catch (e: CancellationException) {
 				throw e
 			} catch (e: Exception) {
 				Log.e("PostFlow", "submitPost failed", e)
-				_uiState.update { it.copy(validationError = strings.getString(R.string.post_err_prepare)) }
+				_uiState.update { it.copy(validationError = strings.get(R.string.post_err_prepare)) }
 			}
-		}
-	}
-
-	private val strings get() = AppStrings.localized(app)
-
-	private fun validateMedia(uri: Uri, mimeType: String?): String? {
-		if (mimeType == null) return strings.getString(R.string.media_err_unknown_type)
-		val sizeBytes = runCatching {
-			app.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize }
-		}.getOrNull()
-		return when {
-			mimeType.startsWith("image/") -> {
-				when {
-					mimeType !in ALLOWED_IMAGE_TYPES -> strings.getString(R.string.media_err_image_format)
-					// Static images are compressed before upload; GIFs are sent as-is.
-					mimeType == "image/gif" && sizeBytes != null && sizeBytes > 5L * 1024 * 1024 ->
-						strings.getString(R.string.media_err_gif_size)
-					else -> null
-				}
-			}
-			mimeType in ALLOWED_VIDEO_TYPES -> {
-				if (sizeBytes != null && sizeBytes > 50L * 1024 * 1024) return strings.getString(R.string.media_err_video_50)
-				val durationMs = runCatching {
-					val retriever = android.media.MediaMetadataRetriever()
-					app.contentResolver.openAssetFileDescriptor(uri, "r")?.use { afd ->
-						retriever.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
-					}
-					val d = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)
-					retriever.release()
-					d?.toLongOrNull()
-				}.getOrNull()
-				if (durationMs != null && durationMs > 60_000L) strings.getString(R.string.media_err_duration_max)
-				else null
-			}
-			else -> strings.getString(R.string.media_err_format)
 		}
 	}
 
@@ -187,10 +152,5 @@ class PostFeedViewModel @Inject constructor(
 		_uiState.update {
 			it.copy(caption = caption.take(MAX_CAPTION_LENGTH))
 		}
-	}
-
-	private companion object {
-		val ALLOWED_IMAGE_TYPES = setOf("image/jpeg", "image/png", "image/webp", "image/gif")
-		val ALLOWED_VIDEO_TYPES = setOf("video/mp4", "video/quicktime", "video/webm")
 	}
 }
