@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status bar icon: the crystal as a flat silhouette with the N cut out. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+    <group
+        android:translateX="-22"
+        android:translateY="-22">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M54,24 L80,39 L80,69 L54,84 L28,69 L28,39 Z M39,38 L47,38 L47,40.45 L61,55.72 L61,38 L69,38 L69,70 L61,70 L61,67.55 L47,52.28 L47,70 L39,70 Z" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M54,24 L80,39 L80,69 L54,84 L28,69 L28,39 Z"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeLineJoin="round"
+        android:strokeWidth="4" />
+    </group>
+</vector>
