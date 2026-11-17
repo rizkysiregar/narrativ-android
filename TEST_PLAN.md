@@ -6,6 +6,22 @@
 **Skala estimasi usaha** (1 engineer): **S** ≤ ½ hari · **M** 1–2 hari · **L** 3–5 hari.
 **Prioritas**: **P0** = blocker rilis production · **P1** = sebaiknya sebelum rilis, boleh menyusul di minggu pertama · **P2** = setelah rilis.
 
+## Status Implementasi
+
+Branch kerja: `chore/test-foundation-phase-0`.
+
+| Task | Status | Catatan |
+|---|---|---|
+| 0.1 Pin JDK | ✅ | `gradle/gradle-daemon-jvm.properties` (toolchain 21). Build jalan dengan JDK default 25 |
+| 0.2 Dependency test | ✅ | Tanpa Hilt-testing & Compose UI test untuk androidTest (menyusul di Phase 3). Robolectric 4.14.1 belum dicoba di API 36 |
+| 0.3 `testOptions` | ✅ | |
+| 0.4 Hapus template test | ✅ | |
+| 0.5 Helper test | ✅ | `MainDispatcherRule`, `Fixtures.kt` (fake dan `TestDataStore` menyusul bersama kelas yang dites) |
+| 0.6 Lint | ✅ | 11 error diperbaiki, 105 warning dibekukan di `app/lint-baseline.xml` |
+| 0.7 CI | 🟡 | `.github/workflows/ci.yml` ditulis dan langkahnya diverifikasi lokal; **belum pernah jalan di GitHub**. Branch protection `master` perlu diatur manual di GitHub |
+| 0.8 Kover | ✅ | Laporan saja, belum ada gate |
+| 0.9 ktlint + detekt | ⏳ | Ditunda: perlu satu commit format massal terpisah |
+
 ---
 
 ## A. Ringkasan Kondisi Project
@@ -62,7 +78,7 @@ Diurutkan dari risiko bisnis tertinggi. Poin bertanda 🔎 adalah **dugaan bug d
 |---|---|---|---|
 | R1 | **Auth/session tanpa test.** Logika 401 → refresh → retry → expire ada di `AuthInterceptor` dan `TokenRefresher` (`@Synchronized`, refresh token single-use, `runBlocking` di thread OkHttp). Regresi di sini = user ter-logout massal atau loop 401. | `data/remote/AuthInterceptor.kt`, `data/remote/TokenRefresher.kt`, `data/session/SessionManager.kt` | Kritis |
 | R2 | **Pipeline upload post tanpa test.** Banyak cabang: jumlah file ≠ content type, file hilang, 403 presigned → minta URL baru sekali, 5xx → retry s.d. 3×, 429 → gagal, IOException → retry, sukses → hapus file + emit completion. | `data/remote/upload/PostUploadWorker.kt`, `PresignedUploader.kt`, `domain/post/UploadManager.kt`, `domain/post/MediaPreparationUseCase.kt` | Kritis (fitur inti, data user bisa hilang) |
-| R3 | 🔎 **Crash saat process death.** `FeedRoute.kt:90-93` (dan pola yang sama di `ExploreRoute.kt:51-54`) menyimpan *bound function reference* `viewModel::toggleLike` ke `SavedStateHandle`. Saat Activity menyimpan state, Bundle akan mencoba men-*serialize* referensi itu beserta ViewModel-nya. Itu berpotensi `RuntimeException: Parcelable encountered IOException writing serializable object` ketika app di-background lalu dibunuh sistem. | `ui/feature/home/feed/FeedRoute.kt`, `ui/feature/home/explore/ExploreRoute.kt`, `ui/feature/home/feed/PostDetailRoute.kt:103` | Tinggi (crash nyata di device RAM kecil) |
+| R3 | 🔎 **Crash saat Activity berhenti / process death.** `FeedRoute.kt:90-93` (dan pola yang sama di `ExploreRoute.kt:51-54`) menyimpan *bound function reference* `viewModel::toggleLike` ke `SavedStateHandle`. Saat Activity menyimpan state, Bundle akan mencoba men-*serialize* referensi itu beserta ViewModel-nya. Bytecode (`FunctionReferenceImpl`) menunjukkan referensi itu `Serializable`, jadi `set()` tidak menolaknya, tetapi ViewModel di dalamnya tidak bisa di-serialize. Karena Android mem-parcel saved state di `onStop`, crash `NotSerializableException` kemungkinan terjadi **saat user menekan Home**, bukan hanya saat process death. Belum direproduksi di device; cek lewat logcat (task 2.10). | `ui/feature/home/feed/FeedRoute.kt`, `ui/feature/home/explore/ExploreRoute.kt`, `ui/feature/home/feed/PostDetailRoute.kt:103` | Tinggi (crash nyata di device RAM kecil) |
 | R4 | **Parsing respons rapuh.** Gson + model Kotlin non-null (`FeedContentItem.username`, `PaginationResponseWrapper.content`, `LoginResponse.token`, dst.). Jika backend menghilangkan field, Gson mengisi `null` ke tipe non-null dan NPE muncul jauh dari titik parsing. Tidak ada contract test. | `data/remote/model/response/**` | Tinggi |
 | R5 | **Build release (R8) tidak pernah dites otomatis.** Keep rule Gson berbasis package (`data.remote.model.**`), `TypeToken` anonim di `TokenRefresher`, objek post di-JSON-kan ke nav saved state, `-keepnames` worker. Kesalahan rule baru terlihat di build release. | `app/proguard-rules.pro`, `TokenRefresher.kt:72` | Tinggi |
 | R6 | 🔎 **Dialog error global dari panggilan latar belakang.** `DeviceRegistrar` dan `RemoteSessionCleaner` memakai `Retrofit` utama, sehingga lewat `AuthInterceptor`, yang memanggil `apiErrorManager.report(...)` untuk IOException dan non-2xx. Akibatnya user bisa melihat dialog "Cannot reach the server" saat logout offline atau saat device sync gagal, padahal keduanya didesain *best effort/silent*. | `data/repository/DeviceRegistrar.kt`, `data/session/RemoteSessionCleaner.kt`, `AuthInterceptor.kt:36-40,63-71` | Sedang (UX) |
@@ -210,7 +226,7 @@ Pelengkapnya adalah **smoke test manual terstruktur** pada build release yang te
 | `data.remote` (interceptor, refresher, NetworkUtils), `data.session` | ≥ 85% line | ≥ 90% |
 | `data.remote.upload`, `domain.post` | ≥ 80% | ≥ 85% |
 | `ui.feature.**.*ViewModel` kritis (Auth, Register, Reset, Comment, BaseFeed, Settings, PostFeed) | ≥ 70% | ≥ 80% |
-| Seluruh kode ter-filter | dicatat saja (perkiraan 25–35%) | ≥ 50%, *ratchet* (tidak boleh turun) |
+| Seluruh kode ter-filter | dicatat saja (**baseline terukur 17 Nov 2026: 3,2% line, 5,4% branch**) | ≥ 50%, *ratchet* (tidak boleh turun) |
 
 ### C.4 CI pipeline (GitHub Actions; repo sudah memakai PR GitHub)
 
@@ -300,6 +316,7 @@ Catatan: `google-services.json` per flavor sudah di-commit, jadi CI bisa build t
 | 1.7 | E7: ekstrak `MediaValidator` dari `PostFeedViewModel.validateMedia` | 0.x | P1 | M |
 | 1.8 | E6: `PushTokenProvider` untuk `DeviceRegistrar` & `RemoteSessionCleaner` | 1.1 | P1 | S |
 | 1.9 | E9: hapus `AuthorizationService` dari `AuthViewModel`, hapus `UserDataRepository`/`OAuth2LoginState` bila memang tidak dipakai | – | P1 | S |
+| 1.11 | E11: `AppInitializer` untuk E2E Hilt (prasyarat 2.11) | 1.1 | P0 | S |
 | 1.10 | E10: ganti function reference di `SavedStateHandle` (R3) dengan mekanisme aman. Kerjakan **setelah** 2.10 membuktikan crash. | 2.10 | P0 jika terbukti | M |
 
 - [ ] 1.1 → 1.6
@@ -328,7 +345,7 @@ Catatan: `google-services.json` per flavor sudah di-commit, jadi CI bisa build t
 | 2.9 | Unit `SettingsViewModel` + `PostFeedViewModel` (tanpa validasi media) | 1.1 | P0 | M |
 | 2.10 | **Verifikasi R3** (process death): manual *Don't keep activities* + test `ActivityScenario.recreate()`/`StateRestorationTester` di layar feed → post detail | – | P0 | S |
 | 2.11 | E2E-2 hermetic (session expiry) di emulator | 1.3, 2.3 | P0 | M |
-| 2.12 | **Smoke checklist manual build release** (flavor `dev`, R8 aktif) dan `prod` internal track: E2E-1, 3, 4, 5, 6, 7, 8 + skenario R8 di B.5 + verifikasi deobfuscation Crashlytics | 0.7 | P0 | M |
+| 2.12 | **Smoke checklist manual build release** (isi checklist konkret **belum ditulis**, termasuk: update dari v1.0.2 harus tetap login, paksa JWT expired harus refresh tanpa logout) (flavor `dev`, R8 aktif) dan `prod` internal track: E2E-1, 3, 4, 5, 6, 7, 8 + skenario R8 di B.5 + verifikasi deobfuscation Crashlytics | 0.7 | P0 | M |
 | 2.13 | Aktifkan `koverVerify` per paket (§C.3) di CI | 2.1–2.9 | P0 | S |
 | 2.14 | Job CI `release-check` (`assembleProdRelease`) | 0.7 | P0 | S |
 | 2.15 | Unit `PostDetailViewModel`, `MainViewModel`, `SplashViewModel`, `SearchViewModel` | 1.1 | P1 | M |
@@ -417,6 +434,7 @@ Catatan: `google-services.json` per flavor sudah di-commit, jadi CI bisa build t
 | E7 | `MediaValidator` | `ui/feature/home/post/PostFeedViewModel.kt` | Kelas yang menerima abstraksi `MediaInspector { mimeType(uri); sizeBytes(uri); durationMs(uri) }`; aturan (format, 5 MB GIF, 50 MB, 60 detik) jadi pure dan bisa dites. Satukan konstanta dengan `MediaPreparationUseCase.ALLOWED_*` (saat ini terduplikasi). | **Sedang.** Menyentuh validasi upload. Mitigasi: test 3.6 ditulis lebih dulu terhadap perilaku sekarang (characterization test). |
 | E8 | Validasi respons wajib (opsional, keputusan setelah 2.4) | `util/NetworkUtils.kt` / model response | Opsi A: ganti Gson → Moshi codegen (`converter-moshi` sudah ada di dependency tetapi belum dipakai) agar field wajib yang hilang gagal saat parsing. Opsi B: tetap Gson + validasi eksplisit pada model kritis. | **Tinggi untuk A** (mengubah semua model, keep rule R8, dan JSON nav saved state). **Rekomendasi: B sebelum rilis, A pasca rilis bila diinginkan.** |
 | E9 | Hapus kode mati | `AuthViewModel` (param `authService`), `di/AuthModule.kt`, `data/repository/UserDataRepository.kt`, `data/model/OAuth2LoginState.kt` | Hapus. Pertimbangkan juga dependency `appauth`/`play-services-auth` bila tidak dipakai di tempat lain (cek manifest: `RedirectUriReceiverActivity` AppAuth masih terdaftar). | **Rendah–sedang.** Pastikan Google Sign-In (Credential Manager) tidak bergantung pada AppAuth. Smoke login Google. |
+| E11 | Pisahkan inisialisasi `NarrativApplication.onCreate()` | `NarrativApplication.kt` | Ekstrak ke `AppInitializer` (`ApiMessages.init`, channel notifikasi, telemetry). E2E Hilt memakai `HiltTestApplication`, jadi `onCreate` aslinya tidak jalan; worker `@HiltWorker` butuh `WorkManagerTestInitHelper` + `HiltWorkerFactory`. Matikan device sync dan Remote Config saat test. | **Rendah.** Pastikan urutan init tidak berubah. |
 | E10 | Hand-off post ke detail tanpa function reference di `SavedStateHandle` | `FeedRoute.kt`, `ExploreRoute.kt`, `HomeRoot.kt:74`, `PostDetailRoute.kt:100-107` | Simpan hanya data serializable (JSON/`postId`). Untuk like, gunakan ViewModel bersama yang di-scope ke nav graph induk (`hiltViewModel(parentEntry)`) atau event hasil (`savedStateHandle["liked_change"] = postId`) yang dibaca layar sebelumnya. | **Sedang.** Menyentuh sinkronisasi like feed ↔ detail. Mitigasi: test 2.10 + test unit sinkronisasi like. |
 
 Yang **sengaja tidak** direkomendasikan sebelum rilis: memecah modul, mengganti `ResultState`, menulis ulang `CommentViewModel`. Semuanya berisiko tinggi tanpa jaring test.
