@@ -7,7 +7,9 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioAttributes
 import android.os.Build
+import android.net.Uri
 import android.os.Bundle
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -31,7 +33,9 @@ import kotlin.math.abs
  */
 object PushNotifications {
 
-	const val CHANNEL_GENERAL = "general"
+	// A channel's sound is fixed once it exists, so the custom sound needed a new id; the old one is deleted.
+	const val CHANNEL_GENERAL = "general_v2"
+	private const val CHANNEL_GENERAL_LEGACY = "general"
 
 	private const val TYPE_NEW_POST = "NEW_POST"
 	private const val KEY_TYPE = "type"
@@ -52,6 +56,7 @@ object PushNotifications {
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
 		val context = AppStrings.localized(appContext)
 		val manager = context.getSystemService(NotificationManager::class.java) ?: return
+		manager.deleteNotificationChannel(CHANNEL_GENERAL_LEGACY)
 		manager.createNotificationChannel(
 			NotificationChannel(
 				CHANNEL_GENERAL,
@@ -59,6 +64,13 @@ object PushNotifications {
 				NotificationManager.IMPORTANCE_DEFAULT
 			).apply {
 				description = context.getString(R.string.notif_channel_general_desc)
+				setSound(
+					Uri.parse("android.resource://${context.packageName}/${R.raw.narrativ_notification}"),
+					AudioAttributes.Builder()
+						.setUsage(AudioAttributes.USAGE_NOTIFICATION)
+						.setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+						.build()
+				)
 			}
 		)
 	}
