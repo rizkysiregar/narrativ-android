@@ -51,12 +51,19 @@ object PushNotifications {
 	private const val KEY_AUTHOR_USERNAME = "authorUsername"
 
 	// activity on your posts and comments (a like, a comment, a reply): the person is whoever did it
-	private val ACTIVITY_TYPES = setOf("POST_LIKED", "POST_COMMENTED", "COMMENT_REPLIED")
+	private val COMMENT_TYPES = setOf("POST_COMMENTED", "COMMENT_REPLIED")
+	private val ACTIVITY_TYPES = setOf("POST_LIKED") + COMMENT_TYPES
 	private const val KEY_ACTOR_ID = "actorId"
 	private const val KEY_ACTOR_USERNAME = "actorUsername"
 
 	/** Where a tapped push wants to go; the home screen takes it and clears it. */
-	data class PushTarget(val userId: String, val username: String)
+	sealed interface PushTarget {
+		/** The post the push is about; [openComments] when it is about a comment or reply. */
+		data class Post(val postId: String, val openComments: Boolean) : PushTarget
+
+		/** The person behind a push that carries no post id (pushes sent before it was added). */
+		data class Profile(val userId: String, val username: String) : PushTarget
+	}
 
 	private val pending = MutableStateFlow<PushTarget?>(null)
 	val pendingTarget: StateFlow<PushTarget?> = pending.asStateFlow()
@@ -127,14 +134,26 @@ object PushNotifications {
 	/** Reads the push data out of the intent that opened the app, and remembers where it points. */
 	fun consumeTap(extras: Bundle?) {
 		extras ?: return
-		val type = extras.getString(KEY_TYPE)
+		val data = extras.keySet().associateWith { extras.getString(it) }
+		targetFor(data)?.let { pending.value = it }
+	}
+
+	/**
+	 * Decides where a tap on a push goes. A post is preferred: every push about a post carries its id. Comment and
+	 * reply pushes open it with the comments shown. Without a post id it falls back to the person's profile.
+	 */
+	fun targetFor(data: Map<String, String?>): PushTarget? {
+		val type = data[KEY_TYPE]
 		val (idKey, usernameKey) = when {
 			type == TYPE_NEW_POST -> KEY_AUTHOR_ID to KEY_AUTHOR_USERNAME
 			type in ACTIVITY_TYPES -> KEY_ACTOR_ID to KEY_ACTOR_USERNAME
-			else -> return
+			else -> return null
 		}
-		val userId = extras.getString(idKey)?.takeIf { it.isNotBlank() } ?: return
-		val username = extras.getString(usernameKey)?.takeIf { it.isNotBlank() } ?: return
-		pending.value = PushTarget(userId, username)
+		data[KEY_POST_ID]?.takeIf { it.isNotBlank() }?.let { postId ->
+			return PushTarget.Post(postId, openComments = type in COMMENT_TYPES)
+		}
+		val userId = data[idKey]?.takeIf { it.isNotBlank() } ?: return null
+		val username = data[usernameKey]?.takeIf { it.isNotBlank() } ?: return null
+		return PushTarget.Profile(userId, username)
 	}
 }

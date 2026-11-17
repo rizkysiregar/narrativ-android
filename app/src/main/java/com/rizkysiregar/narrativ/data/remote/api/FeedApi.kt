@@ -5,6 +5,7 @@ import com.rizkysiregar.narrativ.data.remote.model.request.feed.LikeFeedRequest
 import com.rizkysiregar.narrativ.data.remote.model.response.BaseResponse
 import com.rizkysiregar.narrativ.data.remote.model.response.PaginationResponseWrapper
 import com.rizkysiregar.narrativ.data.remote.model.response.feed.CommentItem
+import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedsPostPaginationResponse
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -41,6 +42,11 @@ interface FeedApi {
 		@Query("size") size: Int,
 		@Query("mediaOnly") mediaOnly: Boolean = false
 	): BaseResponse<FeedsPostPaginationResponse>
+
+	@GET("posts/{postId}")
+	suspend fun getPost(
+		@Path("postId") postId: UUID
+	): BaseResponse<FeedContentItem>
 
 	@POST("posts/{postId}/like")
 	suspend fun likePost(

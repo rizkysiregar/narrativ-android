@@ -10,6 +10,7 @@ import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetFeedByUsernam
 import com.rizkysiregar.narrativ.data.remote.model.request.feed.LikeFeedRequest
 import com.rizkysiregar.narrativ.data.remote.model.response.PaginationResponseWrapper
 import com.rizkysiregar.narrativ.data.remote.model.response.feed.CommentItem
+import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedsPostPaginationResponse
 import com.rizkysiregar.narrativ.data.repository.FeedRepository
 import com.rizkysiregar.narrativ.util.flowFromApi
@@ -49,6 +50,11 @@ class FeedRepositoryImpl @Inject constructor(
 				request.size,
 				request.mediaOnly
 			)
+		}
+
+	override fun getPost(postId: UUID): Flow<ResultState<FeedContentItem>> =
+		flowFromApi {
+			feedApi.getPost(postId)
 		}
 
 	override fun likePost(postId: UUID): Flow<ResultState<String>> =

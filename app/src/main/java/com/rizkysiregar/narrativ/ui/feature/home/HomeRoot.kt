@@ -94,12 +94,17 @@ fun HomeRoot(
 		}
 	}
 
-	// A tapped "new post" push opens the author's profile, where the post is.
+	// A tapped push opens the post it is about; one without a post id (older pushes) opens the person's profile.
 	val pushTarget by PushNotifications.pendingTarget.collectAsState()
 	LaunchedEffect(pushTarget) {
 		pushTarget?.let { target ->
 			PushNotifications.clearPendingTarget()
-			homeNavController.navigate(HomePathRoute.UserDetail.create(target.userId, target.username))
+			when (target) {
+				is PushNotifications.PushTarget.Post ->
+					homeNavController.navigate(HomePathRoute.PostDetail.create(target.postId, target.openComments))
+				is PushNotifications.PushTarget.Profile ->
+					homeNavController.navigate(HomePathRoute.UserDetail.create(target.userId, target.username))
+			}
 		}
 	}
 
@@ -228,11 +233,17 @@ fun HomeRoot(
 			composable(
 				route = HomePathRoute.PostDetail.route,
 				arguments = listOf(
-					navArgument(HomePathRoute.PostDetail.ARG_POST_ID) { type = NavType.StringType }
+					navArgument(HomePathRoute.PostDetail.ARG_POST_ID) { type = NavType.StringType },
+					navArgument(HomePathRoute.PostDetail.ARG_OPEN_COMMENTS) {
+						type = NavType.BoolType
+						defaultValue = false
+					}
 				)
-			) {
+			) { entry ->
 				com.rizkysiregar.narrativ.ui.feature.home.feed.PostDetailDestination(
-					navController = homeNavController
+					navController = homeNavController,
+					postId = entry.arguments?.getString(HomePathRoute.PostDetail.ARG_POST_ID).orEmpty(),
+					openComments = entry.arguments?.getBoolean(HomePathRoute.PostDetail.ARG_OPEN_COMMENTS) ?: false
 				)
 			}
 		}
