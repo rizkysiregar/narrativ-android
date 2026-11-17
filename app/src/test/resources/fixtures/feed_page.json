@@ -1,0 +1,40 @@
+{
+  "code": "200",
+  "message": "OK",
+  "data": {
+    "pageNumber": 0,
+    "last": false,
+    "totalPages": 3,
+    "pageSize": 2,
+    "totalElements": 5,
+    "content": [
+      {
+        "id": "11111111-1111-4111-8111-111111111111",
+        "createdAt": "2026-11-01T08:00:00Z",
+        "caption": "dua media",
+        "likeCount": 7,
+        "liked": true,
+        "username": "rizky",
+        "userId": "6f1d2c3a-0000-4000-8000-000000000001",
+        "commentCount": 3,
+        "futureField": "ignored by the app",
+        "media": [
+          {"id": "m1", "type": "IMAGE", "url": "https://cdn.example/m1.jpg", "thumbnailUrl": null},
+          {"id": "m2", "type": "VIDEO", "url": "https://cdn.example/m2.mp4", "thumbnailUrl": "https://cdn.example/m2.jpg"}
+        ]
+      },
+      {
+        "id": "22222222-2222-4222-8222-222222222222",
+        "createdAt": "2026-11-01T07:00:00Z",
+        "caption": null,
+        "likeCount": 0,
+        "liked": false,
+        "username": "sari",
+        "commentCount": 0,
+        "moderationStatus": "TAKEN_DOWN",
+        "takedownReason": "Melanggar aturan komunitas",
+        "takenDownAt": "2026-11-02T00:00:00Z"
+      }
+    ]
+  }
+}
