@@ -2,8 +2,12 @@ package com.rizkysiregar.narrativ.di
 
 import com.rizkysiregar.narrativ.data.remote.DeviceSyncScheduler
 import com.rizkysiregar.narrativ.data.remote.WorkDeviceSyncScheduler
+import com.rizkysiregar.narrativ.data.repository.ApiDeviceRegistrar
+import com.rizkysiregar.narrativ.data.repository.DeviceRegistrar
 import com.rizkysiregar.narrativ.data.session.CredentialManagerGoogleIdTokenProvider
-import com.rizkysiregar.narrativ.data.session.FirebaseRemoteSessionCleaner
+import com.rizkysiregar.narrativ.data.session.ApiRemoteSessionCleaner
+import com.rizkysiregar.narrativ.data.session.FirebasePushTokenProvider
+import com.rizkysiregar.narrativ.data.session.PushTokenProvider
 import com.rizkysiregar.narrativ.data.session.GoogleIdTokenProvider
 import com.rizkysiregar.narrativ.data.session.RemoteSessionCleaner
 import com.rizkysiregar.narrativ.domain.post.AndroidMediaInspector
@@ -29,7 +33,7 @@ abstract class ServicesModule {
 
 	@Binds
 	@Singleton
-	abstract fun bindRemoteSessionCleaner(impl: FirebaseRemoteSessionCleaner): RemoteSessionCleaner
+	abstract fun bindRemoteSessionCleaner(impl: ApiRemoteSessionCleaner): RemoteSessionCleaner
 
 	@Binds
 	@Singleton
@@ -45,4 +49,12 @@ abstract class ServicesModule {
 	@Binds
 	@Singleton
 	abstract fun bindUploadManager(impl: WorkUploadManager): UploadManager
+
+	@Binds
+	@Singleton
+	abstract fun bindPushTokenProvider(impl: FirebasePushTokenProvider): PushTokenProvider
+
+	@Binds
+	@Singleton
+	abstract fun bindDeviceRegistrar(impl: ApiDeviceRegistrar): DeviceRegistrar
 }

@@ -1,7 +1,6 @@
 package com.rizkysiregar.narrativ.data.session
 
 import android.util.Log
-import com.google.firebase.messaging.FirebaseMessaging
 import com.rizkysiregar.narrativ.constants.PrefKeys
 import com.rizkysiregar.narrativ.data.cache.DataStoreManager
 import com.rizkysiregar.narrativ.data.remote.api.AuthApi
@@ -10,16 +9,16 @@ import com.rizkysiregar.narrativ.data.remote.model.request.auth.RefreshTokenRequ
 import com.rizkysiregar.narrativ.data.remote.model.request.device.DeactivateDeviceRequest
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeoutOrNull
 import retrofit2.Retrofit
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** [RemoteSessionCleaner] on the API and Firebase Messaging. */
+/** [RemoteSessionCleaner] on the API and the push token. */
 @Singleton
-class FirebaseRemoteSessionCleaner @Inject constructor(
+class ApiRemoteSessionCleaner @Inject constructor(
 	private val dataStore: DataStoreManager,
+	private val pushTokens: PushTokenProvider,
 	retrofit: Retrofit
 ) : RemoteSessionCleaner {
 	private val authApi: AuthApi by lazy { retrofit.create(AuthApi::class.java) }
@@ -29,7 +28,7 @@ class FirebaseRemoteSessionCleaner @Inject constructor(
 		withTimeoutOrNull(TIMEOUT_MS) {
 			// the device first: it needs the access token, which the logout call does not
 			attempt("deactivate device") {
-				val pushToken = FirebaseMessaging.getInstance().token.await()
+				val pushToken = pushTokens.token()
 				deviceApi.deactivateDevice(DeactivateDeviceRequest(pushToken))
 			}
 			attempt("revoke refresh token") {
@@ -41,7 +40,7 @@ class FirebaseRemoteSessionCleaner @Inject constructor(
 	}
 
 	override suspend fun dropPushToken() {
-		attempt("delete push token") { FirebaseMessaging.getInstance().deleteToken().await() }
+		attempt("delete push token") { pushTokens.delete() }
 	}
 
 	private suspend fun attempt(step: String, block: suspend () -> Unit) {
