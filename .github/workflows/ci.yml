@@ -24,8 +24,8 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Unit tests and lint
-        run: ./gradlew :app:testDevDebugUnitTest :app:lintDevDebug --stacktrace
+      - name: Unit tests, lint and coverage floors
+        run: ./gradlew :app:testDevDebugUnitTest :app:lintDevDebug :app:verifyCoverageFloors --stacktrace
 
       - name: Upload reports
         if: always()
@@ -35,6 +35,7 @@ jobs:
           path: |
             app/build/reports/tests/
             app/build/reports/lint-results-devDebug.html
+            app/build/reports/kover/
             app/build/test-results/
           if-no-files-found: ignore
 

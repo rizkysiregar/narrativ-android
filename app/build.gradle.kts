@@ -55,10 +55,71 @@ kover {
 					"com.rizkysiregar.narrativ.data.remote.model.*",
 					"*ScreenKt*",
 					"*RouteKt*",
-					"*ViewKt*"
+					"*ViewKt*",
+					"*_AssistedFactory*",
+					// thin adapters over an SDK that cannot run in a JVM test; the logic around them is tested
+					// through their interfaces (PushTokenProvider, GoogleIdTokenProvider, MediaInspector, ...)
+					"com.rizkysiregar.narrativ.data.session.CredentialManagerGoogleIdTokenProvider",
+					"com.rizkysiregar.narrativ.data.session.FirebasePushTokenProvider",
+					"com.rizkysiregar.narrativ.domain.post.AndroidMediaInspector",
+					"com.rizkysiregar.narrativ.telemetry.Firebase*",
+					"com.rizkysiregar.narrativ.config.FirebaseRemoteConfigManager*"
 				)
 			}
 		}
+
+	}
+}
+
+// A floor per area, a little under where it is today, so coverage there only ever goes up. Kover's own verify rules
+// cannot filter per rule, so this reads its XML report. What matters is the risk (see TEST_PLAN.md), not the total:
+// the total is only a net.
+val coverageFloors = listOf(
+	Triple("network and background work", listOf("data/remote"), 90),
+	Triple("session", listOf("data/session"), 90),
+	Triple("repositories", listOf("data/repository"), 85),
+	Triple("auth view models", listOf("ui/feature/auth"), 85),
+	Triple("settings and post composer view models", listOf("ui/feature/home/settings", "ui/feature/home/post"), 85),
+	Triple("util", listOf("util"), 75),
+	Triple("total", listOf(""), 33)
+)
+
+tasks.register("verifyCoverageFloors") {
+	group = "verification"
+	description = "Fails when the line coverage of an area is under its floor (reads the Kover report of devDebug)."
+	dependsOn("koverXmlReportDevDebug")
+	val report = layout.buildDirectory.file("reports/kover/reportDevDebug.xml")
+	doLast {
+		val factory = javax.xml.parsers.DocumentBuilderFactory.newInstance().apply {
+			setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
+		}
+		val packages = factory.newDocumentBuilder().parse(report.get().asFile).getElementsByTagName("package")
+		// package name -> (covered, total) lines
+		val lines = (0 until packages.length).map { packages.item(it) as org.w3c.dom.Element }.associate { pkg ->
+			var covered = 0
+			var total = 0
+			for (k in 0 until pkg.childNodes.length) {
+				val node = pkg.childNodes.item(k)
+				if (node is org.w3c.dom.Element && node.tagName == "counter" && node.getAttribute("type") == "LINE") {
+					covered = node.getAttribute("covered").toInt()
+					total = covered + node.getAttribute("missed").toInt()
+				}
+			}
+			pkg.getAttribute("name") to (covered to total)
+		}
+		val failures = mutableListOf<String>()
+		coverageFloors.forEach { (name, prefixes, floor) ->
+			val matching = lines.filterKeys { pkg ->
+				val path = pkg.removePrefix("com/rizkysiregar/narrativ").removePrefix("/")
+				prefixes.any { it.isEmpty() || path == it || path.startsWith("$it/") }
+			}.values
+			val covered = matching.sumOf { it.first }
+			val total = matching.sumOf { it.second }
+			val percent = if (total == 0) 0.0 else 100.0 * covered / total
+			println("coverage %-40s %5.1f%% (floor %d%%, %d/%d lines)".format(name, percent, floor, covered, total))
+			if (percent < floor) failures += "$name is at ${"%.1f".format(percent)}%, the floor is $floor%"
+		}
+		if (failures.isNotEmpty()) throw GradleException("Coverage is under its floor:\n  " + failures.joinToString("\n  "))
 	}
 }
 
