@@ -88,7 +88,7 @@ object UploadNotifications {
 		}
 
 		return NotificationCompat.Builder(context, CHANNEL_PROGRESS)
-			.setSmallIcon(R.drawable.ic_stat_plane)
+			.setSmallIcon(R.drawable.ic_stat_narrativ)
 			.setColor(Accent500.toArgb())
 			// the plain fields stay filled for surfaces that do not draw custom views (lock screen, wearables)
 			.setContentTitle(titleProgress)
@@ -115,7 +115,7 @@ object UploadNotifications {
 		}
 
 		return NotificationCompat.Builder(context, CHANNEL_RESULT)
-			.setSmallIcon(R.drawable.ic_stat_plane)
+			.setSmallIcon(R.drawable.ic_stat_narrativ)
 			.setColor(if (success) Success.toArgb() else Error.toArgb())
 			.setContentTitle(title)
 			.setContentText(text)

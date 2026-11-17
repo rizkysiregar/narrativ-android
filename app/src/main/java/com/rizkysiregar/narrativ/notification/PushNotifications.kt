@@ -80,7 +80,7 @@ object PushNotifications {
 			context, id, tapIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
 		)
 		val notification = NotificationCompat.Builder(context, CHANNEL_GENERAL)
-			.setSmallIcon(R.drawable.ic_stat_plane)
+			.setSmallIcon(R.drawable.ic_stat_narrativ)
 			.setColor(ContextCompat.getColor(context, R.color.notif_accent))
 			.setContentTitle(title)
 			.setContentText(body)
