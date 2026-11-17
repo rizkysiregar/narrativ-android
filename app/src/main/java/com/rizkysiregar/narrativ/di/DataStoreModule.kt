@@ -1,7 +1,10 @@
 package com.rizkysiregar.narrativ.di
 
 import android.content.Context
-import com.rizkysiregar.narrativ.data.cache.DataStoreManager
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStoreFile
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,11 +23,17 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object DataStoreModule {
 
+	/**
+	 * The name of the preferences file. It holds the JWT and refresh token, so renaming it signs every user out
+	 * after an update. It is the same file `preferencesDataStore("app_pref")` used before.
+	 */
+	const val DATASTORE_NAME = "app_pref"
+
 	@Provides
 	@Singleton
-	fun provideDataStoreManager(
+	fun providePreferencesDataStore(
 		@ApplicationContext context: Context
-	): DataStoreManager = DataStoreManager(context)
-
-
+	): DataStore<Preferences> = PreferenceDataStoreFactory.create(
+		produceFile = { context.preferencesDataStoreFile(DATASTORE_NAME) }
+	)
 }

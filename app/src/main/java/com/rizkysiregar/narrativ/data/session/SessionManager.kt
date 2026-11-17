@@ -2,12 +2,11 @@ package com.rizkysiregar.narrativ.data.session
 
 import com.rizkysiregar.narrativ.data.cache.DataStoreManager
 import com.rizkysiregar.narrativ.data.cache.JwtTokenHolder
+import com.rizkysiregar.narrativ.di.ApplicationScope
 import com.rizkysiregar.narrativ.telemetry.AnalyticsEvents
 import com.rizkysiregar.narrativ.telemetry.AppAnalytics
 import com.rizkysiregar.narrativ.telemetry.CrashReporter
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,9 +27,9 @@ class SessionManager @Inject constructor(
 	private val dataStore: DataStoreManager,
 	private val tokenHolder: JwtTokenHolder,
 	private val analytics: AppAnalytics,
-	private val crashReporter: CrashReporter
+	private val crashReporter: CrashReporter,
+	@ApplicationScope private val scope: CoroutineScope
 ) {
-	private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 	private val invalidationInProgress = AtomicBoolean(false)
 	private val _sessionExpiredMessage = MutableStateFlow<String?>(null)
 	val sessionExpiredMessage: StateFlow<String?> = _sessionExpiredMessage.asStateFlow()

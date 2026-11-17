@@ -1,7 +1,8 @@
 package com.rizkysiregar.narrativ.data.remote.upload
 
+import com.rizkysiregar.narrativ.di.IoDispatcher
 import com.rizkysiregar.narrativ.di.UploadClient
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType
@@ -26,7 +27,8 @@ import javax.inject.Singleton
  */
 @Singleton
 class PresignedUploader @Inject constructor(
-	@UploadClient private val client: OkHttpClient
+	@UploadClient private val client: OkHttpClient,
+	@IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) {
 
 	suspend fun upload(
@@ -34,7 +36,7 @@ class PresignedUploader @Inject constructor(
 		file: File,
 		contentType: String,
 		onProgress: (Float) -> Unit
-	) = withContext(Dispatchers.IO) {
+	) = withContext(ioDispatcher) {
 		val request = Request.Builder()
 			.url(url)
 			.put(ProgressRequestBody(file, contentType.toMediaType(), onProgress))

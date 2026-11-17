@@ -91,10 +91,28 @@ object NetworkModule {
 
 	@Provides
 	@Singleton
-	fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
+	@RefreshClient
+	fun provideRefreshOkHttpClient(
+		appCheckInterceptor: AppCheckInterceptor,
+		chuckerInterceptor: ChuckerInterceptor
+	): OkHttpClient {
+		return OkHttpClient.Builder()
+			.addInterceptor(appCheckInterceptor)
+			.addInterceptor(chuckerInterceptor)
+			.connectTimeout(30, TimeUnit.SECONDS)
+			.readTimeout(30, TimeUnit.SECONDS)
+			.build()
+	}
+
+	@Provides
+	@BaseUrl
+	fun provideBaseUrl(): String = BuildConfig.BASE_URL
+
+	@Provides
+	@Singleton
+	fun provideRetrofit(okHttpClient: OkHttpClient, @BaseUrl baseUrl: String): Retrofit {
 		return Retrofit.Builder()
-//			.baseUrl(Constants.BASE_URL)
-			.baseUrl(BuildConfig.BASE_URL)
+			.baseUrl(baseUrl)
 			.addConverterFactory(GsonConverterFactory.create())
 			.client(okHttpClient)
 			.build()

@@ -15,6 +15,7 @@ import com.rizkysiregar.narrativ.telemetry.AnalyticsEvents
 import com.rizkysiregar.narrativ.telemetry.AppAnalytics
 import com.rizkysiregar.narrativ.telemetry.CrashReporter
 import com.rizkysiregar.narrativ.telemetry.PerfTrace
+import com.rizkysiregar.narrativ.telemetry.PerfTracer
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
@@ -46,6 +47,7 @@ class PostUploadWorker @AssistedInject constructor(
 	private val uploadManager: UploadManager,
 	private val analytics: AppAnalytics,
 	private val crashReporter: CrashReporter,
+	private val perfTracer: PerfTracer,
 	private val appStrings: AppStrings
 ) : CoroutineWorker(appContext, params) {
 
@@ -156,7 +158,7 @@ class PostUploadWorker @AssistedInject constructor(
 		var refreshed = false
 		while (true) {
 			try {
-				PerfTrace.measure(PerfTrace.MEDIA_UPLOAD, mapOf("content_type" to contentType)) {
+				perfTracer.measure(PerfTrace.MEDIA_UPLOAD, mapOf("content_type" to contentType)) {
 					presignedUploader.upload(uploadUrl.presignedUrl, file, contentType, onProgress)
 				}
 				return uploadUrl.objectKey

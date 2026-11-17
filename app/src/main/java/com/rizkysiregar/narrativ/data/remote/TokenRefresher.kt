@@ -1,16 +1,15 @@
 package com.rizkysiregar.narrativ.data.remote
 
-import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.rizkysiregar.narrativ.BuildConfig
-import com.rizkysiregar.narrativ.appcheck.AppCheckInterceptor
 import com.rizkysiregar.narrativ.constants.PrefKeys
 import com.rizkysiregar.narrativ.data.cache.DataStoreManager
 import com.rizkysiregar.narrativ.data.cache.JwtTokenHolder
 import com.rizkysiregar.narrativ.data.remote.model.request.auth.RefreshTokenRequest
 import com.rizkysiregar.narrativ.data.remote.model.response.BaseResponse
 import com.rizkysiregar.narrativ.data.remote.model.response.auth.LoginResponse
+import com.rizkysiregar.narrativ.di.BaseUrl
+import com.rizkysiregar.narrativ.di.RefreshClient
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import okhttp3.MediaType.Companion.toMediaType
@@ -18,7 +17,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -27,23 +25,17 @@ import javax.inject.Singleton
  *
  * Refresh tokens are single use, so calls are serialized: when several requests hit
  * 401 at once, only the first performs the refresh and the rest reuse its result.
- * It uses its own bare client so the call never passes through [AuthInterceptor].
+ * It uses its own client ([RefreshClient]) so the call never passes through [AuthInterceptor].
  */
 @Singleton
 class TokenRefresher @Inject constructor(
 	private val dataStore: DataStoreManager,
 	private val tokenHolder: JwtTokenHolder,
-	chuckerInterceptor: ChuckerInterceptor,
-	appCheckInterceptor: AppCheckInterceptor
+	@RefreshClient private val client: OkHttpClient,
+	@BaseUrl private val baseUrl: String
 ) {
 	enum class Result { REFRESHED, REJECTED, FAILED }
 
-	private val client = OkHttpClient.Builder()
-		.addInterceptor(appCheckInterceptor)
-		.addInterceptor(chuckerInterceptor)
-		.connectTimeout(30, TimeUnit.SECONDS)
-		.readTimeout(30, TimeUnit.SECONDS)
-		.build()
 	private val gson = Gson()
 
 	/**
@@ -61,7 +53,7 @@ class TokenRefresher @Inject constructor(
 		val body = gson.toJson(RefreshTokenRequest(refreshToken))
 			.toRequestBody("application/json".toMediaType())
 		val request = Request.Builder()
-			.url(BuildConfig.BASE_URL + "auth/refresh")
+			.url(baseUrl + "auth/refresh")
 			.post(body)
 			.build()
 

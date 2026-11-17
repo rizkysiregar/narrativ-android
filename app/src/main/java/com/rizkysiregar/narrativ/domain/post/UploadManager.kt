@@ -33,11 +33,11 @@ import com.rizkysiregar.narrativ.R
  */
 @Singleton
 class UploadManager @Inject constructor(
-	@ApplicationContext context: Context
+	@ApplicationContext context: Context,
+	private val appStrings: AppStrings
 ) {
 
 	private val workManager = WorkManager.getInstance(context)
-	private val appStrings = AppStrings(context)
 
 	private val _completions = MutableSharedFlow<Unit>(extraBufferCapacity = 4)
 	val completions: SharedFlow<Unit> = _completions.asSharedFlow()
