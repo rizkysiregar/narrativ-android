@@ -111,6 +111,8 @@ robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "
 androidx-test-core = { group = "androidx.test", name = "core-ktx", version.ref = "androidxTestCore" }
 okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver3", version.ref = "okhttpTest" }
 okhttp-mockwebserver-junit4 = { group = "com.squareup.okhttp3", name = "mockwebserver3-junit4", version.ref = "okhttpTest" }
+# real org.json: the android.jar one is an empty stub in unit tests
+json-test = { module = "org.json:json", version = "20240303" }
 androidx-work-testing = { group = "androidx.work", name = "work-testing", version.ref = "workManager" }
 hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testing", version = "2.57.2" }
 

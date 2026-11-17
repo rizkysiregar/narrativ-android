@@ -126,6 +126,13 @@ android {
 	}
 
 	buildTypes {
+		debug {
+			// The plugin rewrites every OkHttpClient to report to Firebase, which cannot start in a JVM unit test.
+			// Debug builds never send telemetry anyway (see TelemetrySettings).
+			configure<com.google.firebase.perf.plugin.FirebasePerfExtension> {
+				setInstrumentationEnabled(false)
+			}
+		}
 		release {
 			signingConfig = signingConfigs.findByName("release")
 			isMinifyEnabled = true
@@ -248,6 +255,7 @@ dependencies {
 	testImplementation(libs.okhttp.mockwebserver)
 	testImplementation(libs.okhttp.mockwebserver.junit4)
 	testImplementation(libs.androidx.work.testing)
+	testImplementation(libs.json.test)
 	testImplementation(platform(libs.androidx.compose.bom))
 	testImplementation(libs.androidx.ui.test.junit4)
 	androidTestImplementation(libs.androidx.junit)
