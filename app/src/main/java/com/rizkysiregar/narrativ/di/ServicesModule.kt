@@ -15,6 +15,10 @@ import com.rizkysiregar.narrativ.domain.post.FileMediaPreparationUseCase
 import com.rizkysiregar.narrativ.domain.post.MediaInspector
 import com.rizkysiregar.narrativ.domain.post.MediaPreparationUseCase
 import com.rizkysiregar.narrativ.domain.post.UploadManager
+import com.rizkysiregar.narrativ.media.BitmapImageCompressor
+import com.rizkysiregar.narrativ.media.ImageCompressor
+import com.rizkysiregar.narrativ.media.Media3VideoCompressor
+import com.rizkysiregar.narrativ.media.VideoCompressor
 import com.rizkysiregar.narrativ.domain.post.WorkUploadManager
 import dagger.Binds
 import dagger.Module
@@ -57,4 +61,12 @@ abstract class ServicesModule {
 	@Binds
 	@Singleton
 	abstract fun bindDeviceRegistrar(impl: ApiDeviceRegistrar): DeviceRegistrar
+
+	@Binds
+	@Singleton
+	abstract fun bindImageCompressor(impl: BitmapImageCompressor): ImageCompressor
+
+	@Binds
+	@Singleton
+	abstract fun bindVideoCompressor(impl: Media3VideoCompressor): VideoCompressor
 }
