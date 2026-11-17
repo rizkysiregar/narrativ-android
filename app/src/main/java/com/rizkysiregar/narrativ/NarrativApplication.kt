@@ -10,6 +10,7 @@ import androidx.work.Configuration
 import com.rizkysiregar.narrativ.appcheck.AppCheckInstaller
 import com.rizkysiregar.narrativ.config.RemoteConfigManager
 import com.rizkysiregar.narrativ.data.remote.DeviceSyncScheduler
+import com.rizkysiregar.narrativ.notification.PushNotifications
 import com.rizkysiregar.narrativ.notification.UploadNotifications
 import com.rizkysiregar.narrativ.telemetry.TelemetrySettings
 import dagger.hilt.android.HiltAndroidApp
@@ -38,6 +39,7 @@ class NarrativApplication : Application(), Configuration.Provider {
 		AppCheckInstaller.install()
 		telemetrySettings.apply()
 		UploadNotifications.createChannels(this)
+		PushNotifications.createChannel(this)
 
 		// Every time the app comes to the foreground, silently sync device info and refresh Remote Config
 		// (Firebase itself throttles the real fetches to once per interval).

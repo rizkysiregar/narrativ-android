@@ -1,0 +1,102 @@
+package com.rizkysiregar.narrativ.notification
+
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Bundle
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
+import com.rizkysiregar.narrativ.MainActivity
+import com.rizkysiregar.narrativ.R
+import com.rizkysiregar.narrativ.i18n.AppStrings
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlin.math.abs
+
+/**
+ * Push notifications from the server (new post from someone you follow, replies, ...).
+ *
+ * While the app is in the background FCM shows the notification itself, using [CHANNEL_GENERAL] (set as the
+ * default channel in the manifest). In the foreground FCM shows nothing, so [NarrativMessagingService] calls
+ * [show] to post the same notification. Both carry the push's data as intent extras, which [consumeTap] turns
+ * into a [PushTarget] once MainActivity opens.
+ */
+object PushNotifications {
+
+	const val CHANNEL_GENERAL = "general"
+
+	private const val TYPE_NEW_POST = "NEW_POST"
+	private const val KEY_TYPE = "type"
+	private const val KEY_AUTHOR_ID = "authorId"
+	private const val KEY_AUTHOR_USERNAME = "authorUsername"
+
+	/** Where a tapped push wants to go; the home screen takes it and clears it. */
+	data class PushTarget(val userId: String, val username: String)
+
+	private val pending = MutableStateFlow<PushTarget?>(null)
+	val pendingTarget: StateFlow<PushTarget?> = pending.asStateFlow()
+
+	fun clearPendingTarget() {
+		pending.value = null
+	}
+
+	fun createChannel(appContext: Context) {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+		val context = AppStrings.localized(appContext)
+		val manager = context.getSystemService(NotificationManager::class.java) ?: return
+		manager.createNotificationChannel(
+			NotificationChannel(
+				CHANNEL_GENERAL,
+				context.getString(R.string.notif_channel_general),
+				NotificationManager.IMPORTANCE_DEFAULT
+			).apply {
+				description = context.getString(R.string.notif_channel_general_desc)
+			}
+		)
+	}
+
+	/** Posts a push received while the app is open. Does nothing without the notification permission. */
+	fun show(context: Context, title: String?, body: String?, data: Map<String, String>) {
+		if (title.isNullOrBlank() && body.isNullOrBlank()) return
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+			ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+			PackageManager.PERMISSION_GRANTED
+		) return
+
+		val id = abs((data["postId"] ?: "$title$body").hashCode())
+		val tapIntent = Intent(context, MainActivity::class.java).apply {
+			flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+			data.forEach { (key, value) -> putExtra(key, value) }
+		}
+		val contentIntent = PendingIntent.getActivity(
+			context, id, tapIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+		)
+		val notification = NotificationCompat.Builder(context, CHANNEL_GENERAL)
+			.setSmallIcon(R.drawable.ic_stat_plane)
+			.setColor(ContextCompat.getColor(context, R.color.notif_accent))
+			.setContentTitle(title)
+			.setContentText(body)
+			.setStyle(NotificationCompat.BigTextStyle().bigText(body))
+			.setAutoCancel(true)
+			.setContentIntent(contentIntent)
+			.build()
+		NotificationManagerCompat.from(context).notify(id, notification)
+	}
+
+	/** Reads the push data out of the intent that opened the app, and remembers where it points. */
+	fun consumeTap(extras: Bundle?) {
+		extras ?: return
+		if (extras.getString(KEY_TYPE) != TYPE_NEW_POST) return
+		val userId = extras.getString(KEY_AUTHOR_ID)?.takeIf { it.isNotBlank() } ?: return
+		val username = extras.getString(KEY_AUTHOR_USERNAME)?.takeIf { it.isNotBlank() } ?: return
+		pending.value = PushTarget(userId, username)
+	}
+}

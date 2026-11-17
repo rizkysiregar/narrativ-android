@@ -162,6 +162,8 @@
     <string name="notif_channel_progress_desc">Shows the progress of a post being uploaded</string>
     <string name="notif_channel_result">Upload result</string>
     <string name="notif_channel_result_desc">The final result of a post upload</string>
+    <string name="notif_channel_general">General</string>
+    <string name="notif_channel_general_desc">New posts from people you follow, replies and updates</string>
     <string name="notif_failed">Couldn\'t share your post</string>
     <string name="notif_live">It\'s live in your feed</string>
     <string name="notif_posted">Post shared</string>

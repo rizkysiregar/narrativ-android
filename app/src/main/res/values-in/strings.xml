@@ -161,6 +161,8 @@
     <string name="notif_channel_progress_desc">Menampilkan progres postingan yang sedang diunggah</string>
     <string name="notif_channel_result">Hasil unggahan</string>
     <string name="notif_channel_result_desc">Hasil akhir unggahan postingan</string>
+    <string name="notif_channel_general">Umum</string>
+    <string name="notif_channel_general_desc">Postingan baru dari orang yang Anda ikuti, balasan, dan pembaruan</string>
     <string name="notif_failed">Postingan gagal dikirim</string>
     <string name="notif_live">Sudah tampil di feed Anda</string>
     <string name="notif_posted">Postingan terkirim</string>
