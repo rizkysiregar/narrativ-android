@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Required check for every PR: unit tests + lint.
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Unit tests and lint
+        run: ./gradlew :app:testDevDebugUnitTest :app:lintDevDebug --stacktrace
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-reports
+          path: |
+            app/build/reports/tests/
+            app/build/reports/lint-results-devDebug.html
+            app/build/test-results/
+          if-no-files-found: ignore
+
+  # R8 only runs on release builds, so build one on every merge to master.
+  release-check:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # Unsigned: signing only kicks in when keystore.properties / KEYSTORE_* are present.
+      - name: Assemble prod release (R8) and lint it
+        run: ./gradlew :app:assembleProdRelease :app:lintProdRelease --stacktrace
+
+      - name: Upload R8 mapping
+        uses: actions/upload-artifact@v4
+        with:
+          name: prod-release-mapping
+          path: app/build/outputs/mapping/prodRelease/
+          if-no-files-found: warn
