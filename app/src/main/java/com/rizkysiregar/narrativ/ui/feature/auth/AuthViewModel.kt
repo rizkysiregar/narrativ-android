@@ -1,8 +1,6 @@
 package com.rizkysiregar.narrativ.ui.feature.auth
 
-import android.content.Intent
 import android.util.Log
-import androidx.core.net.toUri
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -24,10 +22,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import net.openid.appauth.AuthorizationRequest
-import net.openid.appauth.AuthorizationService
-import net.openid.appauth.AuthorizationServiceConfiguration
-import net.openid.appauth.ResponseTypeValues
 import javax.inject.Inject
 import com.rizkysiregar.narrativ.i18n.AppStrings
 import com.rizkysiregar.narrativ.R
@@ -36,7 +30,6 @@ import com.rizkysiregar.narrativ.R
 class AuthViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
     private val googleLoginUseCase: GoogleLoginUseCase,
-    private val authService: AuthorizationService,
     private val dataStore: DataStoreManager,
     private val tokenHolder: JwtTokenHolder,
     private val sessionManager: SessionManager,
