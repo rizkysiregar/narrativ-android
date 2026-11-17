@@ -70,6 +70,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.AspectRatioFrameLayout
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
@@ -183,6 +184,7 @@ private fun PostDetailMessage(
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun PostDetailScreen(
 	post: FeedContentItem,

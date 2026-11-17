@@ -60,6 +60,7 @@ import com.rizkysiregar.narrativ.R
 import com.rizkysiregar.narrativ.ui.theme.NarrativTheme
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 
 
 /**
@@ -75,6 +76,7 @@ fun RegisterScreen(
 	initialState: RegisterState = RegisterState()
 ) {
 	val context = LocalContext.current
+	val resources = LocalResources.current
 	var registerState by remember { mutableStateOf(initialState) }
 	var formErrors by remember { mutableStateOf(RegisterFormErrors()) }
 
@@ -96,7 +98,7 @@ fun RegisterScreen(
 		MiddleSection(
 			onLegalClick = onLegalClick,
 			onRegisterClick = {
-				val errors = registerState.validate { label -> context.getString(R.string.error_required, context.getString(label)) }
+				val errors = registerState.validate { label -> resources.getString(R.string.error_required, resources.getString(label)) }
 				formErrors = errors
 				if (!errors.hasErrors) {
 					onRegisterClick(registerState.trimmed())

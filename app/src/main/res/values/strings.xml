@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">NARRATIV</string>
+    <string name="app_name" translatable="false">NARRATIV</string>
     <string name="add_comment">Add a comment...</string>
     <string name="add_emoji">Add %1$s</string>
     <string name="adjust_photo">Adjust photo</string>

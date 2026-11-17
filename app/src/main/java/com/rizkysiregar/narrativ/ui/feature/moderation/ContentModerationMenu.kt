@@ -36,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -72,6 +73,7 @@ fun ContentModerationMenu(
 	if (authorId == null || authorId == currentUserId) return
 
 	val context = LocalContext.current
+	val resources = LocalResources.current
 	var menuOpen by remember { mutableStateOf(false) }
 	var showReport by rememberSaveable { mutableStateOf(false) }
 	var showBlock by rememberSaveable { mutableStateOf(false) }
@@ -124,7 +126,7 @@ fun ContentModerationMenu(
 				viewModel.report(target.type, target.targetId, reason, description) { result ->
 					when (result) {
 						ModerationResult.Success ->
-							toast(context.getString(R.string.report_thanks))
+							toast(resources.getString(R.string.report_thanks))
 						is ModerationResult.Failure -> result.message?.let(::toast)
 					}
 				}
@@ -145,7 +147,7 @@ fun ContentModerationMenu(
 					viewModel.block(authorId) { result ->
 						when (result) {
 							ModerationResult.Success -> {
-								toast(context.getString(R.string.user_blocked, target.authorUsername))
+								toast(resources.getString(R.string.user_blocked, target.authorUsername))
 								onBlocked()
 							}
 							is ModerationResult.Failure -> result.message?.let(::toast)

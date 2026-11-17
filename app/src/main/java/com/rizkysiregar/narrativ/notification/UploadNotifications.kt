@@ -1,5 +1,6 @@
 package com.rizkysiregar.narrativ.notification
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -156,6 +157,8 @@ object UploadNotifications {
 		post(context, notificationId, buildResult(context, caption, success))
 	}
 
+	// areNotificationsEnabled() is false without POST_NOTIFICATIONS on API 33+, which is the permission check lint wants.
+	@SuppressLint("MissingPermission")
 	private fun post(context: Context, notificationId: Int, notification: Notification) {
 		val manager = NotificationManagerCompat.from(context)
 		if (!manager.areNotificationsEnabled()) return
