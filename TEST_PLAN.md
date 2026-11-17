@@ -22,6 +22,21 @@ Branch kerja: `chore/test-foundation-phase-0`.
 | 0.8 Kover | ✅ | Laporan saja, belum ada gate |
 | 0.9 ktlint + detekt | ⏳ | Ditunda: perlu satu commit format massal terpisah |
 
+Branch Phase 1: `chore/testability-seams-phase-1`.
+
+| Task | Status | Catatan |
+|---|---|---|
+| 1.1 E1 interface telemetry/string/config | ✅ | `AppAnalytics`, `CrashReporter`, `AppStrings`, `RemoteConfigManager` tetap bernama sama tapi jadi interface (call site tidak berubah). Implementasi: `Firebase*` / `ContextAppStrings`, di-bind di `di/TelemetryModule.kt` |
+| 1.2 E2 DataStore | ✅ | `DataStoreManager(DataStore<Preferences>)`, file tetap `app_pref`. 5 test, termasuk snapshot nama file dan semua `PrefKeys` |
+| 1.3 E3 `@BaseUrl` | ✅ | Ditambah `@RefreshClient` (client refresh token juga di-inject, karena Chucker dan App Check tidak bisa dibuat di JVM) |
+| 1.4 E4 scope/dispatcher | ✅ | `@ApplicationScope` (SupervisorJob + Default), `@IoDispatcher`. `SessionManager` dan `PresignedUploader` |
+| 1.5 E5 Clock | ✅ | `RegisterViewModel`, `DeviceRegistrar` |
+| 1.6 `PerfTracer` | ✅ | Bagian dari 1.1 |
+| 1.9 E9 kode mati | 🟡 | Kode dihapus (`AuthModule`, `UserDataRepository`, `OAuth2LoginState`, param `authService`). Dependency `appauth` dan `RedirectUriReceiverActivity` di manifest **belum** disentuh: menunggu keputusan |
+| 1.11 E11 `AppInitializer` | ✅ | `initLocal` / `initServices` / `observeForeground` |
+| 1.7 E7 `MediaValidator`, 1.8 E6 `PushTokenProvider` | ⏳ | P1, boleh menyusul |
+| 1.10 E10 function reference di `SavedStateHandle` | ⏳ | Menunggu hasil verifikasi R3 (2.10) |
+
 ---
 
 ## A. Ringkasan Kondisi Project
