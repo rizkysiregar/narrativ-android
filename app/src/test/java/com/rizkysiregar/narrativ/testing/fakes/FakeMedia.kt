@@ -84,8 +84,14 @@ class FakeImageCompressor : com.rizkysiregar.narrativ.media.ImageCompressor {
 		return onCompress(source, mimeType)
 	}
 
-	override suspend fun compressAvatar(source: java.io.File, mimeType: String): com.rizkysiregar.narrativ.media.CompressedImage =
-		com.rizkysiregar.narrativ.media.CompressedImage(source, mimeType)
+	val avatarsCompressed = mutableListOf<java.io.File>()
+	var onCompressAvatar: (java.io.File, String) -> com.rizkysiregar.narrativ.media.CompressedImage =
+		{ source, mime -> com.rizkysiregar.narrativ.media.CompressedImage(source, mime) }
+
+	override suspend fun compressAvatar(source: java.io.File, mimeType: String): com.rizkysiregar.narrativ.media.CompressedImage {
+		avatarsCompressed += source
+		return onCompressAvatar(source, mimeType)
+	}
 }
 
 class FakeVideoCompressor : com.rizkysiregar.narrativ.media.VideoCompressor {

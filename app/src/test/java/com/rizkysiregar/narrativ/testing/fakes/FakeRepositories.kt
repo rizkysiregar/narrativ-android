@@ -107,9 +107,19 @@ class FakeUserRepository : UserRepository {
 
 	override fun deleteAccount(request: DeleteAccountRequest) = onDeleteAccount(request).also { deleteRequests += request }
 
-	override suspend fun createProfileImageUploadUrl(contentType: String): ProfileImageUploadUrlResponse = unscripted("createProfileImageUploadUrl")
-	override suspend fun setProfileImage(objectKey: String): UserSearchItemResponse = unscripted("setProfileImage")
-	override suspend fun deleteProfileImage(): UserSearchItemResponse = unscripted("deleteProfileImage")
+	var onCreateProfileImageUploadUrl: (String) -> ProfileImageUploadUrlResponse = { unscripted("createProfileImageUploadUrl") }
+	var onSetProfileImage: (String) -> UserSearchItemResponse = { unscripted("setProfileImage") }
+	var onDeleteProfileImage: () -> UserSearchItemResponse = { unscripted("deleteProfileImage") }
+	val profileImageUploadUrlRequests = mutableListOf<String>()
+	val profileImageKeys = mutableListOf<String>()
+	var profileImageDeletions = 0
+
+	override suspend fun createProfileImageUploadUrl(contentType: String) =
+		onCreateProfileImageUploadUrl(contentType).also { profileImageUploadUrlRequests += contentType }
+
+	override suspend fun setProfileImage(objectKey: String) = onSetProfileImage(objectKey).also { profileImageKeys += objectKey }
+
+	override suspend fun deleteProfileImage() = onDeleteProfileImage().also { profileImageDeletions++ }
 	override fun getUserProfile(userId: String) = onGetUserProfile(userId).also { profileRequests += userId }
 	override fun searchUsers(request: SearchUserRequest): Flow<ResultState<PaginationResponseWrapper<UserSearchItemResponse>>> = unscripted("searchUsers")
 	override fun follow(userId: String): Flow<ResultState<String>> = unscripted("follow")
