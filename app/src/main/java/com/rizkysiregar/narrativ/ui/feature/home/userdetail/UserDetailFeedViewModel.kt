@@ -1,0 +1,49 @@
+package com.rizkysiregar.narrativ.ui.feature.home.userdetail
+
+import com.rizkysiregar.narrativ.data.cache.DataStoreManager
+import com.rizkysiregar.narrativ.data.remote.model.ResultState
+import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetFeedByUsernameRequest
+import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedsPostPaginationResponse
+import com.rizkysiregar.narrativ.domain.feed.DislikePostUseCase
+import com.rizkysiregar.narrativ.domain.feed.GetFeedByUsernameUseCase
+import com.rizkysiregar.narrativ.domain.feed.LikePostUseCase
+import com.rizkysiregar.narrativ.ui.feature.home.feed.BaseFeedViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
+
+/**
+ * Author: Habib Rizky Almajid Siregar
+ * Date: 07/10/26
+ * Description: Software Engineer
+ */
+@HiltViewModel
+class UserDetailFeedViewModel @Inject constructor(
+	private val getFeedByUsernameUseCase: GetFeedByUsernameUseCase,
+	dislikePostUseCase: DislikePostUseCase,
+	likePostUseCase: LikePostUseCase,
+	dataStore: DataStoreManager
+) : BaseFeedViewModel(dataStore, dislikePostUseCase, likePostUseCase) {
+
+	private var targetUsername: String = ""
+
+	fun startFor(username: String) {
+		if (targetUsername == username) return
+		targetUsername = username
+		refreshAll()
+	}
+
+	override suspend fun fetchPage(
+		page: Int,
+		size: Int,
+		mediaOnly: Boolean
+	): Flow<ResultState<FeedsPostPaginationResponse>> =
+		getFeedByUsernameUseCase(
+			GetFeedByUsernameRequest(
+				page = page,
+				size = size,
+				username = targetUsername,
+				mediaOnly = mediaOnly
+			)
+		)
+}

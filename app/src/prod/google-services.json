@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "570846727986",
-    "project_id": "feedzmore-prod",
-    "storage_bucket": "feedzmore-prod.firebasestorage.app"
+    "project_number": "88005068433",
+    "project_id": "narrativ-production",
+    "storage_bucket": "narrativ-production.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:570846727986:android:cc4aea49b78c3fcbe9d12b",
+        "mobilesdk_app_id": "1:88005068433:android:417985acb920921a92e130",
         "android_client_info": {
-          "package_name": "com.rizkysiregar.feedzmore"
+          "package_name": "com.rizkysiregar.narrativ"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyC9FLi5g2StePyYbjZBCUrh0Xx3TkKPQhE"
+          "current_key": "AIzaSyAumygs9I6xNOn4ntLNeDcOSY5MBqRCGJ4"
         }
       ],
       "services": {

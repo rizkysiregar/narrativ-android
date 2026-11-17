@@ -31,7 +31,7 @@ fun signingValue(propertyName: String, envName: String): String? =
 	keystoreProperties.getProperty(propertyName) ?: System.getenv(envName)
 
 android {
-	namespace = "com.rizkysiregar.feedzmore"
+	namespace = "com.rizkysiregar.narrativ"
 	compileSdk = 36
 	flavorDimensions += "env"
 
@@ -50,7 +50,7 @@ android {
 			buildConfigField(
 				"String",
 				"BASE_URL",
-				"\"https://api-dev-feedzmore.rizkysiregar.my.id/api/v1/\""
+				"\"https://api-dev-narrativ.rizkysiregar.my.id/api/v1/\""
 			)
 		}
 
@@ -59,17 +59,17 @@ android {
 			buildConfigField(
 				"String",
 				"BASE_URL",
-				"\"https://api-feedzmore.rizkysiregar.my.id/api/v1/\""
+				"\"https://api-narrativ.rizkysiregar.my.id/api/v1/\""
 			)
 		}
 	}
 
 
 	defaultConfig {
-		applicationId = "com.rizkysiregar.feedzmore"
+		applicationId = "com.rizkysiregar.narrativ"
 		manifestPlaceholders.putAll(
 			mapOf(
-				"appAuthRedirectScheme" to "com.rizkysiregar.feedzmore"
+				"appAuthRedirectScheme" to "com.rizkysiregar.narrativ"
 			)
 		)
 

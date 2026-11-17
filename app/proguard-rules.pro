@@ -8,7 +8,7 @@
 # Gson maps JSON by reflecting on field names and generic signatures, so every request/response
 # model must keep its fields, and the generic types (BaseResponse<T> through TypeToken) their signatures.
 -keepattributes Signature,*Annotation*,EnclosingMethod,InnerClasses
--keep class com.rizkysiregar.feedzmore.data.remote.model.** { *; }
+-keep class com.rizkysiregar.narrativ.data.remote.model.** { *; }
 
 # Models are also written into the nav saved state as JSON (Gson().toJson(post)); nothing else to keep.
 

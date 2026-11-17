@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Feedzmore</string>
+    <string name="app_name">NARRATIV</string>
     <string name="add_comment">Add a comment...</string>
     <string name="add_emoji">Add %1$s</string>
     <string name="adjust_photo">Adjust photo</string>
@@ -30,7 +30,7 @@
     <string name="cd_feed_photo">Post photo</string>
     <string name="cd_image_failed">Image failed to load</string>
     <string name="cd_like">Like</string>
-    <string name="cd_logo">Feedzmore logo</string>
+    <string name="cd_logo">NARRATIV logo</string>
     <string name="cd_media_count">%1$d media</string>
     <string name="cd_page_of">Page %1$d of %2$d</string>
     <string name="cd_photo_n">Photo %1$d</string>
