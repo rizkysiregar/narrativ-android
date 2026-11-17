@@ -17,6 +17,7 @@ import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.Transformer
 import androidx.media3.transformer.VideoEncoderSettings
 import com.rizkysiregar.narrativ.telemetry.CrashReporter
+import com.rizkysiregar.narrativ.telemetry.PerfTracer
 import com.rizkysiregar.narrativ.telemetry.PerfTrace
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -38,11 +39,12 @@ import com.rizkysiregar.narrativ.R
 @Singleton
 class VideoCompressor @Inject constructor(
 	@ApplicationContext private val context: Context,
-	private val crashReporter: CrashReporter
+	private val crashReporter: CrashReporter,
+	private val perfTracer: PerfTracer
 ) {
 
 	suspend fun compress(inputUri: Uri): File =
-		PerfTrace.measure(PerfTrace.VIDEO_COMPRESS) { transcode(inputUri) }
+		perfTracer.measure(PerfTrace.VIDEO_COMPRESS) { transcode(inputUri) }
 
     @OptIn(UnstableApi::class)
     private suspend fun transcode(inputUri: Uri): File {

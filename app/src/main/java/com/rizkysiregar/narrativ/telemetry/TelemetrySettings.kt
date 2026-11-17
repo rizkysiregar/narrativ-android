@@ -21,7 +21,8 @@ import javax.inject.Singleton
 class TelemetrySettings @Inject constructor(
 	@ApplicationContext context: Context,
 	private val analytics: AppAnalytics,
-	private val crashReporter: CrashReporter
+	private val crashReporter: CrashReporter,
+	private val perfTracer: PerfTracer
 ) {
 	private val prefs = context.getSharedPreferences("telemetry", Context.MODE_PRIVATE)
 
@@ -43,7 +44,7 @@ class TelemetrySettings @Inject constructor(
 		val collect = userEnabled && !BuildConfig.DEBUG
 		analytics.setCollectionEnabled(collect)
 		crashReporter.setCollectionEnabled(collect)
-		PerfTrace.setCollectionEnabled(collect)
+		perfTracer.setCollectionEnabled(collect)
 	}
 
 	private companion object {

@@ -11,10 +11,8 @@ import javax.inject.Singleton
  * Text for code that has no composition to read it from (view models, workers, notifications). It always reads in the
  * current [AppLocale], which an application context does not follow on its own before Android 13.
  */
-@Singleton
-class AppStrings @Inject constructor(@ApplicationContext private val context: Context) {
-
-	fun get(@StringRes id: Int, vararg args: Any): String = localized(context).getString(id, *args)
+interface AppStrings {
+	fun get(@StringRes id: Int, vararg args: Any): String
 
 	companion object {
 		fun localized(context: Context): Context {
@@ -23,4 +21,11 @@ class AppStrings @Inject constructor(@ApplicationContext private val context: Co
 			return context.createConfigurationContext(config)
 		}
 	}
+}
+
+@Singleton
+class ContextAppStrings @Inject constructor(@ApplicationContext private val context: Context) : AppStrings {
+
+	override fun get(@StringRes id: Int, vararg args: Any): String =
+		AppStrings.localized(context).getString(id, *args)
 }
