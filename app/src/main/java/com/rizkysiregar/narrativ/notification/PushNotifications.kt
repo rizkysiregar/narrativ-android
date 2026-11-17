@@ -34,9 +34,12 @@ import kotlin.math.abs
  */
 object PushNotifications {
 
-	// A channel's sound is fixed once it exists, so the custom sound needed a new id; the old one is deleted.
-	const val CHANNEL_GENERAL = "general_v2"
-	private const val CHANNEL_GENERAL_LEGACY = "general"
+	// A channel's sound and importance are fixed once it exists, so changing either needs a new id; the old
+	// ones are deleted. v3 is IMPORTANCE_HIGH, which is what lets a push pop up on screen (heads-up).
+	const val CHANNEL_GENERAL = "general_v3"
+	private val CHANNELS_LEGACY = listOf("general", "general_v2")
+
+	private val VIBRATION_PATTERN = longArrayOf(0, 250, 150, 250)
 
 	private const val KEY_TYPE = "type"
 	private const val KEY_POST_ID = "postId"
@@ -66,14 +69,16 @@ object PushNotifications {
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
 		val context = AppStrings.localized(appContext)
 		val manager = context.getSystemService(NotificationManager::class.java) ?: return
-		manager.deleteNotificationChannel(CHANNEL_GENERAL_LEGACY)
+		CHANNELS_LEGACY.forEach(manager::deleteNotificationChannel)
 		manager.createNotificationChannel(
 			NotificationChannel(
 				CHANNEL_GENERAL,
 				context.getString(R.string.notif_channel_general),
-				NotificationManager.IMPORTANCE_DEFAULT
+				NotificationManager.IMPORTANCE_HIGH
 			).apply {
 				description = context.getString(R.string.notif_channel_general_desc)
+				enableVibration(true)
+				vibrationPattern = VIBRATION_PATTERN
 				setSound(
 					Uri.parse("android.resource://${context.packageName}/${R.raw.narrativ_notification}"),
 					AudioAttributes.Builder()
@@ -111,6 +116,8 @@ object PushNotifications {
 			.setContentTitle(title)
 			.setContentText(body)
 			.setStyle(NotificationCompat.BigTextStyle().bigText(body))
+			.setCategory(NotificationCompat.CATEGORY_SOCIAL)
+			.setPriority(NotificationCompat.PRIORITY_HIGH)
 			.setAutoCancel(true)
 			.setContentIntent(contentIntent)
 			.build()

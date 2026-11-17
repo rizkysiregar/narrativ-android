@@ -80,7 +80,7 @@
         <!-- Pushes FCM shows while the app is closed use this channel, icon and color. -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="general_v2" />
+            android:value="general_v3" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_stat_narrativ" />
