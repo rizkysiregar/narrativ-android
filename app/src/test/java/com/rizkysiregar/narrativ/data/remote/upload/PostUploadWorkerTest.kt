@@ -13,6 +13,7 @@ import androidx.work.workDataOf
 import com.google.common.truth.Truth.assertThat
 import com.rizkysiregar.narrativ.R
 import com.rizkysiregar.narrativ.domain.post.UploadManager
+import com.rizkysiregar.narrativ.domain.post.WorkUploadManager
 import com.rizkysiregar.narrativ.telemetry.AnalyticsEvents
 import com.rizkysiregar.narrativ.testing.fakes.FakeAppAnalytics
 import com.rizkysiregar.narrativ.testing.fakes.FakeAppStrings
@@ -63,7 +64,7 @@ class PostUploadWorkerTest {
 	@Before
 	fun setUp() {
 		WorkManagerTestInitHelper.initializeTestWorkManager(context)
-		uploadManager = UploadManager(context, strings)
+		uploadManager = WorkUploadManager(context, strings)
 		server = MockWebServer().apply {
 			dispatcher = object : Dispatcher() {
 				override fun dispatch(request: RecordedRequest): MockResponse {

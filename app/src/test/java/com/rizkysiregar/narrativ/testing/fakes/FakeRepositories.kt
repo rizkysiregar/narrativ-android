@@ -102,13 +102,15 @@ class FakeFeedRepository : FeedRepository {
 class FakeUserRepository : UserRepository {
 	var onDeleteAccount: (DeleteAccountRequest) -> Flow<ResultState<String>> = { unscripted("deleteAccount") }
 	val deleteRequests = mutableListOf<DeleteAccountRequest>()
+	var onGetUserProfile: (String) -> Flow<ResultState<UserSearchItemResponse>> = { unscripted("getUserProfile") }
+	val profileRequests = mutableListOf<String>()
 
 	override fun deleteAccount(request: DeleteAccountRequest) = onDeleteAccount(request).also { deleteRequests += request }
 
 	override suspend fun createProfileImageUploadUrl(contentType: String): ProfileImageUploadUrlResponse = unscripted("createProfileImageUploadUrl")
 	override suspend fun setProfileImage(objectKey: String): UserSearchItemResponse = unscripted("setProfileImage")
 	override suspend fun deleteProfileImage(): UserSearchItemResponse = unscripted("deleteProfileImage")
-	override fun getUserProfile(userId: String): Flow<ResultState<UserSearchItemResponse>> = unscripted("getUserProfile")
+	override fun getUserProfile(userId: String) = onGetUserProfile(userId).also { profileRequests += userId }
 	override fun searchUsers(request: SearchUserRequest): Flow<ResultState<PaginationResponseWrapper<UserSearchItemResponse>>> = unscripted("searchUsers")
 	override fun follow(userId: String): Flow<ResultState<String>> = unscripted("follow")
 	override fun unfollow(userId: String): Flow<ResultState<String>> = unscripted("unfollow")
