@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.tasks.await
 import retrofit2.Retrofit
 import com.rizkysiregar.narrativ.i18n.AppLocale
+import java.time.Clock
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -35,6 +36,7 @@ class DeviceRegistrar @Inject constructor(
 	@ApplicationContext private val context: Context,
 	private val dataStore: DataStoreManager,
 	private val tokenHolder: JwtTokenHolder,
+	private val clock: Clock,
 	retrofit: Retrofit
 ) {
 	private val deviceApi: DeviceApi by lazy { retrofit.create(DeviceApi::class.java) }
@@ -66,7 +68,7 @@ class DeviceRegistrar @Inject constructor(
 
 			dataStore.put(PrefKeys.deviceSyncToken, pushToken)
 			dataStore.put(PrefKeys.deviceSyncUserId, userId)
-			dataStore.put(PrefKeys.deviceSyncAt, System.currentTimeMillis())
+			dataStore.put(PrefKeys.deviceSyncAt, clock.millis())
 			true
 		} catch (e: CancellationException) {
 			throw e
@@ -77,7 +79,7 @@ class DeviceRegistrar @Inject constructor(
 	}
 
 	private suspend fun isUpToDate(userId: String, pushToken: String): Boolean {
-		val age = System.currentTimeMillis() - dataStore.get(PrefKeys.deviceSyncAt, 0L).first()
+		val age = clock.millis() - dataStore.get(PrefKeys.deviceSyncAt, 0L).first()
 		return dataStore.get(PrefKeys.deviceSyncToken, "").first() == pushToken &&
 			dataStore.get(PrefKeys.deviceSyncUserId, "").first() == userId &&
 			age in 0 until TimeUnit.HOURS.toMillis(SYNC_INTERVAL_HOURS)

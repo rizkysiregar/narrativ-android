@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.Clock
 import javax.inject.Inject
 
 /**
@@ -41,7 +42,8 @@ class RegisterViewModel @Inject constructor(
 	private val sendRegisterOtpUseCase: SendRegisterOtpUseCase,
 	private val verifyRegisterOtpUseCase: VerifyRegisterOtpUseCase,
 	private val registerUseCase: RegisterUseCase,
-	private val analytics: AppAnalytics
+	private val analytics: AppAnalytics,
+	private val clock: Clock
 ) : ViewModel() {
 
 	private val _step = MutableStateFlow(RegisterStep.FORM)
@@ -85,7 +87,7 @@ class RegisterViewModel @Inject constructor(
 							analytics.log(AnalyticsEvents.REGISTER_OTP_VERIFIED)
 							verifiedEmail = form.email
 							registrationToken = result.data.registrationToken
-							verifiedAtMillis = System.currentTimeMillis()
+							verifiedAtMillis = clock.millis()
 							register(result.data.registrationToken)
 						}
 
@@ -161,7 +163,7 @@ class RegisterViewModel @Inject constructor(
 	}
 
 	private fun validRegistrationTokenFor(email: String): String? {
-		val ageMillis = System.currentTimeMillis() - verifiedAtMillis
+		val ageMillis = clock.millis() - verifiedAtMillis
 		return registrationToken.takeIf { verifiedEmail == email && ageMillis < TOKEN_VALID_MILLIS }
 	}
 
