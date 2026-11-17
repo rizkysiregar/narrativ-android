@@ -16,7 +16,7 @@ class FakeRemoteSessionCleaner : RemoteSessionCleaner {
 	val calls = mutableListOf<String>()
 
 	/** Runs inside the call, so a test can look at what state the app is in at that moment. */
-	var onSignOut: () -> Unit = {}
+	var onSignOut: suspend () -> Unit = {}
 
 	override suspend fun signOut() {
 		calls += "signOut"
