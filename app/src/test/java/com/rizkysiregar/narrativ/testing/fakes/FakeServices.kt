@@ -33,3 +33,28 @@ class FakeGoogleIdTokenProvider : GoogleIdTokenProvider {
 
 	override suspend fun get(): String = onGet()
 }
+
+class FakePushTokenProvider : com.rizkysiregar.narrativ.data.session.PushTokenProvider {
+	var onToken: suspend () -> String = { "fcm-token-1" }
+	var tokenCalls = 0
+	var deleteCalls = 0
+
+	override suspend fun token(): String {
+		tokenCalls++
+		return onToken()
+	}
+
+	override suspend fun delete() {
+		deleteCalls++
+	}
+}
+
+class FakeDeviceRegistrar : com.rizkysiregar.narrativ.data.repository.DeviceRegistrar {
+	var result = true
+	val calls = mutableListOf<Boolean>()
+
+	override suspend fun sync(force: Boolean): Boolean {
+		calls += force
+		return result
+	}
+}
