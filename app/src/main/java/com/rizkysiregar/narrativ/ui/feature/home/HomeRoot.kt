@@ -1,5 +1,10 @@
 package com.rizkysiregar.narrativ.ui.feature.home
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +21,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.collectAsState
+import androidx.core.content.ContextCompat
+import com.rizkysiregar.narrativ.notification.PushNotifications
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavType
@@ -69,6 +78,30 @@ fun HomeRoot(
 		homeNavController.navigate(HomePathRoute.PostDetail.create(post.id))
 	}
 	val isDetailRoute = currentRoute?.startsWith("post_detail/") == true
+
+	// Ask once the user is in the app, not only when posting: a follower who never posts would otherwise
+	// never get "new post" pushes.
+	val context = LocalContext.current
+	val notificationPermissionLauncher = rememberLauncherForActivityResult(
+		ActivityResultContracts.RequestPermission()
+	) { }
+	LaunchedEffect(Unit) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+			ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+			PackageManager.PERMISSION_GRANTED
+		) {
+			notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+		}
+	}
+
+	// A tapped "new post" push opens the author's profile, where the post is.
+	val pushTarget by PushNotifications.pendingTarget.collectAsState()
+	LaunchedEffect(pushTarget) {
+		pushTarget?.let { target ->
+			PushNotifications.clearPendingTarget()
+			homeNavController.navigate(HomePathRoute.UserDetail.create(target.userId, target.username))
+		}
+	}
 
 	LaunchedEffect(Unit) {
 		uploadBannerViewModel.feedRefreshVersion.collect { feedRefreshVersion += 1 }

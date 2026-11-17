@@ -1,12 +1,14 @@
 package com.rizkysiregar.narrativ
 
 import android.graphics.Color
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.rizkysiregar.narrativ.notification.PushNotifications
 import com.rizkysiregar.narrativ.ui.main.MainRoot
 
 import com.rizkysiregar.narrativ.ui.theme.NarrativTheme
@@ -24,11 +26,17 @@ class MainActivity : AppCompatActivity() {
 			statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
 			navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT)
 		)
+		if (savedInstanceState == null) PushNotifications.consumeTap(intent.extras)
 		setContent {
 			NarrativTheme {
 				MainRoot()
 			}
 		}
 	}
-}
 
+	override fun onNewIntent(intent: Intent) {
+		super.onNewIntent(intent)
+		setIntent(intent)
+		PushNotifications.consumeTap(intent.extras)
+	}
+}
