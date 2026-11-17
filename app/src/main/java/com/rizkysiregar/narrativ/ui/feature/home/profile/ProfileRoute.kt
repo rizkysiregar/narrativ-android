@@ -14,6 +14,7 @@ import androidx.compose.ui.window.DialogProperties
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -48,6 +49,7 @@ fun ProfileRoute(
     val isUpdatingPhoto by profileVm.isUpdatingPhoto.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val resources = LocalResources.current
     var cropUri by rememberSaveable { mutableStateOf<Uri?>(null) }
     val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         uri?.let { cropUri = it }
@@ -77,7 +79,7 @@ fun ProfileRoute(
                 },
                 onLoadFailed = {
                     cropUri = null
-                    Toast.makeText(context, context.getString(R.string.error_photo_open), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, resources.getString(R.string.error_photo_open), Toast.LENGTH_SHORT).show()
                 }
             )
         }

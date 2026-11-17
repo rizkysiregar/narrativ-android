@@ -32,6 +32,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.AspectRatioFrameLayout
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
@@ -47,6 +48,7 @@ import androidx.compose.ui.res.stringResource
  * [initialPage] only seeds the pager (e.g. when the item scrolls back into a list).
  */
 @OptIn(ExperimentalFoundationApi::class)
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun PostMediaPager(
 	media: List<PostMediaItem>,

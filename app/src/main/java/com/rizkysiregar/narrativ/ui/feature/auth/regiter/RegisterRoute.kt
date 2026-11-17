@@ -7,6 +7,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.rizkysiregar.narrativ.data.remote.model.ResultState
@@ -30,6 +31,7 @@ fun RegisterRoute(
 	onRegisterSuccess: () -> Unit
 ) {
 	val context = LocalContext.current
+	val resources = LocalResources.current
 
 	val step by registerViewModel.step.collectAsState()
 	val registerState by registerViewModel.state.collectAsState()
@@ -39,7 +41,7 @@ fun RegisterRoute(
 		if (registerState is ResultState.Success) {
 			println("## register success")
 			Toast.makeText(
-				context, context.getString(R.string.registration_success), Toast.LENGTH_SHORT
+				context, resources.getString(R.string.registration_success), Toast.LENGTH_SHORT
 			).show()
 
 			onRegisterSuccess()

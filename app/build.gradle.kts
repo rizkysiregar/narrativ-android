@@ -17,6 +17,7 @@ plugins {
 	alias(libs.plugins.google.services)
 	alias(libs.plugins.firebase.crashlytics)
 	alias(libs.plugins.firebase.perf)
+	alias(libs.plugins.kover)
 }
 
 // Release signing comes from keystore.properties (see keystore.properties.example) or, on CI, from
@@ -29,6 +30,37 @@ val keystoreProperties = Properties().apply {
 
 fun signingValue(propertyName: String, envName: String): String? =
 	keystoreProperties.getProperty(propertyName) ?: System.getenv(envName)
+
+// Coverage is measured on logic, not on generated code or Compose layout.
+kover {
+	reports {
+		filters {
+			excludes {
+				classes(
+					"*.BuildConfig",
+					"*.R",
+					"*.R$*",
+					"*ComposableSingletons*",
+					"*Hilt_*",
+					"*_HiltModules*",
+					"*_Factory",
+					"*_Factory$*",
+					"*_MembersInjector",
+					"*_GeneratedInjector",
+					"dagger.hilt.*",
+					"hilt_aggregated_deps.*",
+					"com.rizkysiregar.narrativ.di.*",
+					"com.rizkysiregar.narrativ.ui.theme.*",
+					"com.rizkysiregar.narrativ.ui.components.*",
+					"com.rizkysiregar.narrativ.data.remote.model.*",
+					"*ScreenKt*",
+					"*RouteKt*",
+					"*ViewKt*"
+				)
+			}
+		}
+	}
+}
 
 android {
 	namespace = "com.rizkysiregar.narrativ"
@@ -120,6 +152,21 @@ android {
 		buildConfig = true
 	}
 
+	lint {
+		abortOnError = true
+		checkReleaseBuilds = true
+		// Existing warnings are frozen in the baseline; anything new fails the build.
+		baseline = file("lint-baseline.xml")
+	}
+
+	testOptions {
+		unitTests {
+			// Robolectric needs the merged resources; android.util.Log & co return defaults instead of throwing.
+			isIncludeAndroidResources = true
+			isReturnDefaultValues = true
+		}
+	}
+
 	packaging {
 		// exclude duplicate reference file, usually conflict between dependency
 		resources {
@@ -193,6 +240,16 @@ dependencies {
 
 	// --- Testing ---
 	testImplementation(libs.junit)
+	testImplementation(libs.kotlinx.coroutines.test)
+	testImplementation(libs.turbine)
+	testImplementation(libs.truth)
+	testImplementation(libs.robolectric)
+	testImplementation(libs.androidx.test.core)
+	testImplementation(libs.okhttp.mockwebserver)
+	testImplementation(libs.okhttp.mockwebserver.junit4)
+	testImplementation(libs.androidx.work.testing)
+	testImplementation(platform(libs.androidx.compose.bom))
+	testImplementation(libs.androidx.ui.test.junit4)
 	androidTestImplementation(libs.androidx.junit)
 	androidTestImplementation(libs.androidx.espresso.core)
 	androidTestImplementation(platform(libs.androidx.compose.bom))

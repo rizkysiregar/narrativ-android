@@ -7,6 +7,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.rizkysiregar.narrativ.data.remote.model.ResultState
@@ -28,6 +29,7 @@ fun ResetPasswordRoute(
 	val resetState by viewModel.resetState.collectAsState()
 	val otpDelivery by viewModel.otpDelivery.collectAsState()
 	val context = LocalContext.current
+	val resources = LocalResources.current
 	val navigateToLogin = {
 		if (!navController.popBackStack(AuthPathRoutes.Login.route, false)) {
 			navController.navigate(AuthPathRoutes.Login.route) {
@@ -47,7 +49,7 @@ fun ResetPasswordRoute(
 
 			Toast.makeText(
 				context,
-				context.getString(R.string.password_reset_success),
+				resources.getString(R.string.password_reset_success),
 				Toast.LENGTH_LONG
 			).show()
 
