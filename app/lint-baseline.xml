@@ -8,7 +8,7 @@
         errorLine2="   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/rizkysiregar/narrativ/data/remote/upload/PostUploadWorker.kt"
-            line="61"
+            line="63"
             column="4"/>
     </issue>
 
@@ -30,7 +30,7 @@
         errorLine2="   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/rizkysiregar/narrativ/i18n/AppStrings.kt"
-            line="22"
+            line="20"
             column="4"/>
     </issue>
 
@@ -40,8 +40,8 @@
         errorLine1="  val credential = credentialManager.getCredential(context, request).credential"
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/rizkysiregar/narrativ/data/session/GoogleIdTokenProvider.kt"
-            line="37"
+            file="src/main/java/com/rizkysiregar/narrativ/data/session/CredentialManagerGoogleIdTokenProvider.kt"
+            line="33"
             column="20"/>
     </issue>
 
@@ -140,7 +140,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="255"
+            line="295"
             column="17"/>
     </issue>
 
@@ -481,7 +481,7 @@
         errorLine2="                                                                                                  ~~~~~~~">
         <location
             file="$HOME/Documents/work/personal-project/narrativ/code/android/narrativ-android/gradle/libs.versions.toml"
-            line="118"
+            line="120"
             column="99"/>
     </issue>
 
@@ -1084,7 +1084,7 @@
         errorLine2="  ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/rizkysiregar/narrativ/telemetry/TelemetrySettings.kt"
-            line="35"
+            line="36"
             column="3"/>
     </issue>
 
@@ -1117,7 +1117,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="253"
+            line="293"
             column="17"/>
     </issue>
 
@@ -1128,7 +1128,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="254"
+            line="294"
             column="17"/>
     </issue>
 
@@ -1139,7 +1139,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="255"
+            line="295"
             column="17"/>
     </issue>
 
