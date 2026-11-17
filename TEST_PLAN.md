@@ -37,24 +37,29 @@ Branch Phase 1: `chore/testability-seams-phase-1`.
 | 1.7 E7 `MediaValidator`, 1.8 E6 `PushTokenProvider` | ⏳ | P1, boleh menyusul |
 | 1.10 E10 function reference di `SavedStateHandle` | ⏳ | Menunggu hasil verifikasi R3 (2.10) |
 
-Branch Phase 2 (sesi 1): `test/phase-2-p0-core`. Total 198 unit test, coverage terukur **27,1% line / 21,4% branch** (baseline 3,2%).
+Branch Phase 2: `test/phase-2-p0-core` (sesi 1 dan 2). Total **278 unit test**, coverage terukur **35,9% line** setelah adapter SDK dikecualikan (baseline awal 3,2%).
 
 | Task | Status | Catatan |
 |---|---|---|
 | 2.1 `NetworkUtils` | ✅ | 16 test |
 | 2.2 `SessionManager` | ✅ | 7 test, termasuk 16 thread paralel |
-| 2.3 Stack OkHttp (`AuthInterceptor` + `TokenRefresher` + `SessionManager`) | ✅ | 17 test vs MockWebServer. Uji mutasi: menghapus guard dedup `TokenRefresher` memang menggagalkan test 5 request paralel. `LanguageInterceptor` belum (butuh Robolectric, P1) |
-| 2.4 Contract test parsing | 🟡 | 12 test. **Fixture ditulis dari model client, bukan dari backend** (lihat `src/test/resources/fixtures/README.md`). Menunggu contoh respons asli atau spec OpenAPI |
+| 2.3 Stack OkHttp (`AuthInterceptor` + `TokenRefresher` + `SessionManager`) | ✅ | 17 test vs MockWebServer. Uji mutasi pada guard dedup refresh |
+| 2.4 Contract test parsing | 🟡 | 12 test. **Fixture ditulis dari model client, bukan dari backend** (`src/test/resources/fixtures/README.md`). Menunggu contoh respons asli atau spec OpenAPI |
 | 2.5 `PresignedUploader` | ✅ | 6 test |
 | 2.6 `PostUploadWorker` | ✅ | 14 test (Robolectric, sdk 35) |
 | 2.7 Auth VM | ✅ | `AuthViewModel` 8, `RegisterViewModel` 10, `ResetPasswordViewModel` 7 |
-| 2.8 `BaseFeedViewModel`, `CommentViewModel` | ✅ | 18 dan 16 test. Uji mutasi pada guard tap ganda, rollback like, target reply, dan pembersihan tag reply |
-| 2.9 `SettingsViewModel`, `PostFeedViewModel` | 🟡 | `SettingsViewModel` 11 test. **`PostFeedViewModel` belum**: butuh E7 (`MediaValidator`) dan interface untuk `MediaPreparationUseCase`/`UploadManager` |
-| 2.10 Verifikasi R3 | ⏳ | Menunggu hasil cek di device |
-| 2.11 E2E session expiry | ⏳ | |
-| 2.12 Smoke checklist release | ⏳ | Isi checklist belum ditulis |
-| 2.13 Gate Kover per paket | ⏳ | Ditunda sampai test yang tersisa masuk: target `data.remote` ≥ 85% baru tercapai 69% |
+| 2.8 `BaseFeedViewModel`, `CommentViewModel` | ✅ | 18 dan 16 test, dengan uji mutasi |
+| 2.9 `SettingsViewModel`, `PostFeedViewModel` | ✅ | `SettingsViewModel` 11, `PostFeedViewModel` 15, `MediaValidator` 11 (E7 selesai) |
+| P1 yang ikut selesai | ✅ | `DeviceRegistrar` 12, `DeviceSyncWorker` 4, `ApiRemoteSessionCleaner` 6, `LanguageInterceptor` 2, `WorkUploadManager` 7, `WorkDeviceSyncScheduler` 3, repository impl 20 (E6 selesai) |
+| 2.10 Verifikasi R3 | ⏳ | Menunggu hasil cek di device (langkah D-02 di smoke checklist) |
+| 2.11 E2E session expiry | ⏳ | Butuh emulator; belum diizinkan memakai device |
+| 2.12 Smoke checklist release | ✅ ditulis | `docs/RELEASE_SMOKE_CHECKLIST.md`. Belum dijalankan pada build kandidat |
+| 2.13 Gate coverage per area | ✅ | Task `verifyCoverageFloors` (Kover 0.9 tidak bisa memfilter per rule), jalan di job CI `verify`. Batas: network 90, session 90, repository 85, auth VM 85, settings+post VM 85, util 75, total 33 |
 | 2.14 Job CI `release-check` | ✅ | Sudah jalan di GitHub (Phase 0) |
+
+Yang sengaja dikecualikan dari ukuran coverage (adapter tipis ke SDK yang tidak bisa jalan di JVM): `CredentialManagerGoogleIdTokenProvider`, `FirebasePushTokenProvider`, `AndroidMediaInspector`, `Firebase*` di `telemetry`, dan `FirebaseRemoteConfigManager`. Logika di sekitarnya dites lewat interface-nya. `FirebaseRemoteConfigManager` punya sedikit logika sendiri (fallback `ifBlank`, mutex refresh) yang belum teruji.
+
+Belum tercakup: `FileMediaPreparationUseCase` (`domain.post` 55,6%: butuh interface untuk `ImageCompressor`/`VideoCompressor`), paket `media` (1%, P2 di device), `ui.feature.home.feed` (komponen Compose dan `PostDetailViewModel`), dan jalur pilihan bahasa eksplisit di `LanguageInterceptor` (butuh device).
 
 Temuan sesi ini:
 - **R6 terkonfirmasi di level interceptor**: setiap panggilan lewat client utama, termasuk `DeviceRegistrar` dan `RemoteSessionCleaner`, melaporkan kegagalannya ke dialog error global (`aFailingBackgroundCallStillReachesTheGlobalErrorChannel`). Belum diperbaiki, menunggu keputusan.

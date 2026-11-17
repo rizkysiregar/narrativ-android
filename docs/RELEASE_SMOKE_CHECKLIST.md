@@ -73,7 +73,7 @@ Centang hanya kalau hasilnya persis seperti yang tertulis; catat versi (`version
 |---|---|---|---|
 | F-01 | Remote Config `min_supported_version_code` > versionCode build ini, buka app | Dialog update memblokir, tidak bisa ditutup. Kembalikan ke 0: dialog hilang pada pembukaan berikutnya | ☐ |
 | F-02 | Ganti bahasa Indonesia ↔ Inggris di Settings | Seluruh layar berganti, termasuk pesan error toast dan notifikasi; header `Accept-Language` mengikuti (pesan server berganti bahasa) | ☐ |
-| F-03 | Buka halaman legal (kebijakan privasi, syarat) | Tampil di dalam app; tautan keluar domain tidak membuka di dalam | ☐ |
+| F-03 | Buka halaman legal (kebijakan privasi, syarat), tap tautan `mailto:` dan satu tautan ke domain lain | Halaman tampil di dalam app; `mailto:` membuka aplikasi email; tautan ke domain lain tidak melakukan apa-apa (sengaja diabaikan) | ☐ |
 | F-04 | Hapus akun (password; lalu akun Google) | Kembali ke login; akun tidak bisa login lagi | ☐ |
 | F-05 | Matikan telemetry di Settings | Pengaturan tersimpan setelah app dibuka ulang | ☐ |
 
