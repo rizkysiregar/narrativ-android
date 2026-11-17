@@ -24,7 +24,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlin.math.abs
 
 /**
- * Push notifications from the server (new post from someone you follow, replies, ...).
+ * Push notifications from the server: a new post from someone you follow, and likes, comments and replies on
+ * your own posts and comments.
  *
  * While the app is in the background FCM shows the notification itself, using [CHANNEL_GENERAL] (set as the
  * default channel in the manifest). In the foreground FCM shows nothing, so [NarrativMessagingService] calls
@@ -33,17 +34,36 @@ import kotlin.math.abs
  */
 object PushNotifications {
 
-	// A channel's sound is fixed once it exists, so the custom sound needed a new id; the old one is deleted.
-	const val CHANNEL_GENERAL = "general_v2"
-	private const val CHANNEL_GENERAL_LEGACY = "general"
+	// A channel's sound and importance are fixed once it exists, so changing either needs a new id; the old
+	// ones are deleted. v3 is IMPORTANCE_HIGH, which is what lets a push pop up on screen (heads-up).
+	const val CHANNEL_GENERAL = "general_v3"
+	private val CHANNELS_LEGACY = listOf("general", "general_v2")
 
-	private const val TYPE_NEW_POST = "NEW_POST"
+	private val VIBRATION_PATTERN = longArrayOf(0, 250, 150, 250)
+
 	private const val KEY_TYPE = "type"
+	private const val KEY_POST_ID = "postId"
+	private const val KEY_COMMENT_ID = "commentId"
+
+	// "someone you follow posted": the person is the post's author
+	private const val TYPE_NEW_POST = "NEW_POST"
 	private const val KEY_AUTHOR_ID = "authorId"
 	private const val KEY_AUTHOR_USERNAME = "authorUsername"
 
+	// activity on your posts and comments (a like, a comment, a reply): the person is whoever did it
+	private val COMMENT_TYPES = setOf("POST_COMMENTED", "COMMENT_REPLIED")
+	private val ACTIVITY_TYPES = setOf("POST_LIKED") + COMMENT_TYPES
+	private const val KEY_ACTOR_ID = "actorId"
+	private const val KEY_ACTOR_USERNAME = "actorUsername"
+
 	/** Where a tapped push wants to go; the home screen takes it and clears it. */
-	data class PushTarget(val userId: String, val username: String)
+	sealed interface PushTarget {
+		/** The post the push is about; [openComments] when it is about a comment or reply. */
+		data class Post(val postId: String, val openComments: Boolean) : PushTarget
+
+		/** The person behind a push that carries no post id (pushes sent before it was added). */
+		data class Profile(val userId: String, val username: String) : PushTarget
+	}
 
 	private val pending = MutableStateFlow<PushTarget?>(null)
 	val pendingTarget: StateFlow<PushTarget?> = pending.asStateFlow()
@@ -56,14 +76,16 @@ object PushNotifications {
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
 		val context = AppStrings.localized(appContext)
 		val manager = context.getSystemService(NotificationManager::class.java) ?: return
-		manager.deleteNotificationChannel(CHANNEL_GENERAL_LEGACY)
+		CHANNELS_LEGACY.forEach(manager::deleteNotificationChannel)
 		manager.createNotificationChannel(
 			NotificationChannel(
 				CHANNEL_GENERAL,
 				context.getString(R.string.notif_channel_general),
-				NotificationManager.IMPORTANCE_DEFAULT
+				NotificationManager.IMPORTANCE_HIGH
 			).apply {
 				description = context.getString(R.string.notif_channel_general_desc)
+				enableVibration(true)
+				vibrationPattern = VIBRATION_PATTERN
 				setSound(
 					Uri.parse("android.resource://${context.packageName}/${R.raw.narrativ_notification}"),
 					AudioAttributes.Builder()
@@ -83,7 +105,11 @@ object PushNotifications {
 			PackageManager.PERMISSION_GRANTED
 		) return
 
-		val id = abs((data["postId"] ?: "$title$body").hashCode())
+		// one id per event, so a like and a comment on the same post show as two notifications
+		val id = abs(
+			listOf(data[KEY_TYPE], data[KEY_POST_ID], data[KEY_COMMENT_ID], data[KEY_ACTOR_ID], title, body)
+				.joinToString("|").hashCode()
+		)
 		val tapIntent = Intent(context, MainActivity::class.java).apply {
 			flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
 			data.forEach { (key, value) -> putExtra(key, value) }
@@ -97,6 +123,8 @@ object PushNotifications {
 			.setContentTitle(title)
 			.setContentText(body)
 			.setStyle(NotificationCompat.BigTextStyle().bigText(body))
+			.setCategory(NotificationCompat.CATEGORY_SOCIAL)
+			.setPriority(NotificationCompat.PRIORITY_HIGH)
 			.setAutoCancel(true)
 			.setContentIntent(contentIntent)
 			.build()
@@ -106,9 +134,26 @@ object PushNotifications {
 	/** Reads the push data out of the intent that opened the app, and remembers where it points. */
 	fun consumeTap(extras: Bundle?) {
 		extras ?: return
-		if (extras.getString(KEY_TYPE) != TYPE_NEW_POST) return
-		val userId = extras.getString(KEY_AUTHOR_ID)?.takeIf { it.isNotBlank() } ?: return
-		val username = extras.getString(KEY_AUTHOR_USERNAME)?.takeIf { it.isNotBlank() } ?: return
-		pending.value = PushTarget(userId, username)
+		val data = extras.keySet().associateWith { extras.getString(it) }
+		targetFor(data)?.let { pending.value = it }
+	}
+
+	/**
+	 * Decides where a tap on a push goes. A post is preferred: every push about a post carries its id. Comment and
+	 * reply pushes open it with the comments shown. Without a post id it falls back to the person's profile.
+	 */
+	fun targetFor(data: Map<String, String?>): PushTarget? {
+		val type = data[KEY_TYPE]
+		val (idKey, usernameKey) = when {
+			type == TYPE_NEW_POST -> KEY_AUTHOR_ID to KEY_AUTHOR_USERNAME
+			type in ACTIVITY_TYPES -> KEY_ACTOR_ID to KEY_ACTOR_USERNAME
+			else -> return null
+		}
+		data[KEY_POST_ID]?.takeIf { it.isNotBlank() }?.let { postId ->
+			return PushTarget.Post(postId, openComments = type in COMMENT_TYPES)
+		}
+		val userId = data[idKey]?.takeIf { it.isNotBlank() } ?: return null
+		val username = data[usernameKey]?.takeIf { it.isNotBlank() } ?: return null
+		return PushTarget.Profile(userId, username)
 	}
 }

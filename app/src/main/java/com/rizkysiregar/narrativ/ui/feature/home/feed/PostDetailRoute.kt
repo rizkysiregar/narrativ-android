@@ -30,7 +30,13 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -82,8 +88,13 @@ const val KEY_LIKE_HANDLER = "post_detail_like_handler"
 
 @Composable
 fun PostDetailDestination(
-	navController: NavController
+	navController: NavController,
+	postId: String,
+	openComments: Boolean = false,
+	viewModel: PostDetailViewModel = hiltViewModel()
 ) {
+	// Opened from a post list: that screen hands the post over, so it shows at once. Opened from a push
+	// notification there is nothing to hand over, so the post is loaded by its id.
 	val previousEntry = navController.previousBackStackEntry
 	val postJson = remember(previousEntry) {
 		previousEntry?.savedStateHandle?.get<String>(KEY_POST_JSON)
@@ -91,27 +102,84 @@ fun PostDetailDestination(
 	val likeHandler = remember(previousEntry) {
 		previousEntry?.savedStateHandle?.get<Any>(KEY_LIKE_HANDLER) as? (String) -> Unit
 	}
-	val post = remember(postJson) {
-		postJson?.let { runCatching { Gson().fromJson(it, FeedContentItem::class.java) }.getOrNull() }
+	val handedOver = remember(postJson, postId) {
+		postJson
+			?.let { runCatching { Gson().fromJson(it, FeedContentItem::class.java) }.getOrNull() }
+			?.takeIf { it.id == postId }
 	}
 
-	if (post == null) {
-		Box(
-			modifier = Modifier
-				.fillMaxSize()
-				.background(MaterialTheme.colorScheme.background),
-			contentAlignment = Alignment.Center
-		) {
-			Text(stringResource(R.string.post_not_found), color = MaterialTheme.colorScheme.onBackground)
-		}
+	if (handedOver != null) {
+		PostDetailScreen(
+			post = handedOver,
+			onBackClick = { navController.popBackStack() },
+			onLikeClick = likeHandler ?: {},
+			openCommentsOnStart = openComments
+		)
 		return
 	}
 
-	PostDetailScreen(
-		post = post,
-		onBackClick = { navController.popBackStack() },
-		onLikeClick = likeHandler ?: {}
-	)
+	LaunchedEffect(postId) { viewModel.load(postId) }
+	val state by viewModel.state.collectAsStateWithLifecycle()
+	when (val current = state) {
+		is PostDetailUiState.Loaded -> PostDetailScreen(
+			post = current.post,
+			onBackClick = { navController.popBackStack() },
+			onLikeClick = viewModel::toggleLike,
+			openCommentsOnStart = openComments
+		)
+
+		PostDetailUiState.Loading -> PostDetailMessage(
+			onBackClick = { navController.popBackStack() }
+		) { CircularProgressIndicator() }
+
+		PostDetailUiState.Unavailable -> PostDetailMessage(
+			onBackClick = { navController.popBackStack() }
+		) {
+			Text(stringResource(R.string.post_not_found), color = MaterialTheme.colorScheme.onBackground)
+		}
+
+		is PostDetailUiState.Error -> PostDetailMessage(
+			onBackClick = { navController.popBackStack() }
+		) {
+			Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+				Text(current.message, color = MaterialTheme.colorScheme.onBackground, textAlign = TextAlign.Center)
+				TextButton(onClick = viewModel::retry) { Text(stringResource(R.string.retry)) }
+			}
+		}
+	}
+}
+
+/** A centered message (spinner, "not found", retry) with a back button, for when there is no post to show. */
+@Composable
+private fun PostDetailMessage(
+	onBackClick: () -> Unit,
+	content: @Composable () -> Unit
+) {
+	Box(
+		modifier = Modifier
+			.fillMaxSize()
+			.background(MaterialTheme.colorScheme.background)
+	) {
+		IconButton(
+			onClick = onBackClick,
+			modifier = Modifier
+				.align(Alignment.TopStart)
+				.statusBarsPadding()
+				.padding(8.dp)
+		) {
+			Icon(
+				imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+				contentDescription = stringResource(R.string.back),
+				tint = MaterialTheme.colorScheme.onBackground
+			)
+		}
+		Box(
+			modifier = Modifier
+				.fillMaxSize()
+				.padding(horizontal = 32.dp),
+			contentAlignment = Alignment.Center
+		) { content() }
+	}
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -119,7 +187,8 @@ fun PostDetailDestination(
 fun PostDetailScreen(
 	post: FeedContentItem,
 	onBackClick: () -> Unit,
-	onLikeClick: (String) -> Unit
+	onLikeClick: (String) -> Unit,
+	openCommentsOnStart: Boolean = false
 ) {
 	var liked by remember { mutableStateOf(post.liked) }
 	var likeCount by remember { mutableIntStateOf(post.likeCount) }
@@ -156,6 +225,11 @@ fun PostDetailScreen(
 	fun setSheet(open: Boolean) {
 		isSheetOpen = open
 		scope.launch { sheetProgress.animateTo(if (open) 1f else 0f, tween(durationMillis = 280)) }
+	}
+
+	// a push about a comment or reply lands on the post with its comments already open
+	androidx.compose.runtime.LaunchedEffect(Unit) {
+		if (openCommentsOnStart) setSheet(true)
 	}
 
 	val draggableState = rememberDraggableState { delta ->

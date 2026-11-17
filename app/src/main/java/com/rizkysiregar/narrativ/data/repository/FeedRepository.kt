@@ -8,6 +8,7 @@ import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetAllFeedReques
 import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetFeedByUsernameRequest
 import com.rizkysiregar.narrativ.data.remote.model.response.PaginationResponseWrapper
 import com.rizkysiregar.narrativ.data.remote.model.response.feed.CommentItem
+import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedsPostPaginationResponse
 import kotlinx.coroutines.flow.Flow
 import java.util.UUID
@@ -21,6 +22,7 @@ interface FeedRepository {
 	fun getAllFeed(request: GetAllFeedRequest): Flow<ResultState<FeedsPostPaginationResponse>>
 	fun getExplorePosts(request: GetAllFeedRequest): Flow<ResultState<FeedsPostPaginationResponse>>
 	fun getFeedByUsername(request: GetFeedByUsernameRequest): Flow<ResultState<FeedsPostPaginationResponse>>
+	fun getPost(postId: UUID): Flow<ResultState<FeedContentItem>>
 	fun likePost(postId: UUID): Flow<ResultState<String>>
 	fun dislikePost(postId: UUID): Flow<ResultState<String>>
 	fun addComment(request: AddCommentRequest): Flow<ResultState<String>>
