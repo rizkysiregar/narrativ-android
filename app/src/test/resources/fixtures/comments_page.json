@@ -1,0 +1,12 @@
+{
+  "code": "200",
+  "message": "OK",
+  "data": {
+    "pageNumber": 0, "last": true, "totalPages": 1, "pageSize": 20, "totalElements": 3,
+    "content": [
+      {"id": "c1", "username": "rizky", "userId": "u1", "commentContent": "mantap", "createdAt": "2026-11-01T09:00:00Z", "replyCount": 2, "canDelete": true},
+      {"id": "c2", "username": "sari", "commentContent": "setuju", "createdAt": "2026-11-01T09:05:00Z", "parentId": "c1", "replyToCommentId": "c1", "replyToUsername": "rizky"},
+      {"id": "c3", "username": "budi", "commentContent": null, "moderationStatus": "TAKEN_DOWN", "takedownReason": "Spam"}
+    ]
+  }
+}
