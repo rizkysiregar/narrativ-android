@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "narrativ-android-native"
+rootProject.name = "narrativ-android"
 include(":app")
