@@ -71,3 +71,31 @@ class FakeUploadManager : UploadManager {
 		_completions.tryEmit(Unit)
 	}
 }
+
+class FakeImageCompressor : com.rizkysiregar.narrativ.media.ImageCompressor {
+	val compressed = mutableListOf<java.io.File>()
+
+	/** What compress returns; by default the source file untouched. */
+	var onCompress: (java.io.File, String) -> com.rizkysiregar.narrativ.media.CompressedImage =
+		{ source, mime -> com.rizkysiregar.narrativ.media.CompressedImage(source, mime) }
+
+	override suspend fun compress(source: java.io.File, mimeType: String): com.rizkysiregar.narrativ.media.CompressedImage {
+		compressed += source
+		return onCompress(source, mimeType)
+	}
+
+	override suspend fun compressAvatar(source: java.io.File, mimeType: String): com.rizkysiregar.narrativ.media.CompressedImage =
+		com.rizkysiregar.narrativ.media.CompressedImage(source, mimeType)
+}
+
+class FakeVideoCompressor : com.rizkysiregar.narrativ.media.VideoCompressor {
+	val compressed = mutableListOf<Uri>()
+
+	/** What compress returns; throw to fail it. */
+	var onCompress: (Uri) -> java.io.File = { error("not scripted") }
+
+	override suspend fun compress(inputUri: Uri): java.io.File {
+		compressed += inputUri
+		return onCompress(inputUri)
+	}
+}
