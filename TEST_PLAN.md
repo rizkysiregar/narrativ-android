@@ -37,7 +37,7 @@ Branch Phase 1: `chore/testability-seams-phase-1`.
 | 1.7 E7 `MediaValidator`, 1.8 E6 `PushTokenProvider` | ⏳ | P1, boleh menyusul |
 | 1.10 E10 function reference di `SavedStateHandle` | ⏳ | Menunggu hasil verifikasi R3 (2.10) |
 
-Branch Phase 2: `test/phase-2-p0-core` (sesi 1 dan 2). Total **278 unit test**, coverage terukur **35,9% line** setelah adapter SDK dikecualikan (baseline awal 3,2%).
+Branch Phase 2: `test/phase-2-p0-core` (sesi 1 dan 2). Total **299 unit test**, coverage terukur **37,8% line** setelah adapter SDK dikecualikan (baseline awal 3,2%).
 
 | Task | Status | Catatan |
 |---|---|---|
@@ -50,16 +50,16 @@ Branch Phase 2: `test/phase-2-p0-core` (sesi 1 dan 2). Total **278 unit test**, 
 | 2.7 Auth VM | ✅ | `AuthViewModel` 8, `RegisterViewModel` 10, `ResetPasswordViewModel` 7 |
 | 2.8 `BaseFeedViewModel`, `CommentViewModel` | ✅ | 18 dan 16 test, dengan uji mutasi |
 | 2.9 `SettingsViewModel`, `PostFeedViewModel` | ✅ | `SettingsViewModel` 11, `PostFeedViewModel` 15, `MediaValidator` 11 (E7 selesai) |
-| P1 yang ikut selesai | ✅ | `DeviceRegistrar` 12, `DeviceSyncWorker` 4, `ApiRemoteSessionCleaner` 6, `LanguageInterceptor` 2, `WorkUploadManager` 7, `WorkDeviceSyncScheduler` 3, repository impl 20 (E6 selesai) |
+| P1 yang ikut selesai | ✅ | `DeviceRegistrar` 12, `DeviceSyncWorker` 4, `ApiRemoteSessionCleaner` 6, `LanguageInterceptor` 2, `WorkUploadManager` 7, `WorkDeviceSyncScheduler` 3, repository impl 20 (E6 selesai), `FileMediaPreparationUseCase` 15 dan `ProfilePhotoUseCase` 6 (setelah `ImageCompressor` dan `VideoCompressor` jadi interface) |
 | 2.10 Verifikasi R3 | ⏳ | Menunggu hasil cek di device (langkah D-02 di smoke checklist) |
 | 2.11 E2E session expiry | ⏳ | Butuh emulator; belum diizinkan memakai device |
 | 2.12 Smoke checklist release | ✅ ditulis | `docs/RELEASE_SMOKE_CHECKLIST.md`. Belum dijalankan pada build kandidat |
-| 2.13 Gate coverage per area | ✅ | Task `verifyCoverageFloors` (Kover 0.9 tidak bisa memfilter per rule), jalan di job CI `verify`. Batas: network 90, session 90, repository 85, auth VM 85, settings+post VM 85, util 75, total 33 |
+| 2.13 Gate coverage per area | ✅ | Task `verifyCoverageFloors` (Kover 0.9 tidak bisa memfilter per rule), jalan di job CI `verify`. Batas: network 90, session 90, repository 85, auth VM 85, settings+post VM 85, media preparation + upload queue 90, profile photo 85, util 75, total 35 |
 | 2.14 Job CI `release-check` | ✅ | Sudah jalan di GitHub (Phase 0) |
 
 Yang sengaja dikecualikan dari ukuran coverage (adapter tipis ke SDK yang tidak bisa jalan di JVM): `CredentialManagerGoogleIdTokenProvider`, `FirebasePushTokenProvider`, `AndroidMediaInspector`, `Firebase*` di `telemetry`, dan `FirebaseRemoteConfigManager`. Logika di sekitarnya dites lewat interface-nya. `FirebaseRemoteConfigManager` punya sedikit logika sendiri (fallback `ifBlank`, mutex refresh) yang belum teruji.
 
-Belum tercakup: `FileMediaPreparationUseCase` (`domain.post` 55,6%: butuh interface untuk `ImageCompressor`/`VideoCompressor`), paket `media` (1%, P2 di device), `ui.feature.home.feed` (komponen Compose dan `PostDetailViewModel`), dan jalur pilihan bahasa eksplisit di `LanguageInterceptor` (butuh device).
+Belum tercakup: paket `media` (2,2%: `BitmapImageCompressor`, `Media3VideoCompressor`, `AvatarCropper`, `VideoCacheManager`; P2 di device), `ui.feature.home.feed` (komponen Compose dan `PostDetailViewModel`), dan jalur pilihan bahasa eksplisit di `LanguageInterceptor` (butuh device).
 
 Temuan sesi ini:
 - **R6 terkonfirmasi di level interceptor**: setiap panggilan lewat client utama, termasuk `DeviceRegistrar` dan `RemoteSessionCleaner`, melaporkan kegagalannya ke dialog error global (`aFailingBackgroundCallStillReachesTheGlobalErrorChannel`). Belum diperbaiki, menunggu keputusan.

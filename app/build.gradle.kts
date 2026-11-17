@@ -80,8 +80,10 @@ val coverageFloors = listOf(
 	Triple("repositories", listOf("data/repository"), 85),
 	Triple("auth view models", listOf("ui/feature/auth"), 85),
 	Triple("settings and post composer view models", listOf("ui/feature/home/settings", "ui/feature/home/post"), 85),
+	Triple("media preparation and upload queue", listOf("domain/post"), 90),
+	Triple("profile photo", listOf("domain/profile"), 85),
 	Triple("util", listOf("util"), 75),
-	Triple("total", listOf(""), 33)
+	Triple("total", listOf(""), 35)
 )
 
 tasks.register("verifyCoverageFloors") {
