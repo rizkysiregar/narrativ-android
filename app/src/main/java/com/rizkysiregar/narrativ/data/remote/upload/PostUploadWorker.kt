@@ -147,7 +147,7 @@ class PostUploadWorker @AssistedInject constructor(
 		}
 	}
 
-	/** Requests an upload URL, PUTs the file (asking for a fresh URL once if it expired) and returns the object key. */
+	/** Requests an upload URL, uploads the file (asking for a fresh URL once if it expired) and returns the object key. */
 	private suspend fun uploadOne(
 		file: File,
 		contentType: String,
@@ -159,7 +159,7 @@ class PostUploadWorker @AssistedInject constructor(
 		while (true) {
 			try {
 				perfTracer.measure(PerfTrace.MEDIA_UPLOAD, mapOf("content_type" to contentType)) {
-					presignedUploader.upload(uploadUrl.presignedUrl, file, contentType, onProgress)
+					presignedUploader.upload(uploadUrl.presignedUrl, uploadUrl.uploadForm, file, contentType, onProgress)
 				}
 				return uploadUrl.objectKey
 			} catch (e: UploadHttpException) {

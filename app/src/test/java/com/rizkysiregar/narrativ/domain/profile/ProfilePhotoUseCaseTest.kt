@@ -7,6 +7,7 @@ import com.google.common.truth.Truth.assertThat
 import com.rizkysiregar.narrativ.R
 import com.rizkysiregar.narrativ.data.remote.model.response.user.ProfileImageUploadUrlResponse
 import com.rizkysiregar.narrativ.data.remote.model.response.user.UserSearchItemResponse
+import com.rizkysiregar.narrativ.data.remote.model.response.PresignedUploadForm
 import com.rizkysiregar.narrativ.data.remote.upload.PresignedUploader
 import com.rizkysiregar.narrativ.data.remote.upload.UploadHttpException
 import com.rizkysiregar.narrativ.media.CompressedImage
@@ -81,6 +82,26 @@ class ProfilePhotoUseCaseTest {
 		assertThat(put.body!!.utf8()).isEqualTo("small avatar")
 		assertThat(users.profileImageKeys).containsExactly("avatars/1.jpg")
 		assertThat(progress.last()).isEqualTo(1f)
+	}
+
+	@Test
+	fun theSizeCappedFormIsUsedWhenTheServerSendsOne() {
+		val shrunk = cached("shrunk.jpg", "small avatar")
+		images.onCompressAvatar = { _, _ -> CompressedImage(shrunk, "image/jpeg") }
+		users.onCreateProfileImageUploadUrl = {
+			ProfileImageUploadUrlResponse(
+				server.url("/avatars/1").toString(), "avatars/1.jpg", 900,
+				PresignedUploadForm(server.url("/bucket").toString(), mapOf("key" to "avatars/1.jpg", "policy" to "signed"))
+			)
+		}
+
+		upload()
+
+		val post = server.takeRequest()
+		assertThat(post.method).isEqualTo("POST")
+		assertThat(post.url.encodedPath).isEqualTo("/bucket")
+		assertThat(post.body!!.utf8()).contains("small avatar")
+		assertThat(users.profileImageKeys).containsExactly("avatars/1.jpg")
 	}
 
 	@Test

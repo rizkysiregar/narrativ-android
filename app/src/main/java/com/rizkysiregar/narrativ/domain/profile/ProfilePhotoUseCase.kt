@@ -43,7 +43,7 @@ class ProfilePhotoUseCase @Inject constructor(
 		val image = imageCompressor.compressAvatar(copied, resolvedMime!!)
 		try {
 			val target = userRepository.createProfileImageUploadUrl(image.contentType)
-			uploader.upload(target.presignedUrl, image.file, image.contentType, onProgress)
+			uploader.upload(target.presignedUrl, target.uploadForm, image.file, image.contentType, onProgress)
 			return userRepository.setProfileImage(target.objectKey)
 		} finally {
 			withContext(Dispatchers.IO) { image.file.delete() }
