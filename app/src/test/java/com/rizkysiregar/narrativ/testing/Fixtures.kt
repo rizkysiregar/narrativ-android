@@ -33,14 +33,16 @@ fun aFeedItem(
 fun aFeedPage(
 	content: List<FeedContentItem> = emptyList(),
 	last: Boolean = true,
-	pageNumber: Int = 0
+	pageNumber: Int = 0,
+	nextCursor: String? = null
 ) = FeedsPostPaginationResponse(
 	pageNumber = pageNumber,
 	last = last,
 	totalPages = if (last) pageNumber + 1 else pageNumber + 2,
 	pageSize = content.size,
 	content = content,
-	totalElements = content.size
+	totalElements = content.size,
+	nextCursor = nextCursor
 )
 
 fun aComment(

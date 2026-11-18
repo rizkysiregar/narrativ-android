@@ -36,6 +36,7 @@ class UserDetailFeedViewModel @Inject constructor(
 	override suspend fun fetchPage(
 		page: Int,
 		size: Int,
+		cursor: String?,
 		mediaOnly: Boolean
 	): Flow<ResultState<FeedsPostPaginationResponse>> =
 		getFeedByUsernameUseCase(
@@ -43,7 +44,8 @@ class UserDetailFeedViewModel @Inject constructor(
 				page = page,
 				size = size,
 				username = targetUsername,
-				mediaOnly = mediaOnly
+				mediaOnly = mediaOnly,
+				cursor = cursor
 			)
 		)
 }

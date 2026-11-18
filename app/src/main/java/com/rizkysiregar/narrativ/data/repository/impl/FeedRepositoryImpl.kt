@@ -34,12 +34,12 @@ class FeedRepositoryImpl @Inject constructor(
 
 	override fun getAllFeed(request: GetAllFeedRequest): Flow<ResultState<FeedsPostPaginationResponse>> =
 		flowFromApi {
-			feedApi.getFeed(request.page, request.size)
+			feedApi.getFeed(request.page, request.size, request.cursor)
 		}
 
 	override fun getExplorePosts(request: GetAllFeedRequest): Flow<ResultState<FeedsPostPaginationResponse>> =
 		flowFromApi {
-			feedApi.getExplorePosts(request.page, request.size, request.mediaOnly)
+			feedApi.getExplorePosts(request.page, request.size, request.mediaOnly, request.cursor)
 		}
 
 	override fun getFeedByUsername(request: GetFeedByUsernameRequest): Flow<ResultState<FeedsPostPaginationResponse>> =
@@ -48,7 +48,8 @@ class FeedRepositoryImpl @Inject constructor(
 				request.username,
 				request.page,
 				request.size,
-				request.mediaOnly
+				request.mediaOnly,
+				request.cursor
 			)
 		}
 

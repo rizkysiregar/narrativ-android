@@ -98,6 +98,15 @@ class RepositoryImplTest {
 	}
 
 	@Test
+	fun theNextFeedPageIsAskedForByCursor() = runTest {
+		body = fixture("feed_page.json")
+
+		FeedRepositoryImpl(retrofit).getAllFeed(GetAllFeedRequest(page = 1, size = 10, cursor = "abc")).last()
+
+		assertThat(sent().line()).isEqualTo("GET /posts?page=1&size=10&cursor=abc")
+	}
+
+	@Test
 	fun aSinglePostIsRequestedById() = runTest {
 		body = fixture("post_single.json")
 
