@@ -57,6 +57,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rizkysiregar.narrativ.R
+import com.rizkysiregar.narrativ.domain.user.UsernameRules
 import com.rizkysiregar.narrativ.ui.theme.NarrativTheme
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
@@ -98,7 +99,10 @@ fun RegisterScreen(
 		MiddleSection(
 			onLegalClick = onLegalClick,
 			onRegisterClick = {
-				val errors = registerState.validate { label -> resources.getString(R.string.error_required, resources.getString(label)) }
+				val errors = registerState.validate(
+					required = { label -> resources.getString(R.string.error_required, resources.getString(label)) },
+					usernameFormat = resources.getString(R.string.error_username_format)
+				)
 				formErrors = errors
 				if (!errors.hasErrors) {
 					onRegisterClick(registerState.trimmed())
@@ -317,7 +321,7 @@ fun UsernameField(
 		isError = errorMessage != null,
 		supportingText = errorMessage?.let { { Text(it) } },
 		trailingIcon = {
-			if (username.isNotEmpty()) {
+			if (UsernameRules.isValid(username.trim())) {
 				Icon(
 					imageVector = Icons.Default.Check,
 					contentDescription = stringResource(R.string.cd_valid_username)
@@ -375,10 +379,14 @@ private data class RegisterFormErrors(
 		get() = listOf(firstName, lastName, username, email, password).any { it != null }
 }
 
-private fun RegisterState.validate(required: (labelRes: Int) -> String): RegisterFormErrors = RegisterFormErrors(
+private fun RegisterState.validate(
+	required: (labelRes: Int) -> String,
+	usernameFormat: String
+): RegisterFormErrors = RegisterFormErrors(
 	firstName = firstName.requiredError(required(R.string.first_name)),
 	lastName = lastName.requiredError(required(R.string.last_name)),
-	username = username.requiredError(required(R.string.username)),
+	username = username.requiredError(required(R.string.username))
+		?: usernameFormat.takeUnless { UsernameRules.isValid(username.trim()) },
 	email = email.requiredError(required(R.string.email)),
 	password = password.requiredError(required(R.string.password))
 )
