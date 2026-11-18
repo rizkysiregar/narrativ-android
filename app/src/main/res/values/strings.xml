@@ -102,6 +102,7 @@
     <string name="error_required">%1$s is required</string>
     <string name="error_user_id_missing">User ID not found</string>
     <string name="error_username_required">Username is required</string>
+    <string name="error_username_format">3–16 characters: letters, numbers, dots (.) and underscores (_) only</string>
     <string name="error_with_message">Error: %1$s</string>
     <string name="feed_empty_body">Follow other users to see and share moments</string>
     <string name="feed_empty_title">No stories yet</string>
