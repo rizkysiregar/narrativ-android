@@ -140,7 +140,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="295"
+            line="358"
             column="17"/>
     </issue>
 
@@ -1039,8 +1039,8 @@
         errorLine1="    val scaled = Bitmap.createScaledBitmap("
         errorLine2="                 ^">
         <location
-            file="src/main/java/com/rizkysiregar/narrativ/media/ImageCompressor.kt"
-            line="69"
+            file="src/main/java/com/rizkysiregar/narrativ/media/BitmapImageCompressor.kt"
+            line="61"
             column="18"/>
     </issue>
 
@@ -1050,8 +1050,8 @@
         errorLine1="  val scaled = Bitmap.createScaledBitmap("
         errorLine2="               ^">
         <location
-            file="src/main/java/com/rizkysiregar/narrativ/media/ImageCompressor.kt"
-            line="115"
+            file="src/main/java/com/rizkysiregar/narrativ/media/BitmapImageCompressor.kt"
+            line="103"
             column="16"/>
     </issue>
 
@@ -1117,7 +1117,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="293"
+            line="356"
             column="17"/>
     </issue>
 
@@ -1128,7 +1128,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="294"
+            line="357"
             column="17"/>
     </issue>
 
@@ -1139,7 +1139,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="295"
+            line="358"
             column="17"/>
     </issue>
 
