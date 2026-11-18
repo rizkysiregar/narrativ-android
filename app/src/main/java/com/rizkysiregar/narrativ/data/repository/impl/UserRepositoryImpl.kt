@@ -1,5 +1,9 @@
 package com.rizkysiregar.narrativ.data.repository.impl
 
+import com.rizkysiregar.narrativ.data.remote.model.request.user.ChangeEmailOtpRequest
+import com.rizkysiregar.narrativ.data.remote.model.request.user.ConfirmEmailChangeRequest
+import com.rizkysiregar.narrativ.data.remote.model.response.auth.ForgotPasswordResponse
+import com.rizkysiregar.narrativ.data.remote.model.response.auth.LoginResponse
 import com.rizkysiregar.narrativ.data.remote.api.UserApi
 import com.rizkysiregar.narrativ.data.remote.model.ResultState
 import com.rizkysiregar.narrativ.data.remote.model.request.user.DeleteAccountRequest
@@ -41,6 +45,12 @@ class UserRepositoryImpl @Inject constructor(
 		val response = userApi.deleteProfileImage()
 		return response.data ?: throw IllegalStateException(response.message)
 	}
+
+	override fun sendEmailChangeOtp(email: String): Flow<ResultState<ForgotPasswordResponse>> =
+		flowFromApi { userApi.sendEmailChangeOtp(ChangeEmailOtpRequest(email)) }
+
+	override fun confirmEmailChange(request: ConfirmEmailChangeRequest): Flow<ResultState<LoginResponse>> =
+		flowFromApi { userApi.confirmEmailChange(request) }
 
 	override fun deleteAccount(request: DeleteAccountRequest): Flow<ResultState<String>> =
 		flowFromMessageApi { userApi.deleteAccount(request) }
