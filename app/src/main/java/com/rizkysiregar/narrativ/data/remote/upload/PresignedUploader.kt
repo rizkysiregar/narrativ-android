@@ -1,5 +1,6 @@
 package com.rizkysiregar.narrativ.data.remote.upload
 
+import com.rizkysiregar.narrativ.data.remote.model.response.PresignedUploadForm
 import com.rizkysiregar.narrativ.di.IoDispatcher
 import com.rizkysiregar.narrativ.di.UploadClient
 import kotlinx.coroutines.CoroutineDispatcher
@@ -7,6 +8,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
@@ -21,7 +23,8 @@ import javax.inject.Singleton
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 10/10/26
- * Description: Streams a file to a presigned PUT URL. The Content-Type header is
+ * Description: Streams a file to object storage, with a presigned POST form when the backend hands one out
+ * (storage then refuses a file above the signed size limit) or else to a presigned PUT URL. The content type is
  * sent exactly as requested from the backend because it is part of the signature.
  * Network failures are retried a limited number of times with linear backoff.
  */
@@ -31,18 +34,45 @@ class PresignedUploader @Inject constructor(
 	@IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) {
 
+	/** Uses [form] when the backend sent one, else PUTs to [presignedUrl]. */
+	suspend fun upload(
+		presignedUrl: String,
+		form: PresignedUploadForm?,
+		file: File,
+		contentType: String,
+		onProgress: (Float) -> Unit
+	) {
+		if (form != null) post(form, file, contentType, onProgress) else upload(presignedUrl, file, contentType, onProgress)
+	}
+
 	suspend fun upload(
 		url: String,
 		file: File,
 		contentType: String,
 		onProgress: (Float) -> Unit
-	) = withContext(ioDispatcher) {
-		val request = Request.Builder()
+	) = execute(
+		Request.Builder()
 			.url(url)
 			.put(ProgressRequestBody(file, contentType.toMediaType(), onProgress))
 			.header("Content-Type", contentType)
 			.build()
+	)
 
+	/** The signed fields first, as they are, then the file: storage reads the policy before the content. */
+	suspend fun post(
+		form: PresignedUploadForm,
+		file: File,
+		contentType: String,
+		onProgress: (Float) -> Unit
+	) {
+		val body = MultipartBody.Builder().setType(MultipartBody.FORM).apply {
+			form.fields.forEach { (name, value) -> addFormDataPart(name, value) }
+			addFormDataPart("file", file.name, ProgressRequestBody(file, contentType.toMediaType(), onProgress))
+		}.build()
+		execute(Request.Builder().url(form.url).post(body).build())
+	}
+
+	private suspend fun execute(request: Request) = withContext(ioDispatcher) {
 		var attempt = 0
 		while (true) {
 			try {

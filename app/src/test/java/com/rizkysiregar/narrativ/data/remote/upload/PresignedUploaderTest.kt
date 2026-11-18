@@ -1,6 +1,7 @@
 package com.rizkysiregar.narrativ.data.remote.upload
 
 import com.google.common.truth.Truth.assertThat
+import com.rizkysiregar.narrativ.data.remote.model.response.PresignedUploadForm
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -60,6 +61,52 @@ class PresignedUploaderTest {
 		assertThat(request.url.encodedPath).isEqualTo("/bucket/a.jpg")
 		assertThat(request.headers["Content-Type"]).isEqualTo("image/jpeg")
 		assertThat(request.body!!.toByteArray()).isEqualTo(source.readBytes())
+	}
+
+	@Test
+	fun aFormIsPostedWithTheSignedFieldsFirstAndTheFileLast() = runTest {
+		serve { MockResponse.Builder().code(204).build() } // what S3 and MinIO answer to a POST upload
+		val source = file(2_000)
+		val form = PresignedUploadForm(
+			url = server.url("/bucket").toString(),
+			fields = linkedMapOf("key" to "u1/POST_FEED/a.jpg", "Content-Type" to "image/jpeg", "policy" to "signed")
+		)
+
+		uploader().upload("https://unused-put-url", form, source, "image/jpeg") {}
+
+		val request = server.takeRequest()
+		assertThat(request.method).isEqualTo("POST")
+		assertThat(request.url.encodedPath).isEqualTo("/bucket")
+		assertThat(request.headers["Content-Type"]).startsWith("multipart/form-data")
+		val body = request.body!!.utf8()
+		val key = body.indexOf("name=\"key\"")
+		val policy = body.indexOf("name=\"policy\"")
+		val fileStart = body.indexOf("name=\"file\"")
+		assertThat(key).isAtLeast(0)
+		assertThat(policy).isGreaterThan(key)
+		assertThat(fileStart).isGreaterThan(policy)
+		assertThat(body).contains("u1/POST_FEED/a.jpg")
+		assertThat(body.substring(fileStart)).contains("Content-Type: image/jpeg")
+	}
+
+	@Test
+	fun withoutAFormTheFileIsStillPut() = runTest {
+		serve { ok() }
+
+		uploader().upload(server.url("/bucket/a.jpg").toString(), null, file(100), "image/jpeg") {}
+
+		assertThat(server.takeRequest().method).isEqualTo("PUT")
+	}
+
+	@Test
+	fun storageRefusingATooLargeFileIsAnUploadError() = runTest {
+		// the signed content-length-range: S3 answers 400 EntityTooLarge
+		serve { MockResponse.Builder().code(400).body("<Error><Code>EntityTooLarge</Code></Error>").build() }
+		val form = PresignedUploadForm(server.url("/bucket").toString(), mapOf("key" to "k"))
+
+		val error = runCatching { uploader().upload("https://unused", form, file(100), "image/jpeg") {} }.exceptionOrNull()
+
+		assertThat((error as UploadHttpException).code).isEqualTo(400)
 	}
 
 	@Test
