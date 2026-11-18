@@ -35,8 +35,7 @@ private const val SKELETON_CARDS = 2
  * is not left blank. Two are enough to fill the screen, the list is not scrollable while they are shown.
  */
 @Composable
-fun FeedSkeleton(modifier: Modifier = Modifier) {
-	val phase = rememberSkeletonPhase()
+fun FeedSkeleton(modifier: Modifier = Modifier, phase: State<Float> = rememberSkeletonPhase()) {
 	val loading = stringResource(R.string.home_loading)
 	Column(
 		modifier = modifier
