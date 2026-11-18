@@ -75,7 +75,6 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import androidx.navigation.NavController
-import com.google.gson.Gson
 import com.rizkysiregar.narrativ.R
 import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.narrativ.media.currentMediaUrlOrNull
@@ -84,36 +83,24 @@ import com.rizkysiregar.narrativ.ui.components.InitialAvatar
 import com.rizkysiregar.narrativ.util.formatPostDate
 import androidx.compose.ui.res.stringResource
 
-const val KEY_POST_JSON = "post_detail_post_json"
-const val KEY_LIKE_HANDLER = "post_detail_like_handler"
-
 @Composable
 fun PostDetailDestination(
 	navController: NavController,
 	postId: String,
 	openComments: Boolean = false,
+	handoff: PostDetailHandoff,
 	viewModel: PostDetailViewModel = hiltViewModel()
 ) {
 	// Opened from a post list: that screen hands the post over, so it shows at once. Opened from a push
-	// notification there is nothing to hand over, so the post is loaded by its id.
-	val previousEntry = navController.previousBackStackEntry
-	val postJson = remember(previousEntry) {
-		previousEntry?.savedStateHandle?.get<String>(KEY_POST_JSON)
-	}
-	val likeHandler = remember(previousEntry) {
-		previousEntry?.savedStateHandle?.get<Any>(KEY_LIKE_HANDLER) as? (String) -> Unit
-	}
-	val handedOver = remember(postJson, postId) {
-		postJson
-			?.let { runCatching { Gson().fromJson(it, FeedContentItem::class.java) }.getOrNull() }
-			?.takeIf { it.id == postId }
-	}
+	// notification (or after the process was killed) there is nothing to hand over, so the post is loaded by its id.
+	val handedOver = handoff.postFor(postId)
+	val likeHandler = handoff.likeHandlerFor(postId)
 
-	if (handedOver != null) {
+	if (handedOver != null && likeHandler != null) {
 		PostDetailScreen(
 			post = handedOver,
 			onBackClick = { navController.popBackStack() },
-			onLikeClick = likeHandler ?: {},
+			onLikeClick = likeHandler,
 			openCommentsOnStart = openComments
 		)
 		return
