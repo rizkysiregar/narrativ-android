@@ -79,7 +79,7 @@ import com.rizkysiregar.narrativ.R
 import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.narrativ.media.currentMediaUrlOrNull
 import com.rizkysiregar.narrativ.media.rememberVideoPlayer
-import com.rizkysiregar.narrativ.ui.components.InitialAvatar
+import com.rizkysiregar.narrativ.ui.components.PostAuthorAvatar
 import com.rizkysiregar.narrativ.util.formatPostDate
 import androidx.compose.ui.res.stringResource
 
@@ -434,7 +434,7 @@ private fun PostDetailHeader(
 			)
 		}
 		Spacer(Modifier.width(6.dp))
-		InitialAvatar(name = post.username, size = 40.dp)
+		PostAuthorAvatar(imageUrl = post.profileImageUrl, name = post.username, size = 40.dp)
 		Spacer(Modifier.width(11.dp))
 		Column {
 			Text(

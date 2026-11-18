@@ -51,7 +51,7 @@ import com.rizkysiregar.narrativ.R
 import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.narrativ.data.remote.model.response.feed.MediaType
 import com.rizkysiregar.narrativ.data.remote.model.response.feed.PostMediaItem
-import com.rizkysiregar.narrativ.ui.components.InitialAvatar
+import com.rizkysiregar.narrativ.ui.components.PostAuthorAvatar
 import com.rizkysiregar.narrativ.ui.components.TakenDownPlaceholder
 import com.rizkysiregar.narrativ.ui.theme.NarrativTheme
 import com.rizkysiregar.narrativ.util.formatPostDate
@@ -170,7 +170,7 @@ private fun FeedAuthorHeader(
 		modifier = Modifier.fillMaxWidth(),
 		verticalAlignment = Alignment.CenterVertically
 	) {
-		InitialAvatar(name = item.username, size = 38.dp, modifier = authorClick)
+		PostAuthorAvatar(imageUrl = item.profileImageUrl, name = item.username, size = 38.dp, modifier = authorClick)
 		Spacer(Modifier.width(10.dp))
 		Text(
 			text = item.username,

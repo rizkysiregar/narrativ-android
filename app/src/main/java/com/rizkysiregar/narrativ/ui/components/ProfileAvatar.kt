@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -22,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.rizkysiregar.narrativ.R
 import androidx.compose.ui.res.stringResource
 
@@ -56,18 +58,8 @@ fun ProfileAvatar(
 	when {
 		!imageUrl.isNullOrBlank() -> {
 			// show real profile picture
-			// a presigned url changes on every response, so cache on the url without its signature
-			val context = LocalPlatformContext.current
-			val cacheKey = imageUrl.substringBefore('?')
-			val request = remember(imageUrl) {
-				ImageRequest.Builder(context)
-					.data(imageUrl)
-					.memoryCacheKey(cacheKey)
-					.diskCacheKey(cacheKey)
-					.build()
-			}
 			AsyncImage(
-				model = request,
+				model = rememberAvatarRequest(imageUrl),
 				contentDescription = stringResource(R.string.cd_profile_photo),
 				modifier = Modifier
 					.size(size)
@@ -98,6 +90,49 @@ fun ProfileAvatar(
 	}
 }
 
+
+/**
+ * The request for a profile picture. A presigned url changes on every response, so it is cached on the url without
+ * its signature.
+ */
+@Composable
+fun rememberAvatarRequest(imageUrl: String, crossfade: Boolean = false): ImageRequest {
+	val context = LocalPlatformContext.current
+	val cacheKey = imageUrl.substringBefore('?')
+	return remember(imageUrl, crossfade) {
+		ImageRequest.Builder(context)
+			.data(imageUrl)
+			.memoryCacheKey(cacheKey)
+			.diskCacheKey(cacheKey)
+			.crossfade(crossfade)
+			.build()
+	}
+}
+
+/**
+ * The avatar of the author of a post: their photo when they have one, else their initials (what posts always showed).
+ * The initials sit under the photo, so while it loads, or when it fails to load, they stay in view instead of a hole,
+ * and the photo fades in over them.
+ */
+@Composable
+fun PostAuthorAvatar(
+	imageUrl: String?,
+	name: String,
+	size: Dp,
+	modifier: Modifier = Modifier
+) {
+	Box(modifier = modifier.size(size).clip(CircleShape)) {
+		InitialAvatar(name = name, size = size)
+		if (!imageUrl.isNullOrBlank()) {
+			AsyncImage(
+				model = rememberAvatarRequest(imageUrl, crossfade = true),
+				contentDescription = stringResource(R.string.cd_profile_photo),
+				contentScale = ContentScale.Crop,
+				modifier = Modifier.matchParentSize()
+			)
+		}
+	}
+}
 
 @Composable
 fun InitialAvatar(

@@ -73,6 +73,10 @@ data class FeedContentItem(
 	@field:SerializedName("userId")
 	val userId: String? = null,
 
+	// the author's profile picture; null when they have none yet (or for a server that does not send it)
+	@field:SerializedName("profileImageUrl")
+	val profileImageUrl: String? = null,
+
 	@field:SerializedName("commentCount")
 	val commentCount: Int,
 
