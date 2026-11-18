@@ -1,5 +1,8 @@
 package com.rizkysiregar.narrativ.ui.feature.home
 
+import com.rizkysiregar.narrativ.R
+import android.widget.Toast
+import com.rizkysiregar.narrativ.ui.feature.home.settings.ChangeEmailRoute
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
@@ -116,7 +119,7 @@ fun HomeRoot(
 	Box(modifier = Modifier.fillMaxSize()) {
 	Scaffold(
 		bottomBar = {
-			if (currentRoute != HomePathRoute.UserDetail.route && currentRoute != HomePathRoute.FollowList.route && currentRoute != HomePathRoute.Settings.route && currentRoute != HomePathRoute.BlockedUsers.route && currentRoute != BottomNavScreen.PostFeed.route && !isDetailRoute) {
+			if (currentRoute != HomePathRoute.UserDetail.route && currentRoute != HomePathRoute.FollowList.route && currentRoute != HomePathRoute.Settings.route && currentRoute != HomePathRoute.BlockedUsers.route && currentRoute != HomePathRoute.ChangeEmail.route && currentRoute != BottomNavScreen.PostFeed.route && !isDetailRoute) {
 				BottomBar(homeNavController)
 			}
 		}
@@ -182,6 +185,7 @@ fun HomeRoot(
 					SettingsRoute(
 						onBackClick = { homeNavController.popBackStack() },
 						onBlockedUsersClick = { homeNavController.navigate(HomePathRoute.BlockedUsers.route) },
+						onChangeEmailClick = { homeNavController.navigate(HomePathRoute.ChangeEmail.route) },
 						onLegalClick = { document -> navController.navigate(MainPathRoute.Legal.create(document.path)) },
 						onLoggedOut = {
 							navController.navigate(AuthPathRoutes.Login.route) {
@@ -190,6 +194,16 @@ fun HomeRoot(
 								}
 								launchSingleTop = true
 							}
+						}
+					)
+				}
+				composable(HomePathRoute.ChangeEmail.route) {
+					val context = LocalContext.current
+					ChangeEmailRoute(
+						onBackClick = { homeNavController.popBackStack() },
+						onChanged = {
+							Toast.makeText(context, context.getString(R.string.email_changed), Toast.LENGTH_LONG).show()
+							homeNavController.popBackStack()
 						}
 					)
 				}

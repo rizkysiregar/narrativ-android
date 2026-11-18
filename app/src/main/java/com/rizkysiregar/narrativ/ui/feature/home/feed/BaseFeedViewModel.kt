@@ -38,9 +38,15 @@ abstract class BaseFeedViewModel(
     // Posts with a like/dislike request in flight; extra taps are ignored until it settles.
     private val likeInFlight = mutableSetOf<String>()
 
+    /**
+     * One page of the feed. [cursor] is the nextCursor of the previous page (null for the first one); with it the
+     * server returns the posts after that one, so new posts arriving while scrolling never repeat a post on the next
+     * page. [page] is what a server without cursors goes by.
+     */
     abstract suspend fun fetchPage(
         page: Int,
         size: Int,
+        cursor: String?,
         mediaOnly: Boolean
     ): Flow<ResultState<FeedsPostPaginationResponse>>
 
@@ -110,7 +116,7 @@ abstract class BaseFeedViewModel(
             val generation = loadGeneration
             _state.value = FeedUiState(isRefreshing = true)
             loadJob = viewModelScope.launch {
-                loadPage(page = 0, size = _state.value.pageSize, generation = generation)
+                loadPage(page = 0, cursor = null, size = _state.value.pageSize, generation = generation)
             }
         }
 
@@ -123,7 +129,7 @@ abstract class BaseFeedViewModel(
             _state.update { it.copy(isLoadingMore = true, errorMessage = null, isError = false) }
             val generation = loadGeneration
             loadJob = viewModelScope.launch {
-                loadPage(page = state.page, size = state.pageSize, generation = generation)
+                loadPage(page = state.page, cursor = state.nextCursor, size = state.pageSize, generation = generation)
             }
         }
 
@@ -133,8 +139,8 @@ abstract class BaseFeedViewModel(
             }
         }
 
-        private suspend fun loadPage(page: Int, size: Int, generation: Int) {
-            fetchPage(page, size, mediaOnly).collect { result ->
+        private suspend fun loadPage(page: Int, cursor: String?, size: Int, generation: Int) {
+            fetchPage(page, size, cursor, mediaOnly).collect { result ->
                 if (generation != loadGeneration) return@collect
                 when (result) {
                     is ResultState.Loading -> Unit
@@ -144,6 +150,7 @@ abstract class BaseFeedViewModel(
                             it.copy(
                                 items = if (page == 0) response.content else it.items + response.content,
                                 page = page + 1,
+                                nextCursor = response.nextCursor,
                                 hasLoadedInitialPage = true,
                                 isLoadingMore = false,
                                 isRefreshing = false,

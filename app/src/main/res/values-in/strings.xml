@@ -278,4 +278,14 @@
     <string name="view_grid">Tampilan grid</string>
     <string name="view_list">Tampilan list</string>
     <string name="write_comment">Tulis komentar</string>
+    <!-- Pengaturan > Ubah email -->
+    <string name="change_email">Ubah email</string>
+    <string name="change_email_intro">Masukkan email baru untuk akun Anda. Kami akan mengirim kode ke email tersebut untuk memastikan itu milik Anda.</string>
+    <string name="new_email">Email baru</string>
+    <string name="change_email_confirm_hint">Masukkan kata sandi untuk memastikan ini Anda.</string>
+    <string name="change_email_edit_address">Gunakan email lain</string>
+    <string name="resend_code">Kirim ulang kode</string>
+    <string name="saving">Menyimpan…</string>
+    <string name="email_changed">Email Anda telah diubah. Anda telah dikeluarkan dari perangkat lain.</string>
+    <string name="error_otp_incomplete">Masukkan 6 digit kode</string>
 </resources>

@@ -34,6 +34,7 @@ class ProfileFeedViewModel @Inject constructor(
     override suspend fun fetchPage(
         page: Int,
         size: Int,
+        cursor: String?,
         mediaOnly: Boolean
     ): Flow<ResultState<FeedsPostPaginationResponse>> {
         val username = usernameDataStore.value
@@ -42,7 +43,8 @@ class ProfileFeedViewModel @Inject constructor(
                 page = page,
                 size = size,
                 username = username,
-                mediaOnly = mediaOnly
+                mediaOnly = mediaOnly,
+                cursor = cursor
             )
         )
     }

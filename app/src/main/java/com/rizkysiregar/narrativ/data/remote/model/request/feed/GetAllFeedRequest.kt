@@ -11,4 +11,6 @@ data class GetAllFeedRequest(
 	val size: Int,
 	// explore only: leave out caption only posts (grid view)
 	val mediaOnly: Boolean = false,
+	// the nextCursor of the previous page; null for the first page
+	val cursor: String? = null,
 )

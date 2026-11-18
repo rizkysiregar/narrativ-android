@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.outlined.Analytics
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -67,6 +68,7 @@ fun SettingsRoute(
 	viewModel: SettingsViewModel = hiltViewModel(),
 	onBackClick: () -> Unit,
 	onBlockedUsersClick: () -> Unit,
+	onChangeEmailClick: () -> Unit,
 	onLegalClick: (LegalDocument) -> Unit,
 	onLoggedOut: () -> Unit
 ) {
@@ -97,6 +99,13 @@ fun SettingsRoute(
 				.padding(padding)
 				.verticalScroll(rememberScrollState())
 		) {
+			SettingsItem(
+				title = stringResource(R.string.change_email),
+				icon = { Icon(Icons.Outlined.Email, contentDescription = null) },
+				showChevron = true,
+				onClick = onChangeEmailClick
+			)
+			HorizontalDivider()
 			SettingsItem(
 				title = stringResource(R.string.blocked_accounts),
 				icon = { Icon(Icons.Outlined.Block, contentDescription = null) },

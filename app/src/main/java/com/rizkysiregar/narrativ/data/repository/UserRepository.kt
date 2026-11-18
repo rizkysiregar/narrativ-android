@@ -1,5 +1,8 @@
 package com.rizkysiregar.narrativ.data.repository
 
+import com.rizkysiregar.narrativ.data.remote.model.request.user.ConfirmEmailChangeRequest
+import com.rizkysiregar.narrativ.data.remote.model.response.auth.ForgotPasswordResponse
+import com.rizkysiregar.narrativ.data.remote.model.response.auth.LoginResponse
 import com.rizkysiregar.narrativ.data.remote.model.ResultState
 import com.rizkysiregar.narrativ.data.remote.model.request.user.DeleteAccountRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.user.SearchUserRequest
@@ -20,6 +23,11 @@ interface UserRepository {
 	suspend fun createProfileImageUploadUrl(contentType: String): ProfileImageUploadUrlResponse
 	suspend fun setProfileImage(objectKey: String): UserSearchItemResponse
 	suspend fun deleteProfileImage(): UserSearchItemResponse
+
+	fun sendEmailChangeOtp(email: String): Flow<ResultState<ForgotPasswordResponse>>
+
+	/** The email is changed when this succeeds; the caller stores the new token pair, the old one no longer works. */
+	fun confirmEmailChange(request: ConfirmEmailChangeRequest): Flow<ResultState<LoginResponse>>
 
 	/** The account is gone on the server when this succeeds; the caller clears the local session. */
 	fun deleteAccount(request: DeleteAccountRequest): Flow<ResultState<String>>

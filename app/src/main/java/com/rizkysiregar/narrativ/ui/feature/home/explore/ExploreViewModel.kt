@@ -27,7 +27,8 @@ class ExploreViewModel @Inject constructor(
 	override suspend fun fetchPage(
 		page: Int,
 		size: Int,
+		cursor: String?,
 		mediaOnly: Boolean
 	): Flow<ResultState<FeedsPostPaginationResponse>> =
-		getExplorePostsUseCase(GetAllFeedRequest(page, size, mediaOnly))
+		getExplorePostsUseCase(GetAllFeedRequest(page, size, mediaOnly, cursor))
 }

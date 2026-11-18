@@ -45,9 +45,11 @@ class BaseFeedViewModelTest {
 		val serve: (page: Int, mediaOnly: Boolean) -> Flow<ResultState<FeedsPostPaginationResponse>>
 	) : BaseFeedViewModel(dataStore, DislikePostUseCase(repo), LikePostUseCase(repo)) {
 		val requested = mutableListOf<Pair<Int, Boolean>>()
+		val cursors = mutableListOf<String?>()
 
-		override suspend fun fetchPage(page: Int, size: Int, mediaOnly: Boolean): Flow<ResultState<FeedsPostPaginationResponse>> {
+		override suspend fun fetchPage(page: Int, size: Int, cursor: String?, mediaOnly: Boolean): Flow<ResultState<FeedsPostPaginationResponse>> {
 			requested += page to mediaOnly
+			cursors += cursor
 			return serve(page, mediaOnly)
 		}
 	}
@@ -115,6 +117,31 @@ class BaseFeedViewModelTest {
 		assertThat(vm.uiState.value.page).isEqualTo(2)
 		assertThat(vm.uiState.value.hasMore).isFalse()
 		assertThat(vm.requested.map { it.first }).containsExactly(0, 1).inOrder()
+	}
+
+	@Test
+	fun theNextPageStartsAtTheCursorOfThePreviousOne() = runTest(mainRule.dispatcher) {
+		val vm = feed { page, _ ->
+			if (page == 0) successOf(aFeedPage(listOf(aFeedItem()), last = false, nextCursor = "c1"))
+			else successOf(aFeedPage(listOf(aFeedItem()), last = true))
+		}
+		vm.refresh()
+
+		vm.loadNextPage()
+
+		assertThat(vm.cursors).containsExactly(null, "c1").inOrder()
+		assertThat(vm.uiState.value.nextCursor).isNull()
+	}
+
+	@Test
+	fun aRefreshStartsOverWithoutACursor() = runTest(mainRule.dispatcher) {
+		val vm = feed { _, _ -> successOf(aFeedPage(listOf(aFeedItem()), last = false, nextCursor = "c1")) }
+		vm.refresh()
+		vm.loadNextPage()
+
+		vm.refresh()
+
+		assertThat(vm.cursors).containsExactly(null, "c1", null).inOrder()
 	}
 
 	@Test

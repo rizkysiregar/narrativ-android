@@ -22,17 +22,21 @@ import java.util.UUID
  */
 interface FeedApi {
 
+	// The feeds take the nextCursor of the previous page as cursor (the server then ignores page). A null cursor
+	// is left out of the url, so the first page goes by page=0.
 	@GET("posts")
 	suspend fun getFeed(
 		@Query("page") page: Int,
-		@Query("size") size: Int
+		@Query("size") size: Int,
+		@Query("cursor") cursor: String? = null
 	): BaseResponse<FeedsPostPaginationResponse>
 
 	@GET("posts/explore")
 	suspend fun getExplorePosts(
 		@Query("page") page: Int,
 		@Query("size") size: Int,
-		@Query("mediaOnly") mediaOnly: Boolean = false
+		@Query("mediaOnly") mediaOnly: Boolean = false,
+		@Query("cursor") cursor: String? = null
 	): BaseResponse<FeedsPostPaginationResponse>
 
 	@GET("posts/users/{username}/posts")
@@ -40,7 +44,8 @@ interface FeedApi {
 		@Path("username") username: String,
 		@Query("page") page: Int,
 		@Query("size") size: Int,
-		@Query("mediaOnly") mediaOnly: Boolean = false
+		@Query("mediaOnly") mediaOnly: Boolean = false,
+		@Query("cursor") cursor: String? = null
 	): BaseResponse<FeedsPostPaginationResponse>
 
 	@GET("posts/{postId}")

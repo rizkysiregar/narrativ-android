@@ -279,4 +279,14 @@
     <string name="view_grid">Grid view</string>
     <string name="view_list">List view</string>
     <string name="write_comment">Write a comment</string>
+    <!-- Settings > Change email -->
+    <string name="change_email">Change email</string>
+    <string name="change_email_intro">Enter the new email for your account. We’ll send a code to it to make sure it’s yours.</string>
+    <string name="new_email">New email</string>
+    <string name="change_email_confirm_hint">Enter your password to confirm it’s you.</string>
+    <string name="change_email_edit_address">Use a different email</string>
+    <string name="resend_code">Resend code</string>
+    <string name="saving">Saving…</string>
+    <string name="email_changed">Your email was changed. You were signed out on your other devices.</string>
+    <string name="error_otp_incomplete">Enter the 6-digit code</string>
 </resources>

@@ -41,7 +41,11 @@ data class FeedsPostPaginationResponse(
 	val content: List<FeedContentItem>,
 
 	@field:SerializedName("totalElements")
-	val totalElements: Int
+	val totalElements: Int,
+
+	// where the next page starts; absent on the last page (and from a server that pages by number only)
+	@field:SerializedName("nextCursor")
+	val nextCursor: String? = null
 )
 
 data class FeedContentItem(

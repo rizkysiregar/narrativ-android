@@ -1,5 +1,6 @@
 package com.rizkysiregar.narrativ.testing.fakes
 
+import com.rizkysiregar.narrativ.data.remote.model.request.user.ConfirmEmailChangeRequest
 import com.rizkysiregar.narrativ.data.remote.model.ResultState
 import com.rizkysiregar.narrativ.data.remote.model.request.auth.GoogleLoginRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.auth.LoginRequest
@@ -106,6 +107,15 @@ class FakeUserRepository : UserRepository {
 	val profileRequests = mutableListOf<String>()
 
 	override fun deleteAccount(request: DeleteAccountRequest) = onDeleteAccount(request).also { deleteRequests += request }
+
+	var onSendEmailChangeOtp: (String) -> Flow<ResultState<ForgotPasswordResponse>> = { unscripted("sendEmailChangeOtp") }
+	val emailChangeOtpRequests = mutableListOf<String>()
+	var onConfirmEmailChange: (ConfirmEmailChangeRequest) -> Flow<ResultState<LoginResponse>> = { unscripted("confirmEmailChange") }
+	val emailChangeConfirmations = mutableListOf<ConfirmEmailChangeRequest>()
+
+	override fun sendEmailChangeOtp(email: String) = onSendEmailChangeOtp(email).also { emailChangeOtpRequests += email }
+	override fun confirmEmailChange(request: ConfirmEmailChangeRequest) =
+		onConfirmEmailChange(request).also { emailChangeConfirmations += request }
 
 	var onCreateProfileImageUploadUrl: (String) -> ProfileImageUploadUrlResponse = { unscripted("createProfileImageUploadUrl") }
 	var onSetProfileImage: (String) -> UserSearchItemResponse = { unscripted("setProfileImage") }

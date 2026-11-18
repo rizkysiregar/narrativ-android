@@ -1,10 +1,14 @@
 package com.rizkysiregar.narrativ.data.remote.api
 
+import com.rizkysiregar.narrativ.data.remote.model.request.user.ChangeEmailOtpRequest
+import com.rizkysiregar.narrativ.data.remote.model.request.user.ConfirmEmailChangeRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.user.CreateProfileImageUploadUrlRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.user.DeleteAccountRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.user.SetProfileImageRequest
 import com.rizkysiregar.narrativ.data.remote.model.response.BaseResponse
 import com.rizkysiregar.narrativ.data.remote.model.response.PaginationResponseWrapper
+import com.rizkysiregar.narrativ.data.remote.model.response.auth.ForgotPasswordResponse
+import com.rizkysiregar.narrativ.data.remote.model.response.auth.LoginResponse
 import com.rizkysiregar.narrativ.data.remote.model.response.user.FollowStatusResponse
 import com.rizkysiregar.narrativ.data.remote.model.response.user.FollowUserResponse
 import com.rizkysiregar.narrativ.data.remote.model.response.user.ProfileImageUploadUrlResponse
@@ -36,6 +40,14 @@ interface UserApi {
 
 	@DELETE("users/me/profile-image")
 	suspend fun deleteProfileImage(): BaseResponse<UserSearchItemResponse>
+
+	/** Sends an OTP to the new email of the account. */
+	@POST("users/me/email/otp")
+	suspend fun sendEmailChangeOtp(@Body request: ChangeEmailOtpRequest): BaseResponse<ForgotPasswordResponse>
+
+	/** Changes the email; every other session ends and the answer is a new token pair for this device. */
+	@POST("users/me/email")
+	suspend fun confirmEmailChange(@Body request: ConfirmEmailChangeRequest): BaseResponse<LoginResponse>
 
 	/** Deletes the account and its personal data for good. */
 	@POST("users/me/deletion")
