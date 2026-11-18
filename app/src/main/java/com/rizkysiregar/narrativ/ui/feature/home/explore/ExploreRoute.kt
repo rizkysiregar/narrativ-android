@@ -11,11 +11,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.google.gson.Gson
 import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.narrativ.ui.feature.home.feed.CommentSectionSheet
-import com.rizkysiregar.narrativ.ui.feature.home.feed.KEY_LIKE_HANDLER
-import com.rizkysiregar.narrativ.ui.feature.home.feed.KEY_POST_JSON
 import com.rizkysiregar.narrativ.ui.feature.home.feed.PostViewMode
 import com.rizkysiregar.narrativ.ui.feature.home.search.SearchViewModel
 import com.rizkysiregar.narrativ.ui.main.navigation.routes.HomePathRoute
@@ -24,6 +21,7 @@ import com.rizkysiregar.narrativ.ui.main.navigation.routes.HomePathRoute
 fun ExploreRoute(
 	viewModel: ExploreViewModel = hiltViewModel(),
 	searchViewModel: SearchViewModel = hiltViewModel(),
+	onPostClick: (FeedContentItem, (String) -> Unit) -> Unit,
 	navController: NavController
 ) {
 	val searchState by searchViewModel.uiState.collectAsState()
@@ -43,17 +41,7 @@ fun ExploreRoute(
 	var commentPostId by remember { mutableStateOf<String?>(null) }
 	val selectedPost = gridFeed.items.find { it.id == selectedPostId }
 
-	val openDetail: (FeedContentItem) -> Unit = { post ->
-		navController.currentBackStackEntry?.savedStateHandle?.set(
-			KEY_POST_JSON,
-			Gson().toJson(post)
-		)
-		navController.currentBackStackEntry?.savedStateHandle?.set(
-			KEY_LIKE_HANDLER,
-			viewModel::toggleLike
-		)
-		navController.navigate(HomePathRoute.PostDetail.create(post.id))
-	}
+	val openDetail: (FeedContentItem) -> Unit = { post -> onPostClick(post, viewModel::toggleLike) }
 
 	ExploreScreenContent(
 		pagerState = pagerState,

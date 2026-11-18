@@ -9,7 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.google.gson.Gson
+import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.narrativ.ui.main.navigation.BottomNavScreen
 import com.rizkysiregar.narrativ.ui.main.navigation.routes.HomePathRoute
 import kotlinx.coroutines.flow.collectLatest
@@ -25,6 +25,7 @@ fun FeedRoute(
     refreshVersion: Int = 0,
     viewModel: FeedViewModel = hiltViewModel(),
 	onCreateFeed: () -> Unit,
+	onPostClick: (FeedContentItem, (String) -> Unit) -> Unit,
 	navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -82,16 +83,6 @@ fun FeedRoute(
 		onAuthorClick = { userId, username ->
 			navController.navigate(HomePathRoute.UserDetail.create(userId, username))
 		},
-		onVideoClick = { post ->
-			navController.currentBackStackEntry?.savedStateHandle?.set(
-				KEY_POST_JSON,
-				Gson().toJson(post)
-			)
-			navController.currentBackStackEntry?.savedStateHandle?.set(
-				KEY_LIKE_HANDLER,
-				viewModel::toggleLike
-			)
-			navController.navigate(HomePathRoute.PostDetail.create(post.id))
-		}
+		onVideoClick = { post -> onPostClick(post, viewModel::toggleLike) }
     )
 }

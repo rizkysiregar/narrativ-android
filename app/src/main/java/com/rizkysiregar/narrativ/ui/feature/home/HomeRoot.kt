@@ -33,13 +33,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.google.gson.Gson
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rizkysiregar.narrativ.constants.Constants
 import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.narrativ.ui.components.PaperPlaneFlight
-import com.rizkysiregar.narrativ.ui.feature.home.feed.KEY_LIKE_HANDLER
-import com.rizkysiregar.narrativ.ui.feature.home.feed.KEY_POST_JSON
 import com.rizkysiregar.narrativ.ui.feature.home.feed.FeedRoute
+import com.rizkysiregar.narrativ.ui.feature.home.feed.PostDetailHandoff
 import com.rizkysiregar.narrativ.ui.feature.home.post.PostFeedRoute
 import com.rizkysiregar.narrativ.ui.feature.home.profile.ProfileRoute
 import com.rizkysiregar.narrativ.ui.feature.home.settings.SettingsRoute
@@ -70,14 +69,15 @@ fun HomeRoot(
 	// where the paper plane takes off from after a post; null while no plane is flying
 	var planeOrigin by remember { mutableStateOf<Offset?>(null) }
 	val currentRoute = homeNavController.currentBackStackEntryAsState().value?.destination?.route
+	// What a list hands to the post detail. Not in the SavedStateHandle of the back stack: see PostDetailHandoff.
+	val postHandoff: PostDetailHandoff = viewModel()
 	val openPostDetail: (FeedContentItem, (String) -> Unit) -> Unit = { post, likeHandler ->
-		homeNavController.currentBackStackEntry?.savedStateHandle?.apply {
-			set(KEY_POST_JSON, Gson().toJson(post))
-			set(KEY_LIKE_HANDLER, likeHandler)
-		}
+		postHandoff.hand(post, likeHandler)
 		homeNavController.navigate(HomePathRoute.PostDetail.create(post.id))
 	}
 	val isDetailRoute = currentRoute?.startsWith("post_detail/") == true
+	// leaving the detail ends the hand-over, so a later visit (a push, say) never shows a stale post or like
+	LaunchedEffect(isDetailRoute) { if (!isDetailRoute) postHandoff.clear() }
 
 	// Ask once the user is in the app, not only when posting: a follower who never posts would otherwise
 	// never get "new post" pushes.
@@ -140,11 +140,13 @@ fun HomeRoot(
 							launchSingleTop = true
 						}
 					},
+					onPostClick = openPostDetail,
 					navController = homeNavController
 				)
 			}
 				composable(BottomNavScreen.Explore.route) {
 				com.rizkysiregar.narrativ.ui.feature.home.explore.ExploreRoute(
+					onPostClick = openPostDetail,
 					navController = homeNavController
 				)
 			}
@@ -243,7 +245,8 @@ fun HomeRoot(
 				com.rizkysiregar.narrativ.ui.feature.home.feed.PostDetailDestination(
 					navController = homeNavController,
 					postId = entry.arguments?.getString(HomePathRoute.PostDetail.ARG_POST_ID).orEmpty(),
-					openComments = entry.arguments?.getBoolean(HomePathRoute.PostDetail.ARG_OPEN_COMMENTS) ?: false
+					openComments = entry.arguments?.getBoolean(HomePathRoute.PostDetail.ARG_OPEN_COMMENTS) ?: false,
+					handoff = postHandoff
 				)
 			}
 		}
