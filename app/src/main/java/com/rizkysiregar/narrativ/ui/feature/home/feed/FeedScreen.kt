@@ -214,10 +214,16 @@ fun FeedScreen(
 					state = listState,
 					modifier = Modifier.fillMaxSize(),
 					contentPadding = PaddingValues(start = 12.dp, top = 14.dp, end = 12.dp, bottom = 28.dp),
-					verticalArrangement = Arrangement.spacedBy(16.dp)
+					verticalArrangement = Arrangement.spacedBy(16.dp),
+					userScrollEnabled = !uiState.showsSkeleton
 				) {
 					item(contentType = "feed_header") {
 						FeedComposerRow(onClick = onCreateFeed)
+					}
+
+					// the first page is on its way: the outline of the posts instead of a blank screen
+					if (uiState.showsSkeleton) {
+						item(contentType = "feed_skeleton") { FeedSkeleton() }
 					}
 
 					items(

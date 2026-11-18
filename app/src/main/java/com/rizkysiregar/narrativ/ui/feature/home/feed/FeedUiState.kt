@@ -17,4 +17,11 @@ data class FeedUiState(
 	val hasMore: Boolean = false,
 	val errorMessage: String? = null,
 	val isError: Boolean = false
-)
+) {
+	/**
+	 * Nothing to show yet and nothing failed: the first page is on its way (a first install, or a refresh, which
+	 * starts from an empty state). A feed that loaded and is empty is a different thing, it has its own message.
+	 */
+	val showsSkeleton: Boolean
+		get() = items.isEmpty() && !hasLoadedInitialPage && !isError && errorMessage == null
+}
