@@ -84,6 +84,8 @@ class ApiContractTest {
 		assertThat(withMedia.videoAt(1)!!.thumbnailUrl).isEqualTo("https://cdn.example/m2.jpg")
 		assertThat(withMedia.videoAt(0)).isNull()
 		assertThat(withMedia.userId).isNotNull()
+		assertThat(withMedia.profileImageUrl).isEqualTo("https://cdn.example/avatars/rizky.jpg?sig=abc")
+		assertThat(takenDown.profileImageUrl).isNull() // an author without a photo, or an older server
 		assertThat(takenDown.isTakenDown).isTrue()
 		assertThat(takenDown.takedownMessage).isEqualTo("Melanggar aturan komunitas")
 		assertThat(takenDown.caption).isNull()
