@@ -12,7 +12,16 @@
           "package_name": "com.rizkysiregar.narrativ"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "88005068433-3aui5t25hvmv17qdg445fn2b2tlhipn2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rizkysiregar.narrativ",
+            "certificate_hash": "b3df86c04fe065d4afb86f604885311267af0629"
+          }
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAumygs9I6xNOn4ntLNeDcOSY5MBqRCGJ4"

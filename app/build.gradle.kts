@@ -145,6 +145,8 @@ android {
 				"BASE_URL",
 				"\"http://10.0.2.2:9091/api/v1/\""
 			)
+			// Web client of the Google Cloud project behind this flavor; the backend verifies the ID token against it.
+			buildConfigField("String", "WEB_CLIENT_ID", "\"1036351360011-sgcau0c3kjp1vkea20ijndnj83dpr2eo.apps.googleusercontent.com\"")
 		}
 
 		create("dev") {
@@ -154,6 +156,8 @@ android {
 				"BASE_URL",
 				"\"https://api-dev-narrativ.rizkysiregar.my.id/api/v1/\""
 			)
+			// Web client of the Google Cloud project behind this flavor; the backend verifies the ID token against it.
+			buildConfigField("String", "WEB_CLIENT_ID", "\"1036351360011-sgcau0c3kjp1vkea20ijndnj83dpr2eo.apps.googleusercontent.com\"")
 		}
 
 		create("prod") {
@@ -163,6 +167,8 @@ android {
 				"BASE_URL",
 				"\"https://api-narrativ.rizkysiregar.my.id/api/v1/\""
 			)
+			// Web client of the Google Cloud project behind this flavor; the backend verifies the ID token against it.
+			buildConfigField("String", "WEB_CLIENT_ID", "\"88005068433-dcct46up9nob5upb261rpj648i1pajm7.apps.googleusercontent.com\"")
 		}
 	}
 
