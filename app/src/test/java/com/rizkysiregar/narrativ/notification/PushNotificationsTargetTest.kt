@@ -51,4 +51,18 @@ class PushNotificationsTargetTest {
 		assertNull(target("type" to "NEW_POST", "authorId" to "u1"))
 		assertNull(PushNotifications.targetFor(emptyMap()))
 	}
+
+	@Test
+	fun aFollowOpensTheFollowersProfile() {
+		val result = target("type" to "FOLLOWED", "actorId" to "u2", "actorUsername" to "budi")
+
+		assertEquals(PushTarget.Profile("u2", "budi"), result)
+	}
+
+	@Test
+	fun aPinOpensThePostAtThePinnedComment() {
+		val result = target("type" to "COMMENT_PINNED", "postId" to "p1", "commentId" to "c1", "actorId" to "u2", "actorUsername" to "budi")
+
+		assertEquals(PushTarget.Post("p1", openComments = true, commentId = "c1"), result)
+	}
 }

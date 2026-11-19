@@ -32,6 +32,7 @@ sealed class HomePathRoute(val route: String) {
 	}
 	object Profile : MainPathRoute("profile")
 	object Settings : HomePathRoute("settings")
+	object Notifications : HomePathRoute("notifications")
 	object BlockedUsers : HomePathRoute("blocked_users")
 	object ChangeEmail : HomePathRoute("change_email")
 

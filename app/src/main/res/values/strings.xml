@@ -301,4 +301,18 @@
     <string name="quote_and_reply">Quote &amp; reply</string>
     <string name="quoting">Quoting</string>
     <string name="cancel_quote">Cancel quote</string>
+    <string name="notifications_title">Notifications</string>
+    <string name="cd_notifications">Notifications</string>
+    <string name="notifications_today">Today</string>
+    <string name="notifications_this_week">This week</string>
+    <string name="notifications_earlier">Earlier</string>
+    <string name="notifications_empty_title">No notifications yet</string>
+    <string name="notifications_empty_body">Likes, comments and new followers show up here.</string>
+    <string name="notif_liked_one">%1$s liked your post</string>
+    <string name="notif_liked_two">%1$s and %2$s liked your post</string>
+    <string name="notif_liked_many">%1$s, %2$s and %3$d others liked your post</string>
+    <string name="notif_commented">%1$s commented on your post</string>
+    <string name="notif_replied">%1$s replied to your comment</string>
+    <string name="notif_followed">%1$s started following you</string>
+    <string name="notif_pinned">%1$s pinned your comment</string>
 </resources>
