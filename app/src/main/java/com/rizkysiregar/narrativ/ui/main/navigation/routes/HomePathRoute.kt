@@ -9,13 +9,26 @@ package com.rizkysiregar.narrativ.ui.main.navigation.routes
 sealed class HomePathRoute(val route: String) {
 	object Feed : MainPathRoute("feed_post")
 	object UploadPost : MainPathRoute("upload-post")
-	object PostDetail : HomePathRoute("post_detail/{postId}?openComments={openComments}") {
+	/** A post's thread: the post with its comments under it. */
+	object PostDetail : HomePathRoute("post_detail/{postId}?openComments={openComments}&commentId={commentId}") {
 		const val ARG_POST_ID = "postId"
 		const val ARG_OPEN_COMMENTS = "openComments"
+		const val ARG_COMMENT_ID = "commentId"
 
-		/** [openComments] opens the comment sheet on arrival, for a push about a comment or reply. */
-		fun create(postId: String, openComments: Boolean = false): String =
-			"post_detail/$postId?openComments=$openComments"
+		/**
+		 * [openComments] lands on the comments with the input ready, for the comment button or a push about a
+		 * comment; [commentId] scrolls to that comment and marks it.
+		 */
+		fun create(postId: String, openComments: Boolean = false, commentId: String? = null): String =
+			"post_detail/$postId?openComments=$openComments" + commentId?.let { "&commentId=$it" }.orEmpty()
+	}
+
+	/** A post's media full screen. */
+	object PostMedia : HomePathRoute("post_media/{postId}?page={page}") {
+		const val ARG_POST_ID = "postId"
+		const val ARG_PAGE = "page"
+
+		fun create(postId: String, page: Int = 0): String = "post_media/$postId?page=$page"
 	}
 	object Profile : MainPathRoute("profile")
 	object Settings : HomePathRoute("settings")

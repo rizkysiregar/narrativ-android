@@ -70,10 +70,13 @@ fun FeedItemCard(
 	item: FeedContentItem,
 	onLikeClick: (String) -> Unit,
 	onCommentClick: (FeedContentItem) -> Unit = {},
+	// a tap on the card outside its media, buttons and author: opens the post's thread
+	onClick: (() -> Unit)? = null,
 	isActiveVideo: Boolean = false,
 	isVideoMuted: Boolean = false,
 	onToggleVideoMute: () -> Unit = {},
-	onVideoClick: (() -> Unit)? = null,
+	// a tap on a photo or video, with its page: opens the media full screen
+	onMediaClick: ((page: Int) -> Unit)? = null,
 	player: ExoPlayer? = null,
 	initialPage: Int = 0,
 	onPageChange: (Int) -> Unit = {},
@@ -94,7 +97,15 @@ fun FeedItemCard(
 	)
 
 	Card(
-		modifier = Modifier.fillMaxWidth(),
+		modifier = Modifier
+			.fillMaxWidth()
+			.then(
+				if (onClick != null && !item.isTakenDown) {
+					Modifier.clip(RoundedCornerShape(20.dp)).clickable(onClick = onClick)
+				} else {
+					Modifier
+				}
+			),
 		shape = RoundedCornerShape(20.dp),
 		colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
 		border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
@@ -130,7 +141,7 @@ fun FeedItemCard(
 						initialPage = initialPage,
 						onPageChange = onPageChange,
 						onToggleMute = onToggleVideoMute,
-						onVideoClick = onVideoClick,
+						onMediaClick = onMediaClick,
 						aspectRatio = 1f,
 						modifier = Modifier.clip(MediaShape)
 					)

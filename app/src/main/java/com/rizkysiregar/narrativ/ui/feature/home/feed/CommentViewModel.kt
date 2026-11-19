@@ -140,6 +140,14 @@ class CommentViewModel @Inject constructor(
 		}
 	}
 
+	/**
+	 * Loads the first page of [postId]'s comments unless they are already there, so a screen that comes back (from
+	 * the media viewer, say) keeps its comments, open replies and scroll position.
+	 */
+	fun start(postId: String) {
+		if (postId != currentPostId) loadComments(postId, isRefresh = true)
+	}
+
 	fun loadMore() {
 		currentPostId?.let { loadComments(it) }
 	}
@@ -201,6 +209,8 @@ class CommentViewModel @Inject constructor(
 			val pending = CommentItem(
 				id = "pending-${UUID.randomUUID()}",
 				username = dataStore.get(PrefKeys.username, "").first(),
+				// so a comment by the post's author shows as theirs while it is sending
+				userId = dataStore.get(PrefKeys.userId, "").first().takeIf { it.isNotBlank() },
 				commentContent = text,
 				createdAt = Instant.now().toString(),
 				parentId = target?.rootId,
