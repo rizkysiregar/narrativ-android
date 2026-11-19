@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -88,6 +89,7 @@ import com.rizkysiregar.narrativ.ui.feature.home.feed.PostDetailUiState
 import com.rizkysiregar.narrativ.ui.feature.home.feed.PostMediaPager
 import com.rizkysiregar.narrativ.ui.feature.home.feed.authorChapters
 import com.rizkysiregar.narrativ.ui.feature.home.feed.buildCommentRows
+import com.rizkysiregar.narrativ.ui.feature.home.feed.indexOfComment
 import com.rizkysiregar.narrativ.ui.feature.home.feed.lastReplyIndex
 import com.rizkysiregar.narrativ.ui.feature.home.feed.threadLineAt
 import com.rizkysiregar.narrativ.ui.feature.moderation.ContentModerationMenu
@@ -96,6 +98,7 @@ import com.rizkysiregar.narrativ.ui.theme.Like
 import com.rizkysiregar.narrativ.util.formatPostDate
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 // the list items above the comments: the post, then the comments heading
@@ -224,7 +227,7 @@ private fun PostThreadScreen(
 		withFrameNanos { } // let the comment rows be composed first
 		// a reply that is not shown (its thread collapsed) or a comment on a later page cannot be found: then the
 		// thread lands on the comments heading
-		val target = focusCommentId?.let { id -> latestRows.indexOfFirst { it.key == id } }?.takeIf { it >= 0 }
+		val target = focusCommentId?.let { id -> latestRows.indexOfComment(id) }?.takeIf { it >= 0 }
 		if (target != null) {
 			listState.animateScrollToItem(target + HEADER_ITEMS)
 			highlightedId = focusCommentId
@@ -263,13 +266,11 @@ private fun PostThreadScreen(
 				is CommentEvent.SendFailed -> commentText = TextFieldValue(event.text, TextRange(event.text.length))
 				CommentEvent.ScrollToBottom -> {
 					withFrameNanos { } // let the new row be composed first
-					val last = latestRows.lastIndex
-					if (last >= 0) listState.animateScrollToItem(last + HEADER_ITEMS)
+					listState.reveal(latestRows.lastIndex)
 				}
 				is CommentEvent.ScrollToLastReply -> {
 					withFrameNanos { }
-					val index = latestRows.lastReplyIndex(event.rootId)
-					if (index >= 0) listState.animateScrollToItem(index + HEADER_ITEMS)
+					listState.reveal(latestRows.lastReplyIndex(event.rootId))
 				}
 			}
 		}
@@ -306,7 +307,7 @@ private fun PostThreadScreen(
 							onAuthorBlocked = onAuthorBlocked,
 							onContinuationClick = {
 								val first = chapters.minByOrNull { it.value }?.key
-								scrollToRow(rows.indexOfFirst { it.key == first })
+								first?.let { scrollToRow(rows.indexOfComment(it)) }
 							}
 						)
 					}
@@ -320,7 +321,8 @@ private fun PostThreadScreen(
 							threadLine = rows.threadLineAt(index),
 							replyTargetId = replyTarget?.id,
 							modifier = Modifier
-								.animateItem()
+								// no fade-out: a removed row vanishing while the rows below slide up never overlaps them
+								.animateItem(fadeOutSpec = null)
 								.padding(horizontal = 16.dp),
 							onReplyClick = commentViewModel::startReply,
 							onToggleReplies = commentViewModel::toggleReplies,
@@ -618,4 +620,20 @@ private fun CommentsHeading(count: Int) {
 			modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 6.dp)
 		)
 	}
+}
+
+/**
+ * Scrolls to the comment row at [rowIndex] only when it is not fully on screen. Sending a comment asks for this twice
+ * (when it shows as sending, and once saved), and a second scroll on top of the first, while the keyboard closes, is
+ * what made the rows jump over each other.
+ */
+private suspend fun LazyListState.reveal(rowIndex: Int) {
+	if (rowIndex < 0) return
+	snapshotFlow { isScrollInProgress }.first { !it }
+	val index = rowIndex + HEADER_ITEMS
+	val info = layoutInfo
+	val row = info.visibleItemsInfo.firstOrNull { it.index == index }
+	val fullyVisible = row != null && row.offset >= info.viewportStartOffset &&
+		row.offset + row.size <= info.viewportEndOffset - info.afterContentPadding
+	if (!fullyVisible) animateScrollToItem(index)
 }

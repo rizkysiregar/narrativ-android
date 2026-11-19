@@ -198,7 +198,8 @@ class CommentViewModelTest {
 		serverComments = listOf(existing, saved)
 		answer.complete(ResultState.Success("ok"))
 
-		assertThat(vm.comments.value).isEqualTo(listOf(existing, saved))
+		// the saved comment keeps the key of the row it was sending in, otherwise it is the server's
+		assertThat(vm.comments.value.map { it.copy(localKey = null) }).isEqualTo(listOf(existing, saved))
 		assertThat(vm.comments.value.none { it.isPending }).isTrue()
 		assertThat(vm.isSubmitting.value).isFalse()
 		assertThat(events.last()).isEqualTo(CommentEvent.ScrollToBottom)
@@ -257,9 +258,76 @@ class CommentViewModelTest {
 
 		assertThat(repo.addedComments.single().parentId).isEqualTo(UUID.fromString(root.id))
 		assertThat(vm.replyTarget.value).isNull()
-		assertThat(vm.replies.value[root.id]!!.items).containsExactly(saved)
+		assertThat(vm.replies.value[root.id]!!.items.map { it.copy(localKey = null) }).containsExactly(saved)
 		assertThat(events.last()).isEqualTo(CommentEvent.ScrollToLastReply(root.id))
 		assertThat(analytics.events.single().params[AnalyticsEvents.Param.IS_REPLY]).isEqualTo(true)
+	}
+
+	// --- the row of a sent comment keeps its key, so the list updates it in place instead of overlapping two rows ---
+
+	@Test
+	fun aSentReplyKeepsTheRowItWasShownUnderOnceSaved() = runTest(mainRule.dispatcher) {
+		val vm = newViewModel()
+		val root = comment()
+		serverComments = listOf(root)
+		vm.loadComments(postId)
+		val answer = CompletableDeferred<ResultState<String>>()
+		repo.onAddComment = { pending(answer) }
+		val older = comment(content = "lama", parentId = root.id)
+		val saved = comment(content = "balasan", parentId = root.id)
+		serverReplies = mapOf(root.id to listOf(older, saved))
+
+		vm.startReply(root)
+		vm.addComment(postId, "balasan")
+		val keyWhileSending = vm.replies.value[root.id]!!.items.single().listKey
+		answer.complete(ResultState.Success("ok"))
+
+		val items = vm.replies.value[root.id]!!.items
+		assertThat(items.map { it.id }).containsExactly(older.id, saved.id).inOrder()
+		assertThat(items.last().listKey).isEqualTo(keyWhileSending)
+		assertThat(items.first().listKey).isEqualTo(older.id)
+	}
+
+	@Test
+	fun theKeyOutlivesTheNextRefresh() = runTest(mainRule.dispatcher) {
+		val vm = newViewModel()
+		val root = comment()
+		serverComments = listOf(root)
+		vm.loadComments(postId)
+		repo.onAddComment = { successOf("ok") }
+		val first = comment(content = "satu", parentId = root.id)
+		serverReplies = mapOf(root.id to listOf(first))
+		vm.startReply(root)
+		vm.addComment(postId, "satu")
+		val firstKey = vm.replies.value[root.id]!!.items.single().listKey
+
+		val second = comment(content = "dua", parentId = root.id)
+		serverReplies = mapOf(root.id to listOf(first, second))
+		vm.startReply(root)
+		vm.addComment(postId, "dua")
+
+		val items = vm.replies.value[root.id]!!.items
+		assertThat(items.first().listKey).isEqualTo(firstKey)
+		assertThat(items.map { it.listKey }.toSet()).hasSize(2)
+	}
+
+	@Test
+	fun aSentTopLevelCommentKeepsItsRowToo() = runTest(mainRule.dispatcher) {
+		val vm = newViewModel()
+		val existing = comment()
+		serverComments = listOf(existing)
+		vm.loadComments(postId)
+		val answer = CompletableDeferred<ResultState<String>>()
+		repo.onAddComment = { pending(answer) }
+		val saved = comment(content = "halo")
+		serverComments = listOf(existing, saved)
+
+		vm.addComment(postId, "halo")
+		val keyWhileSending = vm.comments.value.last().listKey
+		answer.complete(ResultState.Success("ok"))
+
+		assertThat(vm.comments.value.last().id).isEqualTo(saved.id)
+		assertThat(vm.comments.value.last().listKey).isEqualTo(keyWhileSending)
 	}
 
 	@Test

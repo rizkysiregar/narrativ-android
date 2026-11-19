@@ -294,7 +294,7 @@ class CommentViewModel @Inject constructor(
 					analytics.log(AnalyticsEvents.COMMENT_ADDED, AnalyticsEvents.Param.IS_REPLY to (target != null))
 					replacePending(pending, pending.copy(isPending = false))
 					_isSubmitting.value = false
-					showNewComment(postId, target)
+					showNewComment(postId, target, pending)
 				}
 
 				else -> {
@@ -388,18 +388,20 @@ class CommentViewModel @Inject constructor(
 		}
 	}
 
-	private suspend fun showNewComment(postId: String, target: CommentItem?) {
+	private suspend fun showNewComment(postId: String, target: CommentItem?, sent: CommentItem) {
 		if (postId != currentPostId) return
+		// the rows that were there before, so the refreshed list can tell which comment is the one just sent
+		val before = (_comments.value + _replies.value.values.flatMap { it.items }).filterNot { it.id == sent.id }
 		if (target == null) {
 			// new comments go to the end of the list, so everything before it has to be loaded
-			if (refreshAllComments(postId)) {
+			if (refreshAllComments(postId, before, sent)) {
 				eventChannel.send(CommentEvent.ScrollToBottom)
 			} else {
 				eventChannel.send(CommentEvent.ShowMessage(REFRESH_FAILED))
 			}
 		} else {
 			val rootId = target.rootId
-			if (refreshAllReplies(rootId)) {
+			if (refreshAllReplies(rootId, before, sent)) {
 				eventChannel.send(CommentEvent.ScrollToLastReply(rootId))
 			} else {
 				eventChannel.send(CommentEvent.ShowMessage(REFRESH_FAILED))
@@ -408,7 +410,11 @@ class CommentViewModel @Inject constructor(
 	}
 
 	/** Reloads every page and swaps the list in one go, so the screen never flashes empty. */
-	private suspend fun refreshAllComments(postId: String): Boolean {
+	private suspend fun refreshAllComments(
+		postId: String,
+		before: List<CommentItem> = _comments.value,
+		sent: CommentItem? = null
+	): Boolean {
 		loadGeneration++
 		loadJob?.cancel()
 		_isLoading.value = false
@@ -425,14 +431,18 @@ class CommentViewModel @Inject constructor(
 			reachedEnd = result.data.last || result.data.content.isEmpty()
 			page++
 		}
-		_comments.value = all
+		_comments.value = keepListKeys(all, before, sent)
 		currentPage = page
 		_hasMore.value = !reachedEnd
 		_errorMessage.value = null
 		return true
 	}
 
-	private suspend fun refreshAllReplies(rootId: String): Boolean {
+	private suspend fun refreshAllReplies(
+		rootId: String,
+		before: List<CommentItem> = _replies.value[rootId]?.items.orEmpty(),
+		sent: CommentItem? = null
+	): Boolean {
 		replyJobs.remove(rootId)?.cancel()
 
 		val all = mutableListOf<CommentItem>()
@@ -447,7 +457,8 @@ class CommentViewModel @Inject constructor(
 			reachedEnd = result.data.last || result.data.content.isEmpty()
 			page++
 		}
-		_replies.update { it + (rootId to RepliesState(items = all, nextPage = page, hasMore = !reachedEnd)) }
+		val items = keepListKeys(all, before, sent)
+		_replies.update { it + (rootId to RepliesState(items = items, nextPage = page, hasMore = !reachedEnd)) }
 		updateReplyCount(rootId, total)
 		return true
 	}
@@ -498,3 +509,28 @@ internal fun withPinned(comments: List<CommentItem>, pinnedId: String?): List<Co
 }
 
 private fun parseInstantOrNull(value: String): Instant? = runCatching { Instant.parse(value) }.getOrNull()
+
+/**
+ * The refreshed [fresh] comments with the list keys their rows had before, so a refresh updates rows in place instead
+ * of replacing them. A comment that was already shown keeps its key; the comment just [sent] (new to the list, by
+ * the same author, with the same text) takes the key of the row it was shown under while sending.
+ */
+internal fun keepListKeys(fresh: List<CommentItem>, before: List<CommentItem>, sent: CommentItem?): List<CommentItem> {
+	val keyById = before.mapNotNull { old -> old.localKey?.let { old.id to it } }.toMap()
+	val knownIds = before.mapTo(HashSet()) { it.id }
+	val sentMatch = sent?.let { pending ->
+		fresh.lastOrNull { candidate ->
+			candidate.id !in knownIds &&
+				candidate.parentId == pending.parentId &&
+				candidate.commentContent == pending.commentContent &&
+				(pending.userId == null || candidate.userId == pending.userId)
+		}
+	}
+	return fresh.map { comment ->
+		when {
+			comment.id in keyById -> comment.copy(localKey = keyById.getValue(comment.id))
+			sentMatch != null && comment === sentMatch -> comment.copy(localKey = sent?.id)
+			else -> comment
+		}
+	}
+}
