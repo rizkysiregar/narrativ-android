@@ -6,7 +6,7 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import com.rizkysiregar.narrativ.constants.OAuthConfig
+import com.rizkysiregar.narrativ.BuildConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -21,7 +21,7 @@ class CredentialManagerGoogleIdTokenProvider @Inject constructor(
 		val credentialManager = CredentialManager.create(context)
 
 		val googleIdOption = GetGoogleIdOption.Builder()
-			.setServerClientId(OAuthConfig.WEB_CLIENT_ID)
+			.setServerClientId(BuildConfig.WEB_CLIENT_ID)
 			.setFilterByAuthorizedAccounts(false)
 			.setAutoSelectEnabled(false)
 			.build()
