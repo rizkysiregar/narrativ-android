@@ -10,7 +10,7 @@ internal sealed interface CommentListRow {
 	val threadId: String
 
 	data class Item(val comment: CommentItem) : CommentListRow {
-		override val key: String get() = comment.id
+		override val key: String get() = comment.listKey
 		override val threadId: String get() = comment.rootId
 	}
 
@@ -62,6 +62,10 @@ internal fun buildCommentRows(
 		add(CommentListRow.RepliesToggle(comment.id, comment.replyCount, expanded = true))
 	}
 }
+
+/** Index of the row showing the comment with [commentId], or -1. */
+internal fun List<CommentListRow>.indexOfComment(commentId: String): Int =
+	indexOfFirst { it is CommentListRow.Item && it.comment.id == commentId }
 
 /** Index of the newest loaded reply of [rootId], or -1. */
 internal fun List<CommentListRow>.lastReplyIndex(rootId: String): Int =

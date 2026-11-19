@@ -32,13 +32,20 @@ data class CommentItem(
 	// pinned on top of the comments by the post's author; the server lists it first
 	val pinned: Boolean = false,
 	// shown right after sending, before the server has confirmed it; never part of a server response
-	val isPending: Boolean = false
+	val isPending: Boolean = false,
+	// the id the comment was shown under while it was sending; the saved comment keeps it as its list key, so the
+	// list updates that row instead of fading one out and another in on the same spot. Never part of a server response
+	val localKey: String? = null
 ) {
 	val isTakenDown: Boolean
 		get() = moderationStatus == MODERATION_TAKEN_DOWN
 
 	val isReply: Boolean
 		get() = parentId != null
+
+	/** What identifies the comment's row in a list: the key it was sent under, or its id. */
+	val listKey: String
+		get() = localKey ?: id
 
 	/** The top-level comment this one belongs to (itself when it is top-level). */
 	val rootId: String
