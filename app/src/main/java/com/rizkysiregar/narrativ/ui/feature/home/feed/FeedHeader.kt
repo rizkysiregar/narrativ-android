@@ -24,6 +24,9 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Badge
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -78,7 +81,7 @@ private const val WaveLetterDelay = 0.06f
 private const val WaveLetterSpan = 0.5f
 
 /**
- * Top bar of the feed: the brand label centered, search at the end.
+ * Top bar of the feed: the brand label centered, the inbox bell (with its unread badge) and search at the end.
  *
  * The letters react to the pull-to-refresh gesture: [pullProgress] sends a ripple through them
  * while the list is pulled, and [isRefreshing] keeps them waving until the refresh is done.
@@ -88,7 +91,9 @@ fun FeedHeader(
 	pullProgress: Float,
 	isRefreshing: Boolean,
 	onSearchClick: () -> Unit,
-	modifier: Modifier = Modifier
+	modifier: Modifier = Modifier,
+	unreadNotifications: Int = 0,
+	onNotificationsClick: () -> Unit = {}
 ) {
 	Box(
 		modifier = modifier
@@ -101,11 +106,21 @@ fun FeedHeader(
 			isRefreshing = isRefreshing,
 			modifier = Modifier.align(Alignment.Center)
 		)
-		IconButton(
-			onClick = onSearchClick,
-			modifier = Modifier.align(Alignment.CenterEnd)
-		) {
-			Icon(imageVector = Icons.Default.Search, contentDescription = stringResource(R.string.search))
+		Row(modifier = Modifier.align(Alignment.CenterEnd)) {
+			IconButton(onClick = onNotificationsClick) {
+				BadgedBox(
+					badge = {
+						if (unreadNotifications > 0) {
+							Badge { Text(if (unreadNotifications > 99) "99+" else unreadNotifications.toString()) }
+						}
+					}
+				) {
+					Icon(imageVector = Icons.Outlined.Notifications, contentDescription = stringResource(R.string.cd_notifications))
+				}
+			}
+			IconButton(onClick = onSearchClick) {
+				Icon(imageVector = Icons.Default.Search, contentDescription = stringResource(R.string.search))
+			}
 		}
 	}
 }

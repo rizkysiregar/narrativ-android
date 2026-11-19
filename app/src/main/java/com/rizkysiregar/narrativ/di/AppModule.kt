@@ -2,11 +2,13 @@ package com.rizkysiregar.narrativ.di
 
 import com.rizkysiregar.narrativ.data.repository.AuthRepository
 import com.rizkysiregar.narrativ.data.repository.FeedRepository
+import com.rizkysiregar.narrativ.data.repository.NotificationRepository
 import com.rizkysiregar.narrativ.data.repository.ModerationRepository
 import com.rizkysiregar.narrativ.data.repository.PostRepository
 import com.rizkysiregar.narrativ.data.repository.UserRepository
 import com.rizkysiregar.narrativ.data.repository.impl.AuthRepositoryImpl
 import com.rizkysiregar.narrativ.data.repository.impl.FeedRepositoryImpl
+import com.rizkysiregar.narrativ.data.repository.impl.NotificationRepositoryImpl
 import com.rizkysiregar.narrativ.data.repository.impl.ModerationRepositoryImpl
 import com.rizkysiregar.narrativ.data.repository.impl.PostRepositoryImpl
 import com.rizkysiregar.narrativ.data.repository.impl.UserRepositoryImpl
@@ -39,5 +41,9 @@ abstract class AppModule {
 	@Binds
 	@Singleton
 	abstract fun bindUserRepository(userRepositoryImpl: UserRepositoryImpl): UserRepository
+
+	@Binds
+	@Singleton
+	abstract fun bindNotificationRepository(impl: NotificationRepositoryImpl): NotificationRepository
 
 }

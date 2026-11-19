@@ -25,6 +25,8 @@ fun FeedRoute(
 	onCreateFeed: () -> Unit,
 	postOpener: PostOpener,
 	onUserClick: (userId: String, username: String) -> Unit,
+	onNotificationsClick: () -> Unit,
+	unreadNotifications: Int,
 	navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -80,6 +82,8 @@ fun FeedRoute(
 		player = viewModel.player,
 		onAuthorBlocked = viewModel::refresh,
 		onAuthorClick = onUserClick,
+		unreadNotifications = unreadNotifications,
+		onNotificationsClick = onNotificationsClick,
 		onPostClick = { post -> postOpener.thread(post, viewModel::toggleLike) },
 		onCommentClick = { post -> postOpener.thread(post, viewModel::toggleLike, openComments = true) },
 		onMediaClick = { post, page -> postOpener.media(post, viewModel::toggleLike, page) }
