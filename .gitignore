@@ -23,3 +23,6 @@ keystore.properties
 
 # Claude Code local settings (personal permission rules)
 .claude/settings.local.json
+
+# Release files copied by the Makefile
+/dist/
