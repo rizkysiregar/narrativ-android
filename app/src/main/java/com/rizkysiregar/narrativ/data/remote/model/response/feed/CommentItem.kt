@@ -27,6 +27,10 @@ data class CommentItem(
 	val takedownReason: String? = null,
 	// the author and the owner of the post may delete a comment, the server decides
 	val canDelete: Boolean = false,
+	// words of the post's caption this top-level comment answers, shown above it as a quote
+	val quoteText: String? = null,
+	// pinned on top of the comments by the post's author; the server lists it first
+	val pinned: Boolean = false,
 	// shown right after sending, before the server has confirmed it; never part of a server response
 	val isPending: Boolean = false
 ) {

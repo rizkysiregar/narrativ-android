@@ -64,6 +64,9 @@ fun CommentInputArea(
 	// username of the author being answered, null for a plain comment
 	replyingTo: String? = null,
 	onCancelReply: () -> Unit = {},
+	// words of the caption the comment quotes, null for no quote
+	quoting: String? = null,
+	onCancelQuote: () -> Unit = {},
 	isSubmitting: Boolean = false,
 	focusRequester: FocusRequester = remember { FocusRequester() }
 ) {
@@ -83,6 +86,8 @@ fun CommentInputArea(
 		) {
 			if (replyingTo != null) {
 				ReplyBanner(username = replyingTo, onCancel = onCancelReply)
+			} else if (quoting != null) {
+				QuoteBanner(quote = quoting, onCancel = onCancelQuote)
 			}
 
 			// the full list has its own recents, the quick row would only take height from the comments
@@ -186,6 +191,38 @@ private fun ReplyBanner(username: String, onCancel: () -> Unit) {
 	}
 }
 
+
+@Composable
+private fun QuoteBanner(quote: String, onCancel: () -> Unit) {
+	val quotingLabel = stringResource(R.string.quoting)
+	Surface(color = MaterialTheme.colorScheme.surfaceVariant) {
+		Row(
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(start = 16.dp),
+			verticalAlignment = Alignment.CenterVertically
+		) {
+			Text(
+				text = buildAnnotatedString {
+					withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(quotingLabel) }
+					append("  “$quote”")
+				},
+				style = MaterialTheme.typography.bodySmall,
+				color = MaterialTheme.colorScheme.onSurfaceVariant,
+				maxLines = 2,
+				overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+				modifier = Modifier.weight(1f)
+			)
+			IconButton(onClick = onCancel, modifier = Modifier.size(36.dp)) {
+				Icon(
+					Icons.Default.Close,
+					contentDescription = stringResource(R.string.cancel_quote),
+					modifier = Modifier.size(18.dp)
+				)
+			}
+		}
+	}
+}
 
 @Preview(showBackground = true)
 @Composable

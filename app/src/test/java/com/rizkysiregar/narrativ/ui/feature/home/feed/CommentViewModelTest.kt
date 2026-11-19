@@ -10,6 +10,8 @@ import com.rizkysiregar.narrativ.domain.feed.AddCommentUseCase
 import com.rizkysiregar.narrativ.domain.feed.DeleteCommentUseCase
 import com.rizkysiregar.narrativ.domain.feed.GetCommentUseCase
 import com.rizkysiregar.narrativ.domain.feed.GetRepliesUseCase
+import com.rizkysiregar.narrativ.domain.feed.PinCommentUseCase
+import com.rizkysiregar.narrativ.domain.feed.UnpinCommentUseCase
 import com.rizkysiregar.narrativ.telemetry.AnalyticsEvents
 import com.rizkysiregar.narrativ.testing.MainDispatcherRule
 import com.rizkysiregar.narrativ.testing.aComment
@@ -62,7 +64,7 @@ class CommentViewModelTest {
 		repo.onGetReplies = { r -> serverReplies[r.commentId.toString()].orEmpty().let { successOf(aPage(it, last = true)) } }
 		val vm = CommentViewModel(
 			GetCommentUseCase(repo), GetRepliesUseCase(repo), AddCommentUseCase(repo), DeleteCommentUseCase(repo),
-			dataStore, analytics, strings
+			PinCommentUseCase(repo), UnpinCommentUseCase(repo), dataStore, analytics, strings
 		)
 		backgroundScope.launch(mainRule.dispatcher) { vm.events.collect { events += it } }
 		return vm
@@ -283,6 +285,103 @@ class CommentViewModelTest {
 		vm.startReply(comment().copy(moderationStatus = CommentItem.MODERATION_TAKEN_DOWN))
 
 		assertThat(vm.replyTarget.value).isNull()
+	}
+
+	// --- quoting ---
+
+	@Test
+	fun aQuoteGoesWithTheCommentAndIsClearedOnceSent() = runTest(mainRule.dispatcher) {
+		val vm = newViewModel()
+		vm.loadComments(postId)
+		repo.onAddComment = { successOf("ok") }
+
+		vm.startQuote("  hujan turun pelan ")
+		vm.addComment(postId, "indah")
+
+		assertThat(repo.addedComments.single().quoteText).isEqualTo("hujan turun pelan")
+		assertThat(repo.addedComments.single().parentId).isNull()
+		assertThat(vm.quote.value).isNull()
+	}
+
+	@Test
+	fun aFailedSendPutsTheQuoteBack() = runTest(mainRule.dispatcher) {
+		val vm = newViewModel()
+		vm.loadComments(postId)
+		repo.onAddComment = { failureOf("Gagal") }
+
+		vm.startQuote("hujan")
+		vm.addComment(postId, "indah")
+
+		assertThat(vm.quote.value).isEqualTo("hujan")
+	}
+
+	@Test
+	fun aReplyAndAQuoteExcludeEachOther() = runTest(mainRule.dispatcher) {
+		val vm = newViewModel()
+		val root = comment()
+
+		vm.startQuote("hujan")
+		vm.startReply(root)
+		assertThat(vm.quote.value).isNull()
+
+		vm.startQuote("hujan")
+		assertThat(vm.replyTarget.value).isNull()
+	}
+
+	// --- pinning ---
+
+	@Test
+	fun pinningMovesTheCommentOnTopAtOnce() = runTest(mainRule.dispatcher) {
+		val vm = newViewModel()
+		val first = comment().copy(createdAt = "2026-11-19T01:00:00Z")
+		val second = comment().copy(createdAt = "2026-11-19T02:00:00Z")
+		serverComments = listOf(first, second)
+		vm.loadComments(postId)
+		repo.onPinComment = { _, _ -> successOf("ok") }
+
+		vm.togglePin(postId, second)
+
+		assertThat(vm.comments.value.map { it.id }).containsExactly(second.id, first.id).inOrder()
+		assertThat(vm.comments.value.first().pinned).isTrue()
+	}
+
+	@Test
+	fun unpinningPutsTheCommentBackInItsPlace() = runTest(mainRule.dispatcher) {
+		val vm = newViewModel()
+		val first = comment().copy(createdAt = "2026-11-19T01:00:00Z")
+		val second = comment().copy(createdAt = "2026-11-19T02:00:00Z", pinned = true)
+		serverComments = listOf(second, first)
+		vm.loadComments(postId)
+		repo.onUnpinComment = { successOf("ok") }
+
+		vm.togglePin(postId, second)
+
+		assertThat(vm.comments.value.map { it.id }).containsExactly(first.id, second.id).inOrder()
+		assertThat(vm.comments.value.none { it.pinned }).isTrue()
+	}
+
+	@Test
+	fun aRefusedPinGoesBack() = runTest(mainRule.dispatcher) {
+		val vm = newViewModel()
+		val first = comment()
+		val second = comment()
+		serverComments = listOf(first, second)
+		vm.loadComments(postId)
+		repo.onPinComment = { _, _ -> failureOf("Tidak boleh") }
+
+		vm.togglePin(postId, second)
+
+		assertThat(vm.comments.value).isEqualTo(serverComments)
+		assertThat(events).contains(CommentEvent.ShowMessage("Tidak boleh"))
+	}
+
+	@Test
+	fun aReplyCannotBePinned() = runTest(mainRule.dispatcher) {
+		val vm = newViewModel()
+
+		vm.togglePin(postId, comment(parentId = uuid()))
+
+		assertThat(vm.comments.value).isEmpty()
 	}
 
 	// --- deleting ---

@@ -174,6 +174,9 @@ private fun PostThreadScreen(
 	val isSubmitting by commentViewModel.isSubmitting.collectAsState()
 	val hasMore by commentViewModel.hasMore.collectAsState()
 	val errorMessage by commentViewModel.errorMessage.collectAsState()
+	val quote by commentViewModel.quote.collectAsState()
+	val currentUserId by commentViewModel.currentUserId.collectAsState()
+	val isOwnPost = currentUserId.isNotBlank() && currentUserId == post.userId
 
 	val listState = rememberLazyListState()
 	val scope = rememberCoroutineScope()
@@ -191,6 +194,8 @@ private fun PostThreadScreen(
 	// openComments and focusCommentId are acted on once, not again when the user comes back to the thread
 	var landed by rememberSaveable { mutableStateOf(false) }
 	var highlightedId by remember { mutableStateOf<String?>(null) }
+	// words of the caption a tapped quote points at, marked in the caption for a moment
+	var quoteHighlight by remember { mutableStateOf<String?>(null) }
 
 	val rows = remember(comments, replies) { buildCommentRows(comments, replies) }
 	val chapters = remember(comments, post.userId) { authorChapters(comments, post.userId) }
@@ -232,6 +237,12 @@ private fun PostThreadScreen(
 		if (highlightedId != null) {
 			delay(HIGHLIGHT_MILLIS)
 			highlightedId = null
+		}
+	}
+	LaunchedEffect(quoteHighlight) {
+		if (quoteHighlight != null) {
+			delay(HIGHLIGHT_MILLIS)
+			quoteHighlight = null
 		}
 	}
 
@@ -283,6 +294,11 @@ private fun PostThreadScreen(
 						ThreadPost(
 							post = post,
 							continuationCount = chapters.size,
+							quoteHighlight = quoteHighlight,
+							onQuote = { words ->
+								commentViewModel.startQuote(words)
+								inputFocusRequester.requestFocus()
+							},
 							onLikeClick = onLikeClick,
 							onCommentClick = { inputFocusRequester.requestFocus() },
 							onUserClick = onUserClick,
@@ -313,7 +329,12 @@ private fun PostThreadScreen(
 							onAuthorBlocked = { commentViewModel.loadComments(post.id, isRefresh = true) },
 							postAuthorId = post.userId,
 							chapters = chapters,
-							highlightedId = highlightedId
+							highlightedId = highlightedId,
+							onPinToggle = if (isOwnPost) { comment -> commentViewModel.togglePin(post.id, comment) } else null,
+							onQuoteClick = { words ->
+								quoteHighlight = words
+								scope.launch { listState.animateScrollToItem(0) }
+							}
 						)
 					}
 
@@ -354,6 +375,8 @@ private fun PostThreadScreen(
 				onSend = { commentViewModel.addComment(post.id, commentText.text) },
 				replyingTo = replyTarget?.username,
 				onCancelReply = commentViewModel::cancelReply,
+				quoting = quote,
+				onCancelQuote = commentViewModel::cancelQuote,
 				isSubmitting = isSubmitting,
 				focusRequester = inputFocusRequester,
 				modifier = Modifier.onGloballyPositioned { coordinates ->
@@ -410,6 +433,8 @@ private fun ThreadTopBar(onBackClick: () -> Unit) {
 private fun ThreadPost(
 	post: FeedContentItem,
 	continuationCount: Int,
+	quoteHighlight: String?,
+	onQuote: (String) -> Unit,
 	onLikeClick: () -> Unit,
 	onCommentClick: () -> Unit,
 	onUserClick: (userId: String, username: String) -> Unit,
@@ -422,10 +447,11 @@ private fun ThreadPost(
 
 		if (!post.caption.isNullOrBlank()) {
 			Spacer(Modifier.height(12.dp))
-			Text(
-				text = post.caption,
+			QuotableCaption(
+				caption = post.caption,
 				style = if (post.hasMedia) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal),
-				color = MaterialTheme.colorScheme.onSurface
+				highlight = quoteHighlight,
+				onQuote = onQuote
 			)
 		}
 

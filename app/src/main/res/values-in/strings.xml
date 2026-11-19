@@ -292,4 +292,12 @@
     <string name="thread_author_badge">Penulis</string>
     <string name="thread_chapter">BAGIAN %1$d</string>
     <string name="thread_continues">Cerita berlanjut · %1$d bagian ↓</string>
+    <string name="comment_pinned">Komentar disematkan</string>
+    <string name="comment_unpinned">Sematan dilepas</string>
+    <string name="comment_pin">Sematkan komentar</string>
+    <string name="comment_unpin">Lepas sematan</string>
+    <string name="comment_pinned_label">Disematkan penulis</string>
+    <string name="quote_and_reply">Kutip &amp; balas</string>
+    <string name="quoting">Mengutip</string>
+    <string name="cancel_quote">Batal mengutip</string>
 </resources>
