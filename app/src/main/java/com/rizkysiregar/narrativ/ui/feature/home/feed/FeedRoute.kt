@@ -11,7 +11,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.narrativ.ui.main.navigation.BottomNavScreen
-import com.rizkysiregar.narrativ.ui.main.navigation.routes.HomePathRoute
 import kotlinx.coroutines.flow.collectLatest
 
 /**
@@ -26,6 +25,7 @@ fun FeedRoute(
     viewModel: FeedViewModel = hiltViewModel(),
 	onCreateFeed: () -> Unit,
 	onPostClick: (FeedContentItem, (String) -> Unit) -> Unit,
+	onUserClick: (userId: String, username: String) -> Unit,
 	navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -80,9 +80,7 @@ fun FeedRoute(
 		},
 		player = viewModel.player,
 		onAuthorBlocked = viewModel::refresh,
-		onAuthorClick = { userId, username ->
-			navController.navigate(HomePathRoute.UserDetail.create(userId, username))
-		},
+		onAuthorClick = onUserClick,
 		onVideoClick = { post -> onPostClick(post, viewModel::toggleLike) }
     )
 }

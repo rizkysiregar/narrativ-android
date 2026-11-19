@@ -72,6 +72,8 @@ fun UserDetailScreen(
 	onLikeClick: (String) -> Unit,
 	followStatus: ResultState<com.rizkysiregar.narrativ.data.remote.model.response.user.FollowStatusResponse>? = null,
 	isFollowActionLoading: Boolean = false,
+	// your own account: nothing to follow, so no Follow button
+	isOwnProfile: Boolean = false,
 	onFollowClick: () -> Unit = {},
 	onFollowersClick: () -> Unit = {},
 	onFollowingClick: () -> Unit = {},
@@ -137,6 +139,7 @@ fun UserDetailScreen(
 								FollowStatusSection(
 									followStatus = followStatus,
 									isFollowActionLoading = isFollowActionLoading,
+									showFollowButton = !isOwnProfile,
 									onFollowClick = onFollowClick,
 									onFollowersClick = onFollowersClick,
 									onFollowingClick = onFollowingClick
@@ -197,6 +200,7 @@ private fun UserDetailHeader(user: UserSearchItemResponse) {
 private fun FollowStatusSection(
 	followStatus: ResultState<com.rizkysiregar.narrativ.data.remote.model.response.user.FollowStatusResponse>?,
 	isFollowActionLoading: Boolean,
+	showFollowButton: Boolean,
 	onFollowClick: () -> Unit,
 	onFollowersClick: () -> Unit,
 	onFollowingClick: () -> Unit
@@ -211,6 +215,7 @@ private fun FollowStatusSection(
 				FollowMetric(count = status.followerCount, label = stringResource(R.string.followers), onClick = onFollowersClick)
 				FollowMetric(count = status.followingCount, label = stringResource(R.string.following), onClick = onFollowingClick)
 			}
+			if (!showFollowButton) return@Column
 			Spacer(modifier = Modifier.height(12.dp))
 			Button(
 				onClick = onFollowClick,

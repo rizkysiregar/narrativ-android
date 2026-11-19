@@ -50,6 +50,7 @@ import com.rizkysiregar.narrativ.ui.feature.home.upload.UploadBannerViewModel
 import com.rizkysiregar.narrativ.ui.feature.home.upload.UploadProgressBanner
 import com.rizkysiregar.narrativ.ui.feature.home.userdetail.UserDetailRoute
 import com.rizkysiregar.narrativ.ui.main.navigation.BottomNavScreen
+import com.rizkysiregar.narrativ.ui.main.navigation.openUser
 import com.rizkysiregar.narrativ.ui.main.navigation.routes.AuthPathRoutes
 import com.rizkysiregar.narrativ.ui.main.navigation.routes.MainPathRoute
 import com.rizkysiregar.narrativ.ui.main.navigation.routes.HomePathRoute
@@ -68,6 +69,11 @@ fun HomeRoot(
 ) {
 	val homeNavController = rememberNavController()
 	val uploadBannerViewModel: UploadBannerViewModel = hiltViewModel()
+	val currentUserViewModel: CurrentUserViewModel = hiltViewModel()
+	val currentUserId by currentUserViewModel.userId.collectAsState()
+	val openUser: (String, String) -> Unit = { userId, username ->
+		homeNavController.openUser(userId, username, currentUserId)
+	}
 	var feedRefreshVersion by remember { mutableIntStateOf(0) }
 	// where the paper plane takes off from after a post; null while no plane is flying
 	var planeOrigin by remember { mutableStateOf<Offset?>(null) }
@@ -106,7 +112,7 @@ fun HomeRoot(
 				is PushNotifications.PushTarget.Post ->
 					homeNavController.navigate(HomePathRoute.PostDetail.create(target.postId, target.openComments))
 				is PushNotifications.PushTarget.Profile ->
-					homeNavController.navigate(HomePathRoute.UserDetail.create(target.userId, target.username))
+					openUser(target.userId, target.username)
 			}
 		}
 	}
@@ -144,13 +150,14 @@ fun HomeRoot(
 						}
 					},
 					onPostClick = openPostDetail,
+					onUserClick = openUser,
 					navController = homeNavController
 				)
 			}
 				composable(BottomNavScreen.Explore.route) {
 				com.rizkysiregar.narrativ.ui.feature.home.explore.ExploreRoute(
 					onPostClick = openPostDetail,
-					navController = homeNavController
+					onUserClick = openUser
 				)
 			}
 			composable(BottomNavScreen.PostFeed.route) {
@@ -220,9 +227,7 @@ fun HomeRoot(
 					com.rizkysiregar.narrativ.ui.feature.home.profile.FollowListRoute(
 						userId = entry.arguments?.getString(HomePathRoute.FollowList.ARG_USER_ID).orEmpty(),
 						type = entry.arguments?.getString(HomePathRoute.FollowList.ARG_TYPE).orEmpty(),
-			onUserClick = { userId, username ->
-				homeNavController.navigate(HomePathRoute.UserDetail.create(userId, username))
-			},
+			onUserClick = openUser,
 			onBackClick = { homeNavController.popBackStack() }
 		)
 			}
