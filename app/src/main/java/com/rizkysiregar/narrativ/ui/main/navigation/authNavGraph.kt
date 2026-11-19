@@ -35,6 +35,11 @@ fun NavGraphBuilder.authGraph(navController: NavHostController) {
 				navController.navigate(AuthPathRoutes.Login.route) {
 					popUpTo(AuthPathRoutes.Register.route) { inclusive = true }
 				}
+			},
+			onGoogleSignInSuccess = {
+				navController.navigate(Constants.HOME_GRAPH) {
+					popUpTo(AuthPathRoutes.Login.route) { inclusive = true }
+				}
 			}
 		)
 	}

@@ -12,6 +12,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.rizkysiregar.narrativ.data.remote.model.ResultState
 import com.rizkysiregar.narrativ.ui.base.BaseScreen
+import com.rizkysiregar.narrativ.ui.feature.auth.AuthViewModel
 import com.rizkysiregar.narrativ.ui.feature.auth.reset.OtpVerificationView
 import com.rizkysiregar.narrativ.ui.main.navigation.routes.MainPathRoute
 import com.rizkysiregar.narrativ.ui.main.navigation.routes.AuthPathRoutes
@@ -28,7 +29,10 @@ import com.rizkysiregar.narrativ.R
 fun RegisterRoute(
 	navController: NavController,
 	registerViewModel: RegisterViewModel = hiltViewModel(),
-	onRegisterSuccess: () -> Unit
+	authViewModel: AuthViewModel = hiltViewModel(),
+	onRegisterSuccess: () -> Unit,
+	// Google sign-in creates the account when it does not exist yet and logs straight in
+	onGoogleSignInSuccess: () -> Unit
 ) {
 	val context = LocalContext.current
 	val resources = LocalResources.current
@@ -36,6 +40,7 @@ fun RegisterRoute(
 	val step by registerViewModel.step.collectAsState()
 	val registerState by registerViewModel.state.collectAsState()
 	val otpDelivery by registerViewModel.otpDelivery.collectAsState()
+	val googleLoginState by authViewModel.googleLoginState.collectAsState()
 
 	LaunchedEffect(registerState) {
 		if (registerState is ResultState.Success) {
@@ -49,14 +54,25 @@ fun RegisterRoute(
 		}
 	}
 
+	LaunchedEffect(googleLoginState) {
+		if (googleLoginState is ResultState.Success) {
+			onGoogleSignInSuccess()
+			authViewModel.resetGoogleLoginState()
+		}
+	}
+
 	BackHandler(enabled = step == RegisterStep.OTP_VERIFICATION) {
 		registerViewModel.backToForm()
 	}
 
 	BaseScreen(
-		isLoading = registerState is ResultState.Loading,
-		errorMessage = (registerState as? ResultState.Failure)?.message,
-		onErrorDismiss = { registerViewModel.resetState() }) {
+		isLoading = registerState is ResultState.Loading || googleLoginState is ResultState.Loading,
+		errorMessage = (registerState as? ResultState.Failure)?.message
+			?: (googleLoginState as? ResultState.Failure)?.message,
+		onErrorDismiss = {
+			registerViewModel.resetState()
+			authViewModel.resetGoogleLoginState()
+		}) {
 		when (step) {
 			RegisterStep.FORM -> RegisterScreen(
 				onRegisterClick = { finalState -> registerViewModel.submit(finalState) },
@@ -67,6 +83,7 @@ fun RegisterRoute(
 					}
 				},
 				onLegalClick = { document -> navController.navigate(MainPathRoute.Legal.create(document.path)) },
+				onGoogleSignInClick = { authViewModel.signInWithGoogle() },
 				initialState = registerViewModel.form
 			)
 
