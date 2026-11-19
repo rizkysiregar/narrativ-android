@@ -74,6 +74,7 @@ fun RegisterScreen(
 	onRegisterClick: (RegisterState) -> Unit,
 	onNavigateToLogin: () -> Unit,
 	onLegalClick: (LegalDocument) -> Unit = {},
+	onGoogleSignInClick: () -> Unit = {},
 	initialState: RegisterState = RegisterState()
 ) {
 	val context = LocalContext.current
@@ -98,6 +99,7 @@ fun RegisterScreen(
 		)
 		MiddleSection(
 			onLegalClick = onLegalClick,
+			onGoogleSignInClick = onGoogleSignInClick,
 			onRegisterClick = {
 				val errors = registerState.validate(
 					required = { label -> resources.getString(R.string.error_required, resources.getString(label)) },
@@ -213,7 +215,11 @@ private fun TopSection(
 }
 
 @Composable
-fun MiddleSection(onRegisterClick: () -> Unit, onLegalClick: (LegalDocument) -> Unit = {}) {
+fun MiddleSection(
+	onRegisterClick: () -> Unit,
+	onLegalClick: (LegalDocument) -> Unit = {},
+	onGoogleSignInClick: () -> Unit = {}
+) {
 	Column {
 		LegalConsentText(onLegalClick)
 
@@ -244,7 +250,7 @@ fun MiddleSection(onRegisterClick: () -> Unit, onLegalClick: (LegalDocument) -> 
 
 		Spacer(modifier = Modifier.height(16.dp))
 
-		OAuthButtonsRow()
+		OAuthButtonsRow(onGoogleSignInClick = onGoogleSignInClick)
 	}
 }
 
@@ -447,19 +453,19 @@ fun OrLoginWith() {
 }
 
 @Composable
-fun OAuthButtonsRow() {
+fun OAuthButtonsRow(onGoogleSignInClick: () -> Unit) {
 	Row(
 		modifier = Modifier.fillMaxWidth(),
 		horizontalArrangement = Arrangement.Center
 	) {
-		OAuthButton(R.drawable.google_g_logo)
+		OAuthButton(R.drawable.google_g_logo, onClick = onGoogleSignInClick)
 	}
 }
 
 @Composable
-fun OAuthButton(resId: Int) {
+fun OAuthButton(resId: Int, onClick: () -> Unit) {
 	OutlinedButton(
-		onClick = {},
+		onClick = onClick,
 		shape = RoundedCornerShape(12.dp),
 		modifier = Modifier.size(56.dp),
 		contentPadding = PaddingValues(8.dp)
