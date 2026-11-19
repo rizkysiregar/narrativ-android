@@ -1,6 +1,22 @@
 package com.rizkysiregar.narrativ.ui.feature.home.feed
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -82,8 +98,13 @@ internal fun CommentRow(
 	chapter: Int? = null,
 	lineColor: Color = threadLineColor(),
 	// the comment a notification pointed at
-	isHighlighted: Boolean = false
+	isHighlighted: Boolean = false,
+	// set for the post's author on a top-level comment: a long press offers to pin or unpin it
+	onPinToggle: (() -> Unit)? = null,
+	// a tap on the quote above the comment, with the quoted words
+	onQuoteClick: (String) -> Unit = {}
 ) {
+	var menuOpen by remember { mutableStateOf(false) }
 	val isReply = comment.isReply
 	val highlight by animateColorAsState(
 		targetValue = when {
@@ -99,6 +120,13 @@ internal fun CommentRow(
 		modifier = modifier
 			.fillMaxWidth()
 			.alpha(if (comment.isPending) 0.55f else 1f)
+			.then(
+				if (onPinToggle != null) {
+					Modifier.pointerInput(onPinToggle) { detectTapGestures(onLongPress = { menuOpen = true }) }
+				} else {
+					Modifier
+				}
+			)
 			.threadLine(threadLine, lineColor, elbowY = if (isReply) 20.dp else 0.dp)
 			.padding(top = 6.dp, bottom = if (endsThread) 8.dp else 6.dp)
 			.padding(start = if (isReply) ThreadIndent else 0.dp)
@@ -122,6 +150,9 @@ internal fun CommentRow(
 		)
 
 		Column(modifier = Modifier.weight(1f)) {
+			if (comment.pinned) {
+				PinnedLabel()
+			}
 			if (chapter != null) {
 				Text(
 					text = stringResource(R.string.thread_chapter, chapter),
@@ -158,7 +189,24 @@ internal fun CommentRow(
 				}
 			}
 
+			comment.quoteText?.takeIf { it.isNotBlank() && !comment.isTakenDown }?.let { quote ->
+				QuoteBlock(text = quote, onClick = { onQuoteClick(quote) })
+			}
+
 			CommentBody(comment)
+
+			if (onPinToggle != null) {
+				DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+					DropdownMenuItem(
+						text = { Text(stringResource(if (comment.pinned) R.string.comment_unpin else R.string.comment_pin)) },
+						leadingIcon = { Icon(Icons.Outlined.PushPin, contentDescription = null) },
+						onClick = {
+							menuOpen = false
+							onPinToggle()
+						}
+					)
+				}
+			}
 
 			if (!comment.isTakenDown && !comment.isPending) {
 				// a tall, wide touch target around a small label
@@ -177,6 +225,55 @@ internal fun CommentRow(
 				}
 			}
 		}
+	}
+}
+
+@Composable
+private fun PinnedLabel() {
+	Row(
+		verticalAlignment = Alignment.CenterVertically,
+		modifier = Modifier.padding(bottom = 2.dp)
+	) {
+		Icon(
+			imageVector = Icons.Filled.PushPin,
+			contentDescription = null,
+			tint = MaterialTheme.colorScheme.primary,
+			modifier = Modifier.size(12.dp)
+		)
+		Spacer(modifier = Modifier.width(4.dp))
+		Text(
+			text = stringResource(R.string.comment_pinned_label),
+			style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+			color = MaterialTheme.colorScheme.primary
+		)
+	}
+}
+
+/** The words of the caption a comment answers, set off by a bar like a quote in a letter. */
+@Composable
+private fun QuoteBlock(text: String, onClick: () -> Unit) {
+	Row(
+		modifier = Modifier
+			.padding(top = 2.dp, bottom = 4.dp)
+			.height(IntrinsicSize.Min)
+			.clip(RoundedCornerShape(6.dp))
+			.background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+			.clickable(onClick = onClick)
+	) {
+		Box(
+			modifier = Modifier
+				.width(3.dp)
+				.fillMaxHeight()
+				.background(MaterialTheme.colorScheme.primary)
+		)
+		Text(
+			text = "“$text”",
+			style = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic),
+			color = MaterialTheme.colorScheme.onSurfaceVariant,
+			maxLines = 3,
+			overflow = TextOverflow.Ellipsis,
+			modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+		)
 	}
 }
 

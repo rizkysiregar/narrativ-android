@@ -79,6 +79,8 @@ class FakeFeedRepository : FeedRepository {
 	var onGetPost: (UUID) -> Flow<ResultState<FeedContentItem>> = { unscripted("getPost") }
 	var onAddComment: (AddCommentRequest) -> Flow<ResultState<String>> = { unscripted("addComment") }
 	var onDeleteComment: (UUID) -> Flow<ResultState<String>> = { unscripted("deleteComment") }
+	var onPinComment: (UUID, UUID) -> Flow<ResultState<String>> = { _, _ -> unscripted("pinComment") }
+	var onUnpinComment: (UUID) -> Flow<ResultState<String>> = { unscripted("unpinComment") }
 	var onGetComment: (GetCommentRequest) -> Flow<ResultState<PaginationResponseWrapper<CommentItem>>> = { unscripted("getComment") }
 	var onGetReplies: (GetRepliesRequest) -> Flow<ResultState<PaginationResponseWrapper<CommentItem>>> = { unscripted("getReplies") }
 
@@ -96,6 +98,8 @@ class FakeFeedRepository : FeedRepository {
 	override fun dislikePost(postId: UUID) = onDislike(postId).also { dislikes += postId }
 	override fun addComment(request: AddCommentRequest) = onAddComment(request).also { addedComments += request }
 	override fun deleteComment(commentId: UUID) = onDeleteComment(commentId)
+	override fun pinComment(postId: UUID, commentId: UUID) = onPinComment(postId, commentId)
+	override fun unpinComment(postId: UUID) = onUnpinComment(postId)
 	override fun getComment(request: GetCommentRequest) = onGetComment(request).also { commentRequests += request }
 	override fun getReplies(request: GetRepliesRequest) = onGetReplies(request).also { replyRequests += request }
 }

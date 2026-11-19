@@ -293,4 +293,12 @@
     <string name="thread_author_badge">Author</string>
     <string name="thread_chapter">PART %1$d</string>
     <string name="thread_continues">Story continues · %1$d more ↓</string>
+    <string name="comment_pinned">Comment pinned</string>
+    <string name="comment_unpinned">Comment unpinned</string>
+    <string name="comment_pin">Pin comment</string>
+    <string name="comment_unpin">Unpin comment</string>
+    <string name="comment_pinned_label">Pinned by the author</string>
+    <string name="quote_and_reply">Quote &amp; reply</string>
+    <string name="quoting">Quoting</string>
+    <string name="cancel_quote">Cancel quote</string>
 </resources>
