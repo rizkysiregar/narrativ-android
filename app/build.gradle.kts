@@ -125,6 +125,13 @@ tasks.register("verifyCoverageFloors") {
 	}
 }
 
+val versionMajor = property("VERSION_MAJOR").toString().toInt()
+val versionMinor = property("VERSION_MINOR").toString().toInt()
+val versionPatch = property("VERSION_PATCH").toString().toInt()
+require(versionMinor in 0..99 && versionPatch in 0..99) { "VERSION_MINOR and VERSION_PATCH must be 0..99" }
+val appVersionName = "$versionMajor.$versionMinor.$versionPatch"
+val appVersionCode = versionMajor * 10000 + versionMinor * 100 + versionPatch
+
 android {
 	namespace = "com.rizkysiregar.narrativ"
 	compileSdk = 36
@@ -170,8 +177,8 @@ android {
 
 		minSdk = 26
 		targetSdk = 36
-		versionCode = 3
-		versionName = "1.0.2"
+		versionCode = appVersionCode
+		versionName = appVersionName
 
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 	}
