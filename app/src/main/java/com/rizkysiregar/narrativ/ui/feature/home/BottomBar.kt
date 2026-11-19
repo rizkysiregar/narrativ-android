@@ -32,6 +32,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.rizkysiregar.narrativ.ui.main.navigation.BottomNavScreen
 import com.rizkysiregar.narrativ.ui.main.navigation.IconSource
+import com.rizkysiregar.narrativ.ui.main.navigation.navigateToTab
 import com.rizkysiregar.narrativ.ui.theme.Accent300
 import com.rizkysiregar.narrativ.ui.theme.Accent500
 import com.rizkysiregar.narrativ.ui.theme.AccentSubtle
@@ -62,15 +63,7 @@ fun BottomBar(
 	)
 	val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
-	fun navigateTo(item: BottomNavScreen) {
-		navController.navigate(item.route) {
-			launchSingleTop = true
-			restoreState = true
-			popUpTo(navController.graph.startDestinationId) {
-				saveState = true
-			}
-		}
-	}
+	fun navigateTo(item: BottomNavScreen) = navController.navigateToTab(item)
 
 	Box(
 		modifier = Modifier

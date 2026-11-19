@@ -10,19 +10,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.navigation.NavController
 import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.narrativ.ui.feature.home.feed.CommentSectionSheet
 import com.rizkysiregar.narrativ.ui.feature.home.feed.PostViewMode
 import com.rizkysiregar.narrativ.ui.feature.home.search.SearchViewModel
-import com.rizkysiregar.narrativ.ui.main.navigation.routes.HomePathRoute
 
 @Composable
 fun ExploreRoute(
 	viewModel: ExploreViewModel = hiltViewModel(),
 	searchViewModel: SearchViewModel = hiltViewModel(),
 	onPostClick: (FeedContentItem, (String) -> Unit) -> Unit,
-	navController: NavController
+	onUserClick: (userId: String, username: String) -> Unit
 ) {
 	val searchState by searchViewModel.uiState.collectAsState()
 	val focusManager = LocalFocusManager.current
@@ -70,9 +68,7 @@ fun ExploreRoute(
 		onSearchQueryChange = searchViewModel::onQueryChange,
 		onSearchRetry = searchViewModel::retry,
 		onSearchLoadMore = searchViewModel::loadNextPage,
-		onUserClick = { userId, username ->
-			navController.navigate(HomePathRoute.UserDetail.create(userId, username))
-		}
+		onUserClick = onUserClick
 	)
 
 	if (commentPostId != null) {

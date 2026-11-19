@@ -37,6 +37,7 @@ fun UserDetailRoute(
 	val gridFeed by feedViewModel.gridState.collectAsStateWithLifecycle()
 	val followStatus by detailViewModel.followStatus.collectAsState()
 	val isFollowActionLoading by detailViewModel.isFollowActionLoading.collectAsState()
+	val currentUserId by detailViewModel.userId.collectAsState()
 	val pagerState = rememberPagerState(initialPage = PostViewMode.GRID.ordinal) { PostViewMode.entries.size }
 
 	LaunchedEffect(userId) {
@@ -77,6 +78,7 @@ fun UserDetailRoute(
 			onLikeClick = feedViewModel::toggleLike,
 			followStatus = followStatus,
 			isFollowActionLoading = isFollowActionLoading,
+			isOwnProfile = currentUserId.isNotBlank() && currentUserId == userId,
 			onFollowClick = { detailViewModel.toggleFollow(userId) },
 			onFollowersClick = { onFollowersClick(userId) },
 			onFollowingClick = { onFollowingClick(userId) },
