@@ -24,11 +24,11 @@ class PushNotificationsTargetTest {
 	}
 
 	@Test
-	fun commentAndReplyOpenThePostWithItsComments() {
+	fun commentAndReplyOpenThePostAtTheirComment() {
 		for (type in listOf("POST_COMMENTED", "COMMENT_REPLIED")) {
 			val result = target("type" to type, "postId" to "p1", "commentId" to "c1", "actorId" to "u2", "actorUsername" to "budi")
 
-			assertEquals(type, PushTarget.Post("p1", openComments = true), result)
+			assertEquals(type, PushTarget.Post("p1", openComments = true, commentId = "c1"), result)
 		}
 	}
 

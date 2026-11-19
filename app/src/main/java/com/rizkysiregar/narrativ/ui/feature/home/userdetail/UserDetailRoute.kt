@@ -12,7 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedContentItem
+import com.rizkysiregar.narrativ.ui.feature.home.feed.PostOpener
 import com.rizkysiregar.narrativ.ui.feature.home.feed.PostViewMode
 
 /**
@@ -28,7 +28,7 @@ fun UserDetailRoute(
 	onBackClick: () -> Unit,
 	onFollowersClick: (String) -> Unit = {},
 	onFollowingClick: (String) -> Unit = {},
-	onPostClick: (FeedContentItem, (String) -> Unit) -> Unit = { _, _ -> },
+	postOpener: PostOpener,
 	detailViewModel: UserDetailViewModel = hiltViewModel(),
 	feedViewModel: UserDetailFeedViewModel = hiltViewModel()
 ) {
@@ -82,7 +82,9 @@ fun UserDetailRoute(
 			onFollowClick = { detailViewModel.toggleFollow(userId) },
 			onFollowersClick = { onFollowersClick(userId) },
 			onFollowingClick = { onFollowingClick(userId) },
-			onPostClick = { post -> onPostClick(post, feedViewModel::toggleLike) },
+			onPostClick = { post -> postOpener.thread(post, feedViewModel::toggleLike) },
+			onCommentClick = { post -> postOpener.thread(post, feedViewModel::toggleLike, openComments = true) },
+			onMediaClick = { post, page -> postOpener.media(post, feedViewModel::toggleLike, page) },
 			userId = userId,
 			username = username,
 			onUserBlocked = onBackClick

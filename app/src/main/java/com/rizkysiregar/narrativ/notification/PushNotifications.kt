@@ -58,8 +58,11 @@ object PushNotifications {
 
 	/** Where a tapped push wants to go; the home screen takes it and clears it. */
 	sealed interface PushTarget {
-		/** The post the push is about; [openComments] when it is about a comment or reply. */
-		data class Post(val postId: String, val openComments: Boolean) : PushTarget
+		/**
+		 * The post the push is about; [openComments] when it is about a comment or reply, [commentId] being that
+		 * comment.
+		 */
+		data class Post(val postId: String, val openComments: Boolean, val commentId: String? = null) : PushTarget
 
 		/** The person behind a push that carries no post id (pushes sent before it was added). */
 		data class Profile(val userId: String, val username: String) : PushTarget
@@ -150,7 +153,12 @@ object PushNotifications {
 			else -> return null
 		}
 		data[KEY_POST_ID]?.takeIf { it.isNotBlank() }?.let { postId ->
-			return PushTarget.Post(postId, openComments = type in COMMENT_TYPES)
+			val isComment = type in COMMENT_TYPES
+			return PushTarget.Post(
+				postId = postId,
+				openComments = isComment,
+				commentId = data[KEY_COMMENT_ID]?.takeIf { isComment && it.isNotBlank() }
+			)
 		}
 		val userId = data[idKey]?.takeIf { it.isNotBlank() } ?: return null
 		val username = data[usernameKey]?.takeIf { it.isNotBlank() } ?: return null

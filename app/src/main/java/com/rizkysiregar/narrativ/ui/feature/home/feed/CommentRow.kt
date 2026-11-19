@@ -1,6 +1,7 @@
 package com.rizkysiregar.narrativ.ui.feature.home.feed
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -74,12 +75,22 @@ internal fun CommentRow(
 	modifier: Modifier,
 	isReplyTarget: Boolean,
 	threadLine: ThreadLine,
-	onAuthorBlocked: (() -> Unit)? = null
+	onAuthorBlocked: (() -> Unit)? = null,
+	// written by the author of the post: gets the "Author" badge
+	isPostAuthor: Boolean = false,
+	// the author's own top-level comment as a part of the story (2 for the first one, the post being part 1)
+	chapter: Int? = null,
+	lineColor: Color = threadLineColor(),
+	// the comment a notification pointed at
+	isHighlighted: Boolean = false
 ) {
 	val isReply = comment.isReply
-	val lineColor = threadLineColor()
 	val highlight by animateColorAsState(
-		targetValue = if (isReplyTarget) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) else Color.Transparent,
+		targetValue = when {
+			isReplyTarget || isHighlighted -> MaterialTheme.colorScheme.primary.copy(alpha = if (isHighlighted) 0.14f else 0.08f)
+			chapter != null -> MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)
+			else -> Color.Transparent
+		},
 		label = "replyTargetHighlight"
 	)
 	val endsThread = threadLine == ThreadLine.None || threadLine == ThreadLine.LastBranch
@@ -111,11 +122,23 @@ internal fun CommentRow(
 		)
 
 		Column(modifier = Modifier.weight(1f)) {
+			if (chapter != null) {
+				Text(
+					text = stringResource(R.string.thread_chapter, chapter),
+					style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp),
+					color = MaterialTheme.colorScheme.primary,
+					modifier = Modifier.padding(bottom = 2.dp)
+				)
+			}
 			Row(verticalAlignment = Alignment.CenterVertically) {
 				Text(
 					text = comment.username,
 					style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
 				)
+				if (isPostAuthor) {
+					Spacer(modifier = Modifier.width(6.dp))
+					AuthorBadge()
+				}
 				val timeAgo = if (comment.isPending) stringResource(R.string.sending) else formatTimeAgo(comment.createdAt)
 				if (timeAgo.isNotEmpty()) {
 					Spacer(modifier = Modifier.width(8.dp))
@@ -155,6 +178,20 @@ internal fun CommentRow(
 			}
 		}
 	}
+}
+
+/** Small pill next to the name of the post's author, wherever they comment or reply on their own post. */
+@Composable
+private fun AuthorBadge() {
+	Text(
+		text = stringResource(R.string.thread_author_badge),
+		style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+		color = MaterialTheme.colorScheme.onPrimary,
+		modifier = Modifier
+			.clip(RoundedCornerShape(50))
+			.background(MaterialTheme.colorScheme.primary)
+			.padding(horizontal = 6.dp, vertical = 1.dp)
+	)
 }
 
 @Composable

@@ -78,3 +78,16 @@ internal fun List<CommentListRow>.threadLineAt(index: Int): ThreadLine {
 		else -> ThreadLine.LastBranch
 	}
 }
+
+/**
+ * The post author's own top-level comments read as the story going on: the post is part 1, their first comment
+ * part 2, and so on, in the order the comments are listed (oldest first). Only loaded comments are numbered, and
+ * later pages only add higher numbers, so a number never changes once shown.
+ */
+internal fun authorChapters(comments: List<CommentItem>, postAuthorId: String?): Map<String, Int> {
+	if (postAuthorId.isNullOrBlank()) return emptyMap()
+	return comments
+		.filter { !it.isReply && !it.isTakenDown && it.userId == postAuthorId }
+		.mapIndexed { index, comment -> comment.id to index + 2 }
+		.toMap()
+}

@@ -289,4 +289,8 @@
     <string name="saving">Saving…</string>
     <string name="email_changed">Your email was changed. You were signed out on your other devices.</string>
     <string name="error_otp_incomplete">Enter the 6-digit code</string>
+    <string name="thread_title">Post</string>
+    <string name="thread_author_badge">Author</string>
+    <string name="thread_chapter">PART %1$d</string>
+    <string name="thread_continues">Story continues · %1$d more ↓</string>
 </resources>

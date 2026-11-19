@@ -4,14 +4,10 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedContentItem
-import com.rizkysiregar.narrativ.ui.feature.home.feed.CommentSectionSheet
+import com.rizkysiregar.narrativ.ui.feature.home.feed.PostOpener
 import com.rizkysiregar.narrativ.ui.feature.home.feed.PostViewMode
 import com.rizkysiregar.narrativ.ui.feature.home.search.SearchViewModel
 
@@ -19,7 +15,7 @@ import com.rizkysiregar.narrativ.ui.feature.home.search.SearchViewModel
 fun ExploreRoute(
 	viewModel: ExploreViewModel = hiltViewModel(),
 	searchViewModel: SearchViewModel = hiltViewModel(),
-	onPostClick: (FeedContentItem, (String) -> Unit) -> Unit,
+	postOpener: PostOpener,
 	onUserClick: (userId: String, username: String) -> Unit
 ) {
 	val searchState by searchViewModel.uiState.collectAsState()
@@ -35,25 +31,17 @@ fun ExploreRoute(
 	val listFeed by viewModel.uiState.collectAsState()
 	val gridFeed by viewModel.gridState.collectAsState()
 	val pagerState = rememberPagerState(initialPage = PostViewMode.GRID.ordinal) { PostViewMode.entries.size }
-	var selectedPostId by remember { mutableStateOf<String?>(null) }
-	var commentPostId by remember { mutableStateOf<String?>(null) }
-	val selectedPost = gridFeed.items.find { it.id == selectedPostId }
-
-	val openDetail: (FeedContentItem) -> Unit = { post -> onPostClick(post, viewModel::toggleLike) }
 
 	ExploreScreenContent(
 		pagerState = pagerState,
 		gridFeed = gridFeed,
 		listFeed = listFeed,
-		selectedPost = selectedPost,
-		onGridPostClick = { post ->
-			if (post.isTakenDown) return@ExploreScreenContent
-			if (post.hasVideo) openDetail(post) else selectedPostId = post.id
+		onPostClick = { post ->
+			if (!post.isTakenDown) postOpener.thread(post, viewModel::toggleLike)
 		},
-		onDismissDetail = { selectedPostId = null },
 		onLikeClick = viewModel::toggleLike,
-		onCommentClick = { commentPostId = it.id },
-		onVideoClick = openDetail,
+		onCommentClick = { post -> postOpener.thread(post, viewModel::toggleLike, openComments = true) },
+		onMediaClick = { post, page -> postOpener.media(post, viewModel::toggleLike, page) },
 		onLoadMoreGrid = viewModel::loadNextGridPage,
 		onLoadMoreList = viewModel::loadNextPage,
 		onRetryGrid = {
@@ -70,11 +58,4 @@ fun ExploreRoute(
 		onSearchLoadMore = searchViewModel::loadNextPage,
 		onUserClick = onUserClick
 	)
-
-	if (commentPostId != null) {
-		CommentSectionSheet(
-			postId = commentPostId!!,
-			onDismiss = { commentPostId = null }
-		)
-	}
 }
