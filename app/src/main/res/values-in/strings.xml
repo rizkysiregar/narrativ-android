@@ -288,4 +288,8 @@
     <string name="saving">Menyimpan…</string>
     <string name="email_changed">Email Anda telah diubah. Anda telah dikeluarkan dari perangkat lain.</string>
     <string name="error_otp_incomplete">Masukkan 6 digit kode</string>
+    <string name="thread_title">Postingan</string>
+    <string name="thread_author_badge">Penulis</string>
+    <string name="thread_chapter">BAGIAN %1$d</string>
+    <string name="thread_continues">Cerita berlanjut · %1$d bagian ↓</string>
 </resources>

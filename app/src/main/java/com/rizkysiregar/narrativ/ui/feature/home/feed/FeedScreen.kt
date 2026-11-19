@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,14 +25,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,15 +79,15 @@ fun FeedScreen(
 	onSearchClick: () -> Unit = {},
 	onAuthorClick: ((userId: String, username: String) -> Unit)? = null,
 	player: ExoPlayer? = null,
-	onVideoClick: (FeedContentItem) -> Unit = {},
+	onPostClick: (FeedContentItem) -> Unit = {},
+	onCommentClick: (FeedContentItem) -> Unit = {},
+	onMediaClick: (FeedContentItem, page: Int) -> Unit = { _, _ -> },
 	onAuthorBlocked: (() -> Unit)? = null
 ) {
 	val currentOnLikeClick by rememberUpdatedState(onLikeClick)
 	val pullState =
 		rememberPullRefreshState(refreshing = uiState.isRefreshing, onRefresh = onRefresh)
 
-	var selectedPostId by remember { mutableStateOf<String?>(null) }
-	var showCommentSheet by remember { mutableStateOf(false) }
 	var isVideoMuted by remember { mutableStateOf(false) }
 	var activeVideoPostId by remember { mutableStateOf<String?>(null) }
 	val currentActiveVideoId by rememberUpdatedState(activeVideoPostId)
@@ -234,14 +233,12 @@ fun FeedScreen(
 						FeedItemCard(
 							item = item,
 							onLikeClick = { id -> currentOnLikeClick(id) },
-							onCommentClick = { post ->
-								selectedPostId = post.id
-								showCommentSheet = true
-							},
+							onCommentClick = onCommentClick,
+							onClick = { onPostClick(item) },
 							isActiveVideo = item.id == activeVideoPostId,
 							isVideoMuted = isVideoMuted,
 							onToggleVideoMute = { isVideoMuted = !isVideoMuted },
-							onVideoClick = { onVideoClick(item) },
+							onMediaClick = { page -> onMediaClick(item, page) },
 							player = player,
 							initialPage = pageByPost[item.id] ?: 0,
 							onPageChange = { page -> pageByPost[item.id] = page },
@@ -275,13 +272,6 @@ fun FeedScreen(
 					}
 				}
 			}
-		}
-
-		if (showCommentSheet && selectedPostId != null) {
-			CommentSectionSheet(
-				postId = selectedPostId!!,
-				onDismiss = { showCommentSheet = false }
-			)
 		}
 	}
 	}

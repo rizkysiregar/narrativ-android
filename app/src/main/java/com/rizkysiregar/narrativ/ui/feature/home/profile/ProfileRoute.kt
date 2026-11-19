@@ -23,6 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedContentItem
+import com.rizkysiregar.narrativ.ui.feature.home.feed.PostOpener
 import com.rizkysiregar.narrativ.ui.feature.home.feed.PostViewMode
 import com.rizkysiregar.narrativ.ui.theme.NarrativTheme
 import com.rizkysiregar.narrativ.R
@@ -40,7 +41,7 @@ fun ProfileRoute(
 	onSettingsClick: () -> Unit,
 	onFollowersClick: (String) -> Unit = {},
 	onFollowingClick: (String) -> Unit = {},
-	onPostClick: (FeedContentItem, (String) -> Unit) -> Unit = { _, _ -> }
+	postOpener: PostOpener
 ) {
     val profileState by profileVm.profileState.collectAsState()
     val followStatus by profileVm.followStatus.collectAsState()
@@ -111,7 +112,9 @@ fun ProfileRoute(
             followStatus = followStatus,
             onFollowersClick = { userId -> onFollowersClick(userId) },
             onFollowingClick = { userId -> onFollowingClick(userId) },
-            onPostClick = { post -> onPostClick(post, profileFeedVm::toggleLike) },
+            onPostClick = { post -> postOpener.thread(post, profileFeedVm::toggleLike) },
+            onCommentClick = { post -> postOpener.thread(post, profileFeedVm::toggleLike, openComments = true) },
+            onMediaClick = { post, page -> postOpener.media(post, profileFeedVm::toggleLike, page) },
             isUpdatingPhoto = isUpdatingPhoto,
             onChangePhoto = {
                 photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
@@ -128,7 +131,11 @@ fun ProfileRoute(
 private fun ProfileRoutePreview() {
     NarrativTheme {
         ProfileRoute(
-            onSettingsClick = {}
+            onSettingsClick = {},
+            postOpener = object : PostOpener {
+                override fun thread(post: FeedContentItem, onLike: (String) -> Unit, openComments: Boolean) = Unit
+                override fun media(post: FeedContentItem, onLike: (String) -> Unit, page: Int) = Unit
+            }
         )
     }
 }

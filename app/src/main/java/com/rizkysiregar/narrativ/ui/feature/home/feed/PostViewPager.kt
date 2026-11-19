@@ -41,15 +41,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -93,9 +92,11 @@ fun PostViewPager(
 	pagerState: PagerState,
 	gridFeed: FeedUiState,
 	listFeed: FeedUiState,
-	onGridPostClick: (FeedContentItem) -> Unit,
+	// a grid tile or a card: opens the post's thread
+	onPostClick: (FeedContentItem) -> Unit,
 	onLikeClick: (String) -> Unit,
-	onVideoClick: (FeedContentItem) -> Unit,
+	onCommentClick: (FeedContentItem) -> Unit,
+	onMediaClick: (FeedContentItem, page: Int) -> Unit,
 	onLoadMoreGrid: () -> Unit,
 	onLoadMoreList: () -> Unit,
 	onRetryGrid: () -> Unit,
@@ -108,7 +109,6 @@ fun PostViewPager(
 	// hoisted so each page keeps its scroll position while swiped out of composition
 	val gridState = rememberLazyGridState()
 	val listState = rememberLazyListState()
-	var commentPostId by remember { mutableStateOf<String?>(null) }
 
 	val pages: @Composable () -> Unit = {
 		HorizontalPager(
@@ -120,7 +120,7 @@ fun PostViewPager(
 				PostViewMode.GRID -> PostGridPage(
 					feed = gridFeed,
 					gridState = gridState,
-					onPostClick = onGridPostClick,
+					onPostClick = onPostClick,
 					onLoadMore = onLoadMoreGrid,
 					onRetry = onRetryGrid
 				)
@@ -129,8 +129,9 @@ fun PostViewPager(
 					feed = listFeed,
 					listState = listState,
 					onLikeClick = onLikeClick,
-					onCommentClick = { commentPostId = it.id },
-					onVideoClick = onVideoClick,
+					onPostClick = onPostClick,
+					onCommentClick = onCommentClick,
+					onMediaClick = onMediaClick,
 					onLoadMore = onLoadMoreList,
 					onRetry = onRetryList,
 					onAuthorBlocked = onAuthorBlocked,
@@ -152,10 +153,6 @@ fun PostViewPager(
 			PostViewModeTabs(pagerState = pagerState)
 			Box(modifier = Modifier.weight(1f)) { pages() }
 		}
-	}
-
-	commentPostId?.let { postId ->
-		CommentSectionSheet(postId = postId, onDismiss = { commentPostId = null })
 	}
 }
 
@@ -269,8 +266,9 @@ private fun PostListPage(
 	feed: FeedUiState,
 	listState: LazyListState,
 	onLikeClick: (String) -> Unit,
+	onPostClick: (FeedContentItem) -> Unit,
 	onCommentClick: (FeedContentItem) -> Unit,
-	onVideoClick: (FeedContentItem) -> Unit,
+	onMediaClick: (FeedContentItem, page: Int) -> Unit,
 	onLoadMore: () -> Unit,
 	onRetry: () -> Unit,
 	onAuthorBlocked: (() -> Unit)? = null,
@@ -293,12 +291,13 @@ private fun PostListPage(
 		verticalArrangement = Arrangement.spacedBy(12.dp)
 	) {
 		items(feed.items, key = { it.id }) { post ->
-			// no inline playback here: a video shows its poster and opens the full screen detail
+			// no inline playback here: a video shows its poster and opens full screen
 			FeedItemCard(
 				item = post,
 				onLikeClick = onLikeClick,
 				onCommentClick = onCommentClick,
-				onVideoClick = { onVideoClick(post) },
+				onClick = { onPostClick(post) },
+				onMediaClick = { page -> onMediaClick(post, page) },
 				onAuthorBlocked = onAuthorBlocked,
 				onAuthorClick = onAuthorClick
 			)

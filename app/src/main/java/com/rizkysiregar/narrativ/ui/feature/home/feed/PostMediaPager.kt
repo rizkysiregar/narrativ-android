@@ -2,6 +2,7 @@ package com.rizkysiregar.narrativ.ui.feature.home.feed
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -59,7 +60,8 @@ fun PostMediaPager(
 	initialPage: Int = 0,
 	onPageChange: (Int) -> Unit = {},
 	onToggleMute: (() -> Unit)? = null,
-	onVideoClick: (() -> Unit)? = null,
+	// a tap on a page (photo or video) with its index; null leaves taps to the page itself
+	onMediaClick: ((page: Int) -> Unit)? = null,
 	aspectRatio: Float? = 1.08f,
 	imageContentScale: ContentScale = ContentScale.Crop,
 	videoResizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_ZOOM,
@@ -92,7 +94,7 @@ fun PostMediaPager(
 				player = player,
 				muted = muted,
 				onToggleMute = onToggleMute,
-				onVideoClick = onVideoClick,
+				onClick = onMediaClick?.let { click -> { click(page) } },
 				imageContentScale = imageContentScale,
 				videoResizeMode = videoResizeMode,
 				showMuteButton = showMuteButton
@@ -125,7 +127,7 @@ private fun PostMediaPage(
 	player: ExoPlayer?,
 	muted: Boolean,
 	onToggleMute: (() -> Unit)?,
-	onVideoClick: (() -> Unit)?,
+	onClick: (() -> Unit)?,
 	imageContentScale: ContentScale,
 	videoResizeMode: Int,
 	showMuteButton: Boolean
@@ -139,7 +141,7 @@ private fun PostMediaPage(
 			muted = muted,
 			showMuteButton = showMuteButton,
 			onToggleMute = onToggleMute,
-			onVideoClick = onVideoClick,
+			onVideoClick = onClick,
 			modifier = Modifier.fillMaxSize(),
 			aspectRatio = null,
 			playerResizeMode = videoResizeMode
@@ -148,7 +150,9 @@ private fun PostMediaPage(
 		PostMediaImage(
 			imageUrl = item.url.orEmpty(),
 			contentScale = imageContentScale,
-			modifier = Modifier.fillMaxSize()
+			modifier = Modifier
+				.fillMaxSize()
+				.then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
 		)
 	}
 }

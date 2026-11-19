@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import com.rizkysiregar.narrativ.ui.theme.Accent300
@@ -38,6 +39,7 @@ import kotlin.math.max
 import kotlin.math.sin
 
 private const val FLIGHT_MILLIS = 1200
+private const val HOP_MILLIS = 750
 private const val TRAIL_FRACTION = 0.35f
 
 /**
@@ -51,13 +53,71 @@ fun PaperPlaneFlight(
 	onFinished: () -> Unit,
 	modifier: Modifier = Modifier
 ) {
+	PlaneFlight(
+		origin = origin,
+		onFinished = onFinished,
+		planeSize = 26.dp,
+		durationMillis = FLIGHT_MILLIS,
+		fadesOut = false,
+		route = { start, w, h ->
+			// Up and back first, then a long sweep out of the top-right corner.
+			moveTo(start.x, start.y)
+			cubicTo(
+				start.x - w * 0.28f, start.y - h * 0.22f,
+				w * 0.6f, -h * 0.05f,
+				w * 1.25f, -h * 0.12f
+			)
+		},
+		modifier = modifier
+	)
+}
+
+/**
+ * A small paper plane that hops from [origin] (the send button of a comment) up into the comments above and fades
+ * there, as if the comment flew into the thread. Like [PaperPlaneFlight] it only draws and respects reduced motion.
+ */
+@Composable
+fun CommentPlaneFlight(
+	origin: Offset,
+	onFinished: () -> Unit,
+	modifier: Modifier = Modifier
+) {
+	PlaneFlight(
+		origin = origin,
+		onFinished = onFinished,
+		planeSize = 14.dp,
+		durationMillis = HOP_MILLIS,
+		fadesOut = true,
+		route = { start, w, h ->
+			moveTo(start.x, start.y)
+			cubicTo(
+				start.x + w * 0.04f, start.y - h * 0.18f,
+				start.x - w * 0.3f, start.y - h * 0.3f,
+				start.x - w * 0.55f, start.y - h * 0.26f
+			)
+		},
+		modifier = modifier
+	)
+}
+
+@Composable
+private fun PlaneFlight(
+	origin: Offset,
+	onFinished: () -> Unit,
+	planeSize: Dp,
+	durationMillis: Int,
+	fadesOut: Boolean,
+	// the flight path in the overlay's coordinates, from the start point and the overlay's width and height
+	route: Path.(start: Offset, width: Float, height: Float) -> Unit,
+	modifier: Modifier
+) {
 	val reduceMotion = rememberReduceMotion()
 	val progress = remember { Animatable(0f) }
 	var rootOffset by remember { mutableStateOf(Offset.Zero) }
 
 	LaunchedEffect(Unit) {
 		if (!reduceMotion) {
-			progress.animateTo(1f, tween(FLIGHT_MILLIS, easing = CubicBezierEasing(0.35f, 0f, 0.8f, 0.65f)))
+			progress.animateTo(1f, tween(durationMillis, easing = CubicBezierEasing(0.35f, 0f, 0.8f, 0.65f)))
 		}
 		onFinished()
 	}
@@ -68,28 +128,21 @@ fun PaperPlaneFlight(
 			.onGloballyPositioned { rootOffset = it.positionInRoot() }
 			.drawWithCache {
 				val start = origin - rootOffset
-				val w = size.width
-				val h = size.height
-				// Up and back first, then a long sweep out of the top-right corner.
-				val path = Path().apply {
-					moveTo(start.x, start.y)
-					cubicTo(
-						start.x - w * 0.28f, start.y - h * 0.22f,
-						w * 0.6f, -h * 0.05f,
-						w * 1.25f, -h * 0.12f
-					)
-				}
+				val path = Path().apply { route(start, size.width, size.height) }
 				val measure = PathMeasure().apply { setPath(path, false) }
 				val length = measure.length
-				val planeSize = 26.dp.toPx()
+				val planePx = planeSize.toPx()
+				// the trail is drawn to the scale of the plane
+				val trailScale = planeSize / 26.dp
 				val trailStroke = Stroke(
-					width = 3.dp.toPx(),
+					width = 3.dp.toPx() * trailScale,
 					cap = StrokeCap.Round,
-					pathEffect = PathEffect.dashPathEffect(floatArrayOf(12.dp.toPx(), 14.dp.toPx()))
+					pathEffect = PathEffect.dashPathEffect(floatArrayOf(12.dp.toPx() * trailScale, 14.dp.toPx() * trailScale))
 				)
 
 				onDrawBehind {
 					val p = progress.value
+					val fadeOut = if (fadesOut) 1f - ((p - 0.7f) / 0.3f).coerceIn(0f, 1f) else 1f
 					val distance = length * p
 					val position = measure.getPosition(distance)
 					val tangent = measure.getTangent(distance)
@@ -101,7 +154,7 @@ fun PaperPlaneFlight(
 						drawPath(
 							path = trail,
 							brush = Brush.linearGradient(
-								colors = listOf(Color.Transparent, Accent300.copy(alpha = 0.8f), Like),
+								colors = listOf(Color.Transparent, Accent300.copy(alpha = 0.8f * fadeOut), Like.copy(alpha = fadeOut)),
 								start = measure.getPosition(trailStart),
 								end = position
 							),
@@ -114,14 +167,14 @@ fun PaperPlaneFlight(
 					val shrink = lerp(1f, 0.75f, ((p - 0.7f) / 0.3f).coerceIn(0f, 1f))
 					val angle = atan2(tangent.y, tangent.x) * 180f / PI.toFloat()
 					val bank = sin(p * 16f) * 5f
-					val alpha = (p / 0.08f).coerceIn(0f, 1f)
+					val alpha = (p / 0.08f).coerceIn(0f, 1f) * fadeOut
 
 					withTransform({
 						translate(position.x, position.y)
 						rotate(angle + bank, Offset.Zero)
 						scale(grow * shrink, grow * shrink, Offset.Zero)
 					}) {
-						drawPlane(planeSize, alpha)
+						drawPlane(planePx, alpha)
 					}
 				}
 			}

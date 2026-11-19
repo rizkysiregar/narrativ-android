@@ -9,7 +9,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.narrativ.ui.main.navigation.BottomNavScreen
 import kotlinx.coroutines.flow.collectLatest
 
@@ -24,7 +23,7 @@ fun FeedRoute(
     refreshVersion: Int = 0,
     viewModel: FeedViewModel = hiltViewModel(),
 	onCreateFeed: () -> Unit,
-	onPostClick: (FeedContentItem, (String) -> Unit) -> Unit,
+	postOpener: PostOpener,
 	onUserClick: (userId: String, username: String) -> Unit,
 	navController: NavController
 ) {
@@ -81,6 +80,8 @@ fun FeedRoute(
 		player = viewModel.player,
 		onAuthorBlocked = viewModel::refresh,
 		onAuthorClick = onUserClick,
-		onVideoClick = { post -> onPostClick(post, viewModel::toggleLike) }
+		onPostClick = { post -> postOpener.thread(post, viewModel::toggleLike) },
+		onCommentClick = { post -> postOpener.thread(post, viewModel::toggleLike, openComments = true) },
+		onMediaClick = { post, page -> postOpener.media(post, viewModel::toggleLike, page) }
     )
 }

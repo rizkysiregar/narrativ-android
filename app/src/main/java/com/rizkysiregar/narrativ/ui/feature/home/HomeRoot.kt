@@ -42,6 +42,9 @@ import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedContentItem
 import com.rizkysiregar.narrativ.ui.components.PaperPlaneFlight
 import com.rizkysiregar.narrativ.ui.feature.home.feed.FeedRoute
 import com.rizkysiregar.narrativ.ui.feature.home.feed.PostDetailHandoff
+import com.rizkysiregar.narrativ.ui.feature.home.feed.PostMediaViewerDestination
+import com.rizkysiregar.narrativ.ui.feature.home.feed.PostOpener
+import com.rizkysiregar.narrativ.ui.feature.home.thread.PostThreadDestination
 import com.rizkysiregar.narrativ.ui.feature.home.post.PostFeedRoute
 import com.rizkysiregar.narrativ.ui.feature.home.profile.ProfileRoute
 import com.rizkysiregar.narrativ.ui.feature.home.settings.SettingsRoute
@@ -80,11 +83,20 @@ fun HomeRoot(
 	val currentRoute = homeNavController.currentBackStackEntryAsState().value?.destination?.route
 	// What a list hands to the post detail. Not in the SavedStateHandle of the back stack: see PostDetailHandoff.
 	val postHandoff: PostDetailHandoff = viewModel()
-	val openPostDetail: (FeedContentItem, (String) -> Unit) -> Unit = { post, likeHandler ->
-		postHandoff.hand(post, likeHandler)
-		homeNavController.navigate(HomePathRoute.PostDetail.create(post.id))
+	val postOpener = remember(homeNavController, postHandoff) {
+		object : PostOpener {
+			override fun thread(post: FeedContentItem, onLike: (String) -> Unit, openComments: Boolean) {
+				postHandoff.hand(post, onLike)
+				homeNavController.navigate(HomePathRoute.PostDetail.create(post.id, openComments))
+			}
+
+			override fun media(post: FeedContentItem, onLike: (String) -> Unit, page: Int) {
+				postHandoff.hand(post, onLike)
+				homeNavController.navigate(HomePathRoute.PostMedia.create(post.id, page))
+			}
+		}
 	}
-	val isDetailRoute = currentRoute?.startsWith("post_detail/") == true
+	val isDetailRoute = currentRoute?.startsWith("post_detail/") == true || currentRoute?.startsWith("post_media/") == true
 	// leaving the detail ends the hand-over, so a later visit (a push, say) never shows a stale post or like
 	LaunchedEffect(isDetailRoute) { if (!isDetailRoute) postHandoff.clear() }
 
@@ -110,7 +122,7 @@ fun HomeRoot(
 			PushNotifications.clearPendingTarget()
 			when (target) {
 				is PushNotifications.PushTarget.Post ->
-					homeNavController.navigate(HomePathRoute.PostDetail.create(target.postId, target.openComments))
+					homeNavController.navigate(HomePathRoute.PostDetail.create(target.postId, target.openComments, target.commentId))
 				is PushNotifications.PushTarget.Profile ->
 					openUser(target.userId, target.username)
 			}
@@ -149,14 +161,14 @@ fun HomeRoot(
 							launchSingleTop = true
 						}
 					},
-					onPostClick = openPostDetail,
+					postOpener = postOpener,
 					onUserClick = openUser,
 					navController = homeNavController
 				)
 			}
 				composable(BottomNavScreen.Explore.route) {
 				com.rizkysiregar.narrativ.ui.feature.home.explore.ExploreRoute(
-					onPostClick = openPostDetail,
+					postOpener = postOpener,
 					onUserClick = openUser
 				)
 			}
@@ -185,7 +197,7 @@ fun HomeRoot(
 				onFollowingClick = { userId ->
 					homeNavController.navigate(HomePathRoute.FollowList.create(userId, "following"))
 				},
-				onPostClick = openPostDetail
+				postOpener = postOpener
 			)
 		}
 				composable(HomePathRoute.Settings.route) {
@@ -248,7 +260,7 @@ fun HomeRoot(
 			onFollowingClick = { id ->
 				homeNavController.navigate(HomePathRoute.FollowList.create(id, "following"))
 			},
-			onPostClick = openPostDetail
+			postOpener = postOpener
 		)
 		}
 			composable(
@@ -258,14 +270,51 @@ fun HomeRoot(
 					navArgument(HomePathRoute.PostDetail.ARG_OPEN_COMMENTS) {
 						type = NavType.BoolType
 						defaultValue = false
+					},
+					navArgument(HomePathRoute.PostDetail.ARG_COMMENT_ID) {
+						type = NavType.StringType
+						nullable = true
+						defaultValue = null
 					}
 				)
 			) { entry ->
-				com.rizkysiregar.narrativ.ui.feature.home.feed.PostDetailDestination(
-					navController = homeNavController,
+				PostThreadDestination(
 					postId = entry.arguments?.getString(HomePathRoute.PostDetail.ARG_POST_ID).orEmpty(),
 					openComments = entry.arguments?.getBoolean(HomePathRoute.PostDetail.ARG_OPEN_COMMENTS) ?: false,
-					handoff = postHandoff
+					focusCommentId = entry.arguments?.getString(HomePathRoute.PostDetail.ARG_COMMENT_ID),
+					handoff = postHandoff,
+					onBackClick = { homeNavController.popBackStack() },
+					onUserClick = openUser,
+					onMediaClick = { post, onLike, page -> postOpener.media(post, onLike, page) }
+				)
+			}
+			composable(
+				route = HomePathRoute.PostMedia.route,
+				arguments = listOf(
+					navArgument(HomePathRoute.PostMedia.ARG_POST_ID) { type = NavType.StringType },
+					navArgument(HomePathRoute.PostMedia.ARG_PAGE) {
+						type = NavType.IntType
+						defaultValue = 0
+					}
+				)
+			) { entry ->
+				val postId = entry.arguments?.getString(HomePathRoute.PostMedia.ARG_POST_ID).orEmpty()
+				PostMediaViewerDestination(
+					navController = homeNavController,
+					postId = postId,
+					initialPage = entry.arguments?.getInt(HomePathRoute.PostMedia.ARG_PAGE) ?: 0,
+					handoff = postHandoff,
+					onCommentsClick = {
+						// opened from the post's thread: go back to it rather than stacking a second one
+						val previous = homeNavController.previousBackStackEntry
+						val fromThread = previous?.destination?.route == HomePathRoute.PostDetail.route &&
+							previous.arguments?.getString(HomePathRoute.PostDetail.ARG_POST_ID) == postId
+						if (fromThread) {
+							homeNavController.popBackStack()
+						} else {
+							homeNavController.navigate(HomePathRoute.PostDetail.create(postId, openComments = true))
+						}
+					}
 				)
 			}
 		}
