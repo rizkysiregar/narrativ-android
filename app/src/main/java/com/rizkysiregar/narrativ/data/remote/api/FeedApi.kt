@@ -1,6 +1,7 @@
 package com.rizkysiregar.narrativ.data.remote.api
 
 import com.rizkysiregar.narrativ.data.remote.model.request.feed.AddCommentRequest
+import com.rizkysiregar.narrativ.data.remote.model.request.feed.PinCommentRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.feed.LikeFeedRequest
 import com.rizkysiregar.narrativ.data.remote.model.response.BaseResponse
 import com.rizkysiregar.narrativ.data.remote.model.response.PaginationResponseWrapper
@@ -11,6 +12,7 @@ import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 import java.util.UUID
@@ -79,6 +81,17 @@ interface FeedApi {
 		@Path("postId") postId: UUID,
 		@Query("page") page: Int
 	): BaseResponse<PaginationResponseWrapper<CommentItem>>
+
+	@PUT("posts/{postId}/pinned-comment")
+	suspend fun pinComment(
+		@Path("postId") postId: UUID,
+		@Body request: PinCommentRequest
+	): BaseResponse<String>
+
+	@DELETE("posts/{postId}/pinned-comment")
+	suspend fun unpinComment(
+		@Path("postId") postId: UUID
+	): BaseResponse<String>
 
 	@GET("comments/{commentId}/replies")
 	suspend fun getCommentReplies(

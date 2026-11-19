@@ -292,4 +292,26 @@
     <string name="thread_author_badge">Penulis</string>
     <string name="thread_chapter">BAGIAN %1$d</string>
     <string name="thread_continues">Cerita berlanjut · %1$d bagian ↓</string>
+    <string name="comment_pinned">Komentar disematkan</string>
+    <string name="comment_unpinned">Sematan dilepas</string>
+    <string name="comment_pin">Sematkan komentar</string>
+    <string name="comment_unpin">Lepas sematan</string>
+    <string name="comment_pinned_label">Disematkan penulis</string>
+    <string name="quote_and_reply">Kutip &amp; balas</string>
+    <string name="quoting">Mengutip</string>
+    <string name="cancel_quote">Batal mengutip</string>
+    <string name="notifications_title">Notifikasi</string>
+    <string name="cd_notifications">Notifikasi</string>
+    <string name="notifications_today">Hari ini</string>
+    <string name="notifications_this_week">Minggu ini</string>
+    <string name="notifications_earlier">Sebelumnya</string>
+    <string name="notifications_empty_title">Belum ada notifikasi</string>
+    <string name="notifications_empty_body">Like, komentar, dan follower baru akan muncul di sini.</string>
+    <string name="notif_liked_one">%1$s menyukai postinganmu</string>
+    <string name="notif_liked_two">%1$s dan %2$s menyukai postinganmu</string>
+    <string name="notif_liked_many">%1$s, %2$s, dan %3$d lainnya menyukai postinganmu</string>
+    <string name="notif_commented">%1$s mengomentari postinganmu</string>
+    <string name="notif_replied">%1$s membalas komentarmu</string>
+    <string name="notif_followed">%1$s mulai mengikutimu</string>
+    <string name="notif_pinned">%1$s menyematkan komentarmu</string>
 </resources>

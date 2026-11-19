@@ -51,8 +51,9 @@ object PushNotifications {
 	private const val KEY_AUTHOR_USERNAME = "authorUsername"
 
 	// activity on your posts and comments (a like, a comment, a reply): the person is whoever did it
-	private val COMMENT_TYPES = setOf("POST_COMMENTED", "COMMENT_REPLIED")
-	private val ACTIVITY_TYPES = setOf("POST_LIKED") + COMMENT_TYPES
+	private val COMMENT_TYPES = setOf("POST_COMMENTED", "COMMENT_REPLIED", "COMMENT_PINNED")
+	// a follow carries no post, so it always opens the follower's profile
+	private val ACTIVITY_TYPES = setOf("POST_LIKED", "FOLLOWED") + COMMENT_TYPES
 	private const val KEY_ACTOR_ID = "actorId"
 	private const val KEY_ACTOR_USERNAME = "actorUsername"
 

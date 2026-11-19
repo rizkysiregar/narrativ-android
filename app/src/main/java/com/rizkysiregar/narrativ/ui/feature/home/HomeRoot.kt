@@ -45,6 +45,9 @@ import com.rizkysiregar.narrativ.ui.feature.home.feed.PostDetailHandoff
 import com.rizkysiregar.narrativ.ui.feature.home.feed.PostMediaViewerDestination
 import com.rizkysiregar.narrativ.ui.feature.home.feed.PostOpener
 import com.rizkysiregar.narrativ.ui.feature.home.thread.PostThreadDestination
+import com.rizkysiregar.narrativ.ui.feature.home.notifications.NotificationBadgeViewModel
+import com.rizkysiregar.narrativ.ui.feature.home.notifications.NotificationsRoute
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.rizkysiregar.narrativ.ui.feature.home.post.PostFeedRoute
 import com.rizkysiregar.narrativ.ui.feature.home.profile.ProfileRoute
 import com.rizkysiregar.narrativ.ui.feature.home.settings.SettingsRoute
@@ -74,6 +77,13 @@ fun HomeRoot(
 	val uploadBannerViewModel: UploadBannerViewModel = hiltViewModel()
 	val currentUserViewModel: CurrentUserViewModel = hiltViewModel()
 	val currentUserId by currentUserViewModel.userId.collectAsState()
+	val badgeViewModel: NotificationBadgeViewModel = hiltViewModel()
+	val unreadNotifications by badgeViewModel.unreadCount.collectAsState()
+	// back from the background, pushes may have arrived that FCM showed by itself
+	LifecycleResumeEffect(Unit) {
+		badgeViewModel.refresh()
+		onPauseOrDispose { }
+	}
 	val openUser: (String, String) -> Unit = { userId, username ->
 		homeNavController.openUser(userId, username, currentUserId)
 	}
@@ -137,7 +147,7 @@ fun HomeRoot(
 	Box(modifier = Modifier.fillMaxSize()) {
 	Scaffold(
 		bottomBar = {
-			if (currentRoute != HomePathRoute.UserDetail.route && currentRoute != HomePathRoute.FollowList.route && currentRoute != HomePathRoute.Settings.route && currentRoute != HomePathRoute.BlockedUsers.route && currentRoute != HomePathRoute.ChangeEmail.route && currentRoute != BottomNavScreen.PostFeed.route && !isDetailRoute) {
+			if (currentRoute != HomePathRoute.UserDetail.route && currentRoute != HomePathRoute.FollowList.route && currentRoute != HomePathRoute.Settings.route && currentRoute != HomePathRoute.Notifications.route && currentRoute != HomePathRoute.BlockedUsers.route && currentRoute != HomePathRoute.ChangeEmail.route && currentRoute != BottomNavScreen.PostFeed.route && !isDetailRoute) {
 				BottomBar(homeNavController)
 			}
 		}
@@ -163,6 +173,8 @@ fun HomeRoot(
 					},
 					postOpener = postOpener,
 					onUserClick = openUser,
+					onNotificationsClick = { homeNavController.navigate(HomePathRoute.Notifications.route) },
+					unreadNotifications = unreadNotifications,
 					navController = homeNavController
 				)
 			}
@@ -200,6 +212,17 @@ fun HomeRoot(
 				postOpener = postOpener
 			)
 		}
+				composable(HomePathRoute.Notifications.route) {
+					NotificationsRoute(
+						onBackClick = { homeNavController.popBackStack() },
+						onOpenPost = { postId, commentId ->
+							homeNavController.navigate(
+								HomePathRoute.PostDetail.create(postId, openComments = commentId != null, commentId = commentId)
+							)
+						},
+						onOpenUser = openUser
+					)
+				}
 				composable(HomePathRoute.Settings.route) {
 					SettingsRoute(
 						onBackClick = { homeNavController.popBackStack() },

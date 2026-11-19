@@ -50,7 +50,10 @@ internal fun CommentListRowContent(
 	modifier: Modifier = Modifier,
 	postAuthorId: String? = null,
 	chapters: Map<String, Int> = emptyMap(),
-	highlightedId: String? = null
+	highlightedId: String? = null,
+	// set when the viewer wrote the post: top-level comments can be pinned with a long press
+	onPinToggle: ((CommentItem) -> Unit)? = null,
+	onQuoteClick: (String) -> Unit = {}
 ) {
 	val lineColor = if (row.threadId in chapters) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else threadLineColor()
 	when (row) {
@@ -67,7 +70,9 @@ internal fun CommentListRowContent(
 					isPostAuthor = postAuthorId != null && comment.userId == postAuthorId,
 					chapter = chapters[comment.id],
 					lineColor = lineColor,
-					isHighlighted = comment.id == highlightedId
+					isHighlighted = comment.id == highlightedId,
+					onPinToggle = onPinToggle?.takeIf { !comment.isReply && !comment.isPending }?.let { toggle -> { toggle(comment) } },
+					onQuoteClick = onQuoteClick
 				)
 			}
 			if (comment.canDelete && !comment.isPending) {

@@ -4,6 +4,7 @@ import com.rizkysiregar.narrativ.data.remote.api.FeedApi
 import com.rizkysiregar.narrativ.data.remote.model.ResultState
 import com.rizkysiregar.narrativ.data.remote.model.request.feed.AddCommentRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetCommentRequest
+import com.rizkysiregar.narrativ.data.remote.model.request.feed.PinCommentRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetRepliesRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetAllFeedRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetFeedByUsernameRequest
@@ -79,6 +80,16 @@ class FeedRepositoryImpl @Inject constructor(
 	override fun deleteComment(commentId: UUID): Flow<ResultState<String>> =
 		flowFromMessageApi {
 			feedApi.deleteComment(commentId)
+		}
+
+	override fun pinComment(postId: UUID, commentId: UUID): Flow<ResultState<String>> =
+		flowFromMessageApi {
+			feedApi.pinComment(postId, PinCommentRequest(commentId))
+		}
+
+	override fun unpinComment(postId: UUID): Flow<ResultState<String>> =
+		flowFromMessageApi {
+			feedApi.unpinComment(postId)
 		}
 
 	override fun getComment(request: GetCommentRequest): Flow<ResultState<PaginationResponseWrapper<CommentItem>>> =

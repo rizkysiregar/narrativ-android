@@ -14,6 +14,8 @@ import com.rizkysiregar.narrativ.domain.feed.AddCommentUseCase
 import com.rizkysiregar.narrativ.domain.feed.DeleteCommentUseCase
 import com.rizkysiregar.narrativ.domain.feed.GetCommentUseCase
 import com.rizkysiregar.narrativ.domain.feed.GetRepliesUseCase
+import com.rizkysiregar.narrativ.domain.feed.PinCommentUseCase
+import com.rizkysiregar.narrativ.domain.feed.UnpinCommentUseCase
 import com.rizkysiregar.narrativ.telemetry.AnalyticsEvents
 import com.rizkysiregar.narrativ.telemetry.AppAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,7 +27,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -72,6 +76,8 @@ class CommentViewModel @Inject constructor(
 	private val getRepliesUseCase: GetRepliesUseCase,
 	private val addCommentUseCase: AddCommentUseCase,
 	private val deleteCommentUseCase: DeleteCommentUseCase,
+	private val pinCommentUseCase: PinCommentUseCase,
+	private val unpinCommentUseCase: UnpinCommentUseCase,
 	private val dataStore: DataStoreManager,
 	private val analytics: AppAnalytics,
 	private val appStrings: AppStrings
@@ -96,6 +102,14 @@ class CommentViewModel @Inject constructor(
 	private val _replyTarget = MutableStateFlow<CommentItem?>(null)
 	val replyTarget: StateFlow<CommentItem?> = _replyTarget.asStateFlow()
 
+	// the signed-in user, so the screen knows when it shows their own post (they may pin its comments)
+	val currentUserId: StateFlow<String> = dataStore.get(PrefKeys.userId, "")
+		.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "")
+
+	// words of the caption the next top-level comment quotes; a quote and a reply exclude each other
+	private val _quote = MutableStateFlow<String?>(null)
+	val quote: StateFlow<String?> = _quote.asStateFlow()
+
 	// state for submit or post comment
 	private val _isSubmitting = MutableStateFlow(false)
 	val isSubmitting = _isSubmitting.asStateFlow()
@@ -109,6 +123,7 @@ class CommentViewModel @Inject constructor(
 	private var loadGeneration = 0
 	private val replyJobs = mutableMapOf<String, Job>()
 	private val deleting = mutableSetOf<String>()
+	private var pinJob: Job? = null
 
 	fun loadComments(postId: String, isRefresh: Boolean = false) {
 		if (isRefresh || postId != currentPostId) {
@@ -191,7 +206,47 @@ class CommentViewModel @Inject constructor(
 
 	fun startReply(target: CommentItem) {
 		if (target.isTakenDown) return
+		_quote.value = null
 		_replyTarget.value = target
+	}
+
+	/** Quotes [text] of the caption in the next comment, which then answers the post rather than a comment. */
+	fun startQuote(text: String) {
+		val quote = text.trim().take(MAX_QUOTE_LENGTH)
+		if (quote.isEmpty()) return
+		_replyTarget.value = null
+		_quote.value = quote
+	}
+
+	fun cancelQuote() {
+		_quote.value = null
+	}
+
+	/**
+	 * Pins [comment] on top of the comments, or unpins it when it is the pinned one. Only the post's author may; the
+	 * list changes at once and goes back when the server refuses.
+	 */
+	fun togglePin(postId: String, comment: CommentItem) {
+		if (comment.isReply || comment.isPending || pinJob?.isActive == true) return
+		val before = _comments.value
+		val pin = !comment.pinned
+		_comments.value = withPinned(before, if (pin) comment.id else null)
+		pinJob = viewModelScope.launch {
+			val uuid = UUID.fromString(postId)
+			val request = if (pin) pinCommentUseCase(uuid, UUID.fromString(comment.id)) else unpinCommentUseCase(uuid)
+			when (val result = request.awaitResult()) {
+				is ResultState.Success -> eventChannel.send(
+					CommentEvent.ShowMessage(appStrings.get(if (pin) R.string.comment_pinned else R.string.comment_unpinned))
+				)
+
+				is ResultState.Failure -> {
+					_comments.value = before
+					eventChannel.send(CommentEvent.ShowMessage(result.message))
+				}
+
+				else -> Unit
+			}
+		}
 	}
 
 	fun cancelReply() {
@@ -204,6 +259,8 @@ class CommentViewModel @Inject constructor(
 		if (text.isEmpty() || _isSubmitting.value) return
 
 		val target = _replyTarget.value
+		// a quote answers the post, so it never goes with a reply
+		val quote = _quote.value.takeIf { target == null }
 		_isSubmitting.value = true
 		viewModelScope.launch {
 			val pending = CommentItem(
@@ -216,18 +273,21 @@ class CommentViewModel @Inject constructor(
 				parentId = target?.rootId,
 				replyToCommentId = target?.id,
 				replyToUsername = target?.username,
+				quoteText = quote,
 				isPending = true
 			)
 			val wasExpanded = target != null && _replies.value.containsKey(target.rootId)
 			insertPending(pending, target)
 			_replyTarget.value = null
+			_quote.value = null
 			eventChannel.send(CommentEvent.Sent)
 			eventChannel.send(if (target == null) CommentEvent.ScrollToBottom else CommentEvent.ScrollToLastReply(target.rootId))
 
 			val request = AddCommentRequest(
 				postId = UUID.fromString(postId),
 				content = text,
-				parentId = target?.let { UUID.fromString(it.id) }
+				parentId = target?.let { UUID.fromString(it.id) },
+				quoteText = quote
 			)
 			when (val result = addCommentUseCase(request).awaitResult()) {
 				is ResultState.Success -> {
@@ -241,6 +301,7 @@ class CommentViewModel @Inject constructor(
 					analytics.log(AnalyticsEvents.COMMENT_FAILED, AnalyticsEvents.Param.IS_REPLY to (target != null))
 					removePending(pending, wasExpanded)
 					_replyTarget.value = target
+					_quote.value = quote
 					_isSubmitting.value = false
 					eventChannel.send(CommentEvent.SendFailed(text))
 					eventChannel.send(
@@ -422,3 +483,18 @@ class CommentViewModel @Inject constructor(
 		const val REFRESH_FAILED = "Terkirim, tapi gagal memuat ulang komentar."
 	}
 }
+
+// the server stores a quote in VARCHAR(300)
+const val MAX_QUOTE_LENGTH = 300
+
+/**
+ * The comments as the server lists them with [pinnedId] pinned: the pinned one first, the rest oldest first. Without
+ * a pin every comment goes back to its place.
+ */
+internal fun withPinned(comments: List<CommentItem>, pinnedId: String?): List<CommentItem> {
+	val updated = comments.map { it.copy(pinned = it.id == pinnedId) }
+	val (pinned, rest) = updated.partition { it.pinned }
+	return pinned + rest.sortedWith(compareBy(nullsLast<Instant>()) { it.createdAt?.let(::parseInstantOrNull) })
+}
+
+private fun parseInstantOrNull(value: String): Instant? = runCatching { Instant.parse(value) }.getOrNull()
