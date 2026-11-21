@@ -53,7 +53,6 @@ import androidx.compose.ui.res.stringResource
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 07/10/26
- * Description: Software Engineer
  */
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -14,9 +14,9 @@ import com.rizkysiregar.narrativ.testing.fakes.FakeAppAnalytics
 import com.rizkysiregar.narrativ.testing.fakes.FakeAuthRepository
 import com.rizkysiregar.narrativ.testing.fakes.failureOf
 import com.rizkysiregar.narrativ.testing.fakes.successOf
-import com.rizkysiregar.narrativ.ui.feature.auth.regiter.RegisterState
-import com.rizkysiregar.narrativ.ui.feature.auth.regiter.RegisterStep
-import com.rizkysiregar.narrativ.ui.feature.auth.regiter.RegisterViewModel
+import com.rizkysiregar.narrativ.ui.feature.auth.register.RegisterState
+import com.rizkysiregar.narrativ.ui.feature.auth.register.RegisterStep
+import com.rizkysiregar.narrativ.ui.feature.auth.register.RegisterViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Rule

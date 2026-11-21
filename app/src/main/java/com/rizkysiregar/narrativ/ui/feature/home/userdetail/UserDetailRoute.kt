@@ -18,7 +18,6 @@ import com.rizkysiregar.narrativ.ui.feature.home.feed.PostViewMode
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 07/10/26
- * Description: Software Engineer
  */
 
 @Composable

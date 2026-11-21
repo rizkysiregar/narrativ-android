@@ -1,4 +1,4 @@
-package com.rizkysiregar.narrativ.ui.feature.auth.regiter
+package com.rizkysiregar.narrativ.ui.feature.auth.register
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -21,7 +21,6 @@ import com.rizkysiregar.narrativ.R
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 24/02/26
- * Description: Software Engineer
  */
 
 
@@ -44,7 +43,6 @@ fun RegisterRoute(
 
 	LaunchedEffect(registerState) {
 		if (registerState is ResultState.Success) {
-			println("## register success")
 			Toast.makeText(
 				context, resources.getString(R.string.registration_success), Toast.LENGTH_SHORT
 			).show()

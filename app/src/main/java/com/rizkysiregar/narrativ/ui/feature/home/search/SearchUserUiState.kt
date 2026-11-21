@@ -5,7 +5,6 @@ import com.rizkysiregar.narrativ.data.remote.model.response.user.UserSearchItemR
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 07/10/26
- * Description: Software Engineer
  */
 data class SearchUserUiState(
 	val query: String = "",

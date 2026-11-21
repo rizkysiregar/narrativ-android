@@ -21,7 +21,6 @@ import retrofit2.http.POST
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 18/08/25
- * Description: Software Engineer
  */
 interface AuthApi {
 

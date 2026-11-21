@@ -12,7 +12,6 @@ import javax.inject.Inject
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 10/10/26
- * Description: Software Engineer
  */
 class PostRepositoryImpl @Inject constructor(
 	private val retrofit: Retrofit

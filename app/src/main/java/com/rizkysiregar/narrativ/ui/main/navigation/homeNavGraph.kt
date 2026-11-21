@@ -11,7 +11,6 @@ import com.rizkysiregar.narrativ.ui.main.navigation.routes.HomePathRoute
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 19/11/25
- * Description: Software Engineer
  */
 
 

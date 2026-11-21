@@ -24,7 +24,6 @@ import retrofit2.http.Query
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 04/01/26
- * Description: Software Engineer
  */
 
 interface UserApi {

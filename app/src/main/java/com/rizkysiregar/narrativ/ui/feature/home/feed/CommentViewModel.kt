@@ -41,7 +41,6 @@ import com.rizkysiregar.narrativ.R
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 08/03/26
- * Description: Software Engineer
  */
 
 /** Replies of one top-level comment. A comment is expanded exactly when it has an entry in [CommentViewModel.replies]. */

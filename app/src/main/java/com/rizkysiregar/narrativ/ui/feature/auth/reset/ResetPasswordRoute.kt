@@ -18,7 +18,6 @@ import com.rizkysiregar.narrativ.R
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 03/03/26
- * Description: Software Engineer
  */
 
 @Composable
@@ -45,7 +44,6 @@ fun ResetPasswordRoute(
 
 	LaunchedEffect(resetState) {
 		if (currentStep == ResetPasswordStep.FINISH && resetState is ResultState.Success) {
-			println("## Reset Password Success ##")
 
 			Toast.makeText(
 				context,

@@ -12,7 +12,6 @@ import androidx.annotation.StringRes
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 21/11/25
- * Description: Software Engineer
  */
 
 sealed class BottomNavScreen(

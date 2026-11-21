@@ -10,7 +10,6 @@ import javax.inject.Inject
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 03/03/26
- * Description: Software Engineer
  */
 
 class VerifyOtpResetPasswordUseCase @Inject constructor(

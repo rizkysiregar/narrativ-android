@@ -21,7 +21,6 @@ private const val FOLD_MILLIS = 320
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 06/12/25
- * Description: Software Engineer
  */
 
 

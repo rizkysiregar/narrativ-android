@@ -17,7 +17,6 @@ import com.rizkysiregar.narrativ.ui.theme.NarrativTheme
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 03/03/26
- * Description: Software Engineer
  */
 
 @Composable

@@ -17,7 +17,6 @@ import com.rizkysiregar.narrativ.ui.feature.common.ErrorDialog
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 15/11/25
- * Description: Software Engineer
  */
 
 

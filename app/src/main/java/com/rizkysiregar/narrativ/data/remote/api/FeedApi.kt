@@ -20,7 +20,6 @@ import java.util.UUID
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 22/11/25
- * Description: Software Engineer
  */
 interface FeedApi {
 

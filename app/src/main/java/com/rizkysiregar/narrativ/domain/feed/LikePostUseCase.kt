@@ -9,7 +9,6 @@ import javax.inject.Inject
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 05/03/26
- * Description: Software Engineer
  */
 
 class LikePostUseCase @Inject constructor(

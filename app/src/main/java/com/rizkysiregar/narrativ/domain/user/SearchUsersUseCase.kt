@@ -11,7 +11,6 @@ import javax.inject.Inject
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 07/10/26
- * Description: Software Engineer
  */
 class SearchUsersUseCase @Inject constructor(
 	private val repository: UserRepository

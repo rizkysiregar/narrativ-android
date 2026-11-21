@@ -2,10 +2,9 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
 /*
-*  Build Types > debug, release
-*  Product Flavours > dev, staging, prod
-*
-* */
+ * Build types: debug, release
+ * Product flavors (dimension "env"): local (emulator backend), dev, prod
+ */
 
 
 plugins {
@@ -72,7 +71,7 @@ kover {
 }
 
 // A floor per area, a little under where it is today, so coverage there only ever goes up. Kover's own verify rules
-// cannot filter per rule, so this reads its XML report. What matters is the risk (see TEST_PLAN.md), not the total:
+// cannot filter per rule, so this reads its XML report. What matters is the risk (see docs/TEST_PLAN.md), not the total:
 // the total is only a net.
 val coverageFloors = listOf(
 	Triple("network and background work", listOf("data/remote"), 90),
@@ -310,7 +309,6 @@ dependencies {
 
 	// --- Networking (Retrofit + OkHttp) ---
 	implementation(libs.retrofit)
-	implementation(libs.retrofit.moshi)
 	implementation(libs.retrofit.gson)
 	implementation(libs.okhttp)
 	implementation(libs.okhttp.logging)
@@ -366,9 +364,7 @@ dependencies {
 
 
 	// Credential Manager for Google Sign-In
-	implementation("androidx.credentials:credentials:1.6.0")
-	implementation("androidx.credentials:credentials-play-services-auth:1.6.0")
-	implementation("com.google.android.libraries.identity.googleid:googleid:1.2.0")
-
-
+	implementation(libs.androidx.credentials)
+	implementation(libs.androidx.credentials.play.services.auth)
+	implementation(libs.googleid)
 }

@@ -11,7 +11,6 @@ import javax.inject.Inject
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 18/08/25
- * Description: Software Engineer
  */
 
 class AuthInterceptor @Inject constructor(

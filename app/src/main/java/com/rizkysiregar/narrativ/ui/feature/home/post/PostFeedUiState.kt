@@ -11,7 +11,6 @@ const val MAX_CAPTION_LENGTH = 500
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 07/12/25
- * Description: Software Engineer
  */
 data class PostFeedUiState(
 	// 0..MAX_POST_MEDIA, in the order they will be shown; a post may also be caption only
