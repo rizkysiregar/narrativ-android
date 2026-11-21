@@ -125,8 +125,9 @@ fun PostThreadDestination(
 	onMediaClick: (post: FeedContentItem, onLike: (String) -> Unit, page: Int) -> Unit,
 	viewModel: PostThreadViewModel = hiltViewModel()
 ) {
-	// read the hand-over in the first composition, so a post opened from a list shows without a spinner
-	remember(postId) { viewModel.start(postId, handoff.postFor(postId), handoff.likeHandlerFor(postId)) }
+	// read the hand-over in the first composition, so a post opened from a list shows without a spinner;
+	// start() only acts on the first call for a post, so recompositions change nothing
+	viewModel.start(postId, handoff.postFor(postId), handoff.likeHandlerFor(postId))
 	val state by viewModel.state.collectAsStateWithLifecycle()
 
 	when (val current = state) {
