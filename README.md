@@ -58,20 +58,20 @@ The app follows the layering from Google's guide to app architecture: a **UI lay
 ```mermaid
 flowchart TD
     subgraph UI["UI layer: ui/"]
-        Route["Route\n(collects state, navigation)"] --> Screen["Screen\n(stateless Composable)"]
-        Route --> VM["ViewModel\nStateFlow&lt;UiState&gt;"]
+        Route["Route<br/>(collects state, navigation)"] --> Screen["Screen<br/>(stateless Composable)"]
+        Route --> VM["ViewModel<br/>StateFlow&lt;UiState&gt;"]
     end
 
     subgraph Domain["Domain layer: domain/"]
-        UC["Use cases\nLoginUseCase, GetAllFeedUseCase, ..."]
+        UC["Use cases<br/>LoginUseCase, GetAllFeedUseCase, ..."]
         UM["UploadManager"]
     end
 
     subgraph Data["Data layer: data/"]
-        Repo["Repository interfaces\n+ impl/"]
+        Repo["Repository interfaces<br/>+ impl/"]
         API["Retrofit APIs"]
-        DS["DataStore\n(session)"]
-        Worker["PostUploadWorker\n(WorkManager)"]
+        DS["DataStore<br/>(session)"]
+        Worker["PostUploadWorker<br/>(WorkManager)"]
     end
 
     VM --> UC
@@ -80,9 +80,9 @@ flowchart TD
     UM --> Worker
     Repo --> API
     Worker --> API
-    API --> OkHttp["OkHttp\nApp Check → Language → Auth → Chucker"]
+    API --> OkHttp["OkHttp<br/>App Check → Language → Auth → Chucker"]
     OkHttp --> Backend[("NARRATIV backend")]
-    Worker --> Storage[("Object storage\npresigned upload")]
+    Worker --> Storage[("Object storage<br/>presigned upload")]
 ```
 
 ### Package layout
