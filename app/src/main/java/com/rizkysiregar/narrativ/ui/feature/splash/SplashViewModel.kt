@@ -19,7 +19,6 @@ import javax.inject.Inject
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 18/11/25
- * Description: Software Engineer
  */
 
 @HiltViewModel

@@ -1,4 +1,4 @@
-package com.rizkysiregar.narrativ.ui.feature.auth.regiter
+package com.rizkysiregar.narrativ.ui.feature.auth.register
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -21,7 +21,6 @@ import javax.inject.Inject
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 15/11/26
- * Description: Software Engineer
  */
 
 enum class RegisterStep { FORM, OTP_VERIFICATION }

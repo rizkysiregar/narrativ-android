@@ -9,7 +9,6 @@ import javax.inject.Inject
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 04/01/26
- * Description: Software Engineer
  */
 class FetchUserProfileUseCase @Inject constructor(
 	private val repo: UserRepository

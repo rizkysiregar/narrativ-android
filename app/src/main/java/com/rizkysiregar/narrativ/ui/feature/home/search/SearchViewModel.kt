@@ -21,7 +21,6 @@ import javax.inject.Inject
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 07/10/26
- * Description: Software Engineer
  */
 @HiltViewModel
 class SearchViewModel @Inject constructor(

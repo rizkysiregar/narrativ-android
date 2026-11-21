@@ -7,7 +7,6 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 18/11/25
- * Description: Software Engineer
  */
 object PrefKeys {
 	val isLoggedIn = booleanPreferencesKey("is_logged_in")

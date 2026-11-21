@@ -40,7 +40,6 @@ import androidx.compose.ui.res.stringResource
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 02/03/26
- * Description: Software Engineer
  */
 
 @Composable

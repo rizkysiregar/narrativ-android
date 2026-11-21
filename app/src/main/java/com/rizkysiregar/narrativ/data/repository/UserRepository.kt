@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 04/01/26
- * Description: Software Engineer
  */
 interface UserRepository {
 	/** Each of these throws when the call fails, like [PostRepository.createUploadUrl]. */

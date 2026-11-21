@@ -33,7 +33,6 @@ import com.rizkysiregar.narrativ.R
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 06/12/25
- * Description: Software Engineer
  */
 
 @HiltViewModel

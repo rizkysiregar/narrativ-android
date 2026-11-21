@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.stateIn
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 11/01/26
- * Description: Software Engineer
  */
 
 

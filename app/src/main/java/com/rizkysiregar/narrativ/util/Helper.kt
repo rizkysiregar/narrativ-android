@@ -5,7 +5,6 @@ import java.net.URLEncoder
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 05/12/25
- * Description: Software Engineer
  */
 
 

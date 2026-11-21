@@ -11,7 +11,6 @@ import javax.inject.Inject
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 07/03/26
- * Description: Software Engineer
  */
 class GetCommentUseCase @Inject constructor(
 	private val repository: FeedRepository

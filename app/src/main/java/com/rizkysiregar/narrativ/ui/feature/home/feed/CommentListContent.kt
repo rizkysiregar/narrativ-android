@@ -29,7 +29,6 @@ import com.rizkysiregar.narrativ.R
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 08/03/26
- * Description: Software Engineer
  */
 
 /**

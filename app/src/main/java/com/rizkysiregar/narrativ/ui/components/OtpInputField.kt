@@ -25,7 +25,6 @@ import com.rizkysiregar.narrativ.ui.theme.NarrativTheme
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 02/03/26
- * Description: Software Engineer
  */
 
 private const val OTP_LENGTH = 6

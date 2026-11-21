@@ -24,7 +24,6 @@ import com.rizkysiregar.narrativ.R
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 15/11/26
- * Description: Software Engineer
  */
 
 val QUICK_EMOJIS = listOf("😂", "❤️", "👍", "🔥", "😮", "😢", "🙏", "👏", "🎉", "😍")

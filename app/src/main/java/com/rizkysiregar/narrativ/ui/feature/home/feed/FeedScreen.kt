@@ -60,7 +60,6 @@ import androidx.compose.ui.res.stringResource
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 22/11/25
- * Description: Software Engineer
  */
 
 private const val PRELOAD_DEBOUNCE_MS = 300L

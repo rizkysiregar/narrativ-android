@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.collectAsState
 import androidx.core.content.ContextCompat
 import com.rizkysiregar.narrativ.notification.PushNotifications
@@ -64,7 +65,6 @@ import com.rizkysiregar.narrativ.ui.main.navigation.routes.HomePathRoute
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 19/11/25
- * Description: Software Engineer
  */
 
 
@@ -241,10 +241,11 @@ fun HomeRoot(
 				}
 				composable(HomePathRoute.ChangeEmail.route) {
 					val context = LocalContext.current
+					val emailChanged = stringResource(R.string.email_changed)
 					ChangeEmailRoute(
 						onBackClick = { homeNavController.popBackStack() },
 						onChanged = {
-							Toast.makeText(context, context.getString(R.string.email_changed), Toast.LENGTH_LONG).show()
+							Toast.makeText(context, emailChanged, Toast.LENGTH_LONG).show()
 							homeNavController.popBackStack()
 						}
 					)

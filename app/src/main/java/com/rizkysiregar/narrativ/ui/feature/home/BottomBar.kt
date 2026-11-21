@@ -45,7 +45,6 @@ import com.rizkysiregar.narrativ.R
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 21/11/25
- * Description: Software Engineer
  */
 
 private val BarHeight = 52.dp

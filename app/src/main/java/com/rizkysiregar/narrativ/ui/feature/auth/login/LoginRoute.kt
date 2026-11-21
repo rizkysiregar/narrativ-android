@@ -19,7 +19,6 @@ import com.rizkysiregar.narrativ.R
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 15/11/25
- * Description: Software Engineer
  */
 
 
@@ -102,7 +101,6 @@ fun LoginRoute(
 				navController.navigate(AuthPathRoutes.ResetPassword.route)
 			},
 			onGoogleLoginClick = {
-				println("google login")
 				viewModel.signInWithGoogle()
 			}
 		)

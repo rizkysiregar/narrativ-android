@@ -58,7 +58,6 @@ import androidx.compose.ui.res.stringResource
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 15/11/26
- * Description: Software Engineer
  */
 
 private const val BRAND = "narrativ"

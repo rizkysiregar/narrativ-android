@@ -9,7 +9,6 @@ import javax.inject.Inject
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 27/02/26
- * Description: Software Engineer
  */
 class RegisterUseCase @Inject constructor(
 	private val authRepository: AuthRepository

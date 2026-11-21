@@ -23,7 +23,6 @@ import javax.inject.Singleton
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 18/08/25
- * Description: Software Engineer
  */
 
 @Module

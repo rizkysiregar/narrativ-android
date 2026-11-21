@@ -42,7 +42,6 @@ import androidx.compose.ui.res.stringResource
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 16/11/25
- * Description: Software Engineer
  */
 
 /**

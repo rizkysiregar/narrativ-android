@@ -29,7 +29,6 @@ import com.rizkysiregar.narrativ.ui.main.navigation.routes.AuthPathRoutes
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 18/11/25
- * Description: Software Engineer
  */
 
 

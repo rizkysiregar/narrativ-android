@@ -82,11 +82,11 @@ class AuthViewModel @Inject constructor(
                     _googleLoginState.value = result
                 }
             } catch (gce: GetCredentialException) {
-                println("error.gce: ${gce.message}")
+                Log.w(TAG, "Google sign-in: credential request failed", gce)
                 _googleLoginState.value =
                     ResultState.Failure(gce.message ?: appStrings.get(R.string.error_google_sign_in))
             } catch (e: Exception) {
-                println("error.e: ${e.message}")
+                Log.w(TAG, "Google sign-in failed", e)
                 _googleLoginState.value = ResultState.Failure(e.message ?: appStrings.get(R.string.error_generic))
             }
         }
@@ -115,5 +115,7 @@ class AuthViewModel @Inject constructor(
         deviceSyncScheduler.schedule(force = true)
     }
 
+    private companion object {
+        const val TAG = "AuthViewModel"
+    }
 }
-

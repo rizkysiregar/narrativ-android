@@ -350,6 +350,44 @@ class RepositoryImplTest {
 		assertThat(post).hasMessageThat().isEqualTo("tidak ada data")
 	}
 
+	// --- notifications ---
+
+	@Test
+	fun theInboxIsPagedByCursor() = runTest {
+		body = """{"code":"200","message":"OK","data":{"content":[],"last":false,"nextCursor":"c2"}}"""
+		val repo = NotificationRepositoryImpl(retrofit)
+
+		repo.getNotifications(cursor = null, size = 20).last()
+		val result = repo.getNotifications(cursor = "c2", size = 20).last()
+
+		assertThat(sent().line()).isEqualTo("GET /users/me/notifications?size=20")
+		assertThat(sent().line()).isEqualTo("GET /users/me/notifications?cursor=c2&size=20")
+		assertThat((result as ResultState.Success).data.nextCursor).isEqualTo("c2")
+	}
+
+	@Test
+	fun theUnreadCountIsRead() = runTest {
+		body = """{"code":"200","message":"OK","data":{"unread":7}}"""
+
+		val result = NotificationRepositoryImpl(retrofit).getUnreadCount().last()
+
+		assertThat(sent().line()).isEqualTo("GET /users/me/notifications/unread-count")
+		assertThat((result as ResultState.Success).data.unread).isEqualTo(7)
+	}
+
+	@Test
+	fun markingReadSendsTheGroupOrEverything() = runTest {
+		val repo = NotificationRepositoryImpl(retrofit)
+
+		repo.markRead("like:p1").last()
+		repo.markAllRead().last()
+
+		val one = sent()
+		assertThat(one.line()).isEqualTo("POST /users/me/notifications/read")
+		assertThat(one.body!!.utf8()).isEqualTo("""{"groupKey":"like:p1"}""")
+		assertThat(sent().line()).isEqualTo("POST /users/me/notifications/read-all")
+	}
+
 	private companion object {
 		const val ACTION_OK = """{"code":"200","message":"ok","data":null}"""
 	}

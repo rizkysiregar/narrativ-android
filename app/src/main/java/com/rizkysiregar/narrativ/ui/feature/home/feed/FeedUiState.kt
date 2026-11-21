@@ -5,7 +5,6 @@ import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedContentItem
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 23/11/25
- * Description: Software Engineer
  */
 data class FeedUiState(
 	val items: List<FeedContentItem> = emptyList(),

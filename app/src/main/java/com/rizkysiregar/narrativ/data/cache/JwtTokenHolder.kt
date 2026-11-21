@@ -6,7 +6,6 @@ import javax.inject.Singleton
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 24/11/25
- * Description: Software Engineer
  */
 
 

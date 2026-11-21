@@ -10,7 +10,6 @@ import javax.inject.Inject
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 15/11/26
- * Description: Software Engineer
  */
 class VerifyRegisterOtpUseCase @Inject constructor(
 	private val authRepository: AuthRepository

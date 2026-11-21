@@ -3,7 +3,6 @@ package com.rizkysiregar.narrativ.ui.main.navigation.routes
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 21/11/25
- * Description: Software Engineer
  */
 
 sealed class HomePathRoute(val route: String) {

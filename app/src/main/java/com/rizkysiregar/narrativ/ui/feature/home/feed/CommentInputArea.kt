@@ -46,7 +46,6 @@ import com.rizkysiregar.narrativ.R
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 08/03/26
- * Description: Software Engineer
  */
 
 // the server stores a comment in VARCHAR(255): longer text would be rejected with a server error

@@ -5,7 +5,6 @@ import java.util.UUID
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 05/03/26
- * Description: Software Engineer
  */
 data class LikeFeedRequest(
 	val postId: UUID

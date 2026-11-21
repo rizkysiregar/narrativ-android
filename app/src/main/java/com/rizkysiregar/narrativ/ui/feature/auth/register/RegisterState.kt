@@ -1,9 +1,8 @@
-package com.rizkysiregar.narrativ.ui.feature.auth.regiter
+package com.rizkysiregar.narrativ.ui.feature.auth.register
 
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 24/02/26
- * Description: Software Engineer
  */
 data class RegisterState(
 	val firstName: String = "",

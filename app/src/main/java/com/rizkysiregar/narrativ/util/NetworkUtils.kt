@@ -15,7 +15,6 @@ import java.io.IOException
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 20/11/25
- * Description: Software Engineer
  */
 
 suspend fun <T> safeApiCall(

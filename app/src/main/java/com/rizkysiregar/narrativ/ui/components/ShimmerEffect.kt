@@ -18,7 +18,6 @@ import androidx.compose.ui.graphics.Color
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 27/02/26
- * Description: Software Engineer
  */
 
 @Composable

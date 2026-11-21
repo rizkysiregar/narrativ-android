@@ -1,4 +1,4 @@
-package com.rizkysiregar.narrativ.ui.feature.auth.regiter
+package com.rizkysiregar.narrativ.ui.feature.auth.register
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -67,7 +67,6 @@ import androidx.compose.ui.platform.LocalResources
 /**
  * Author: Habib Rizky Almajid Siregar
  * Date: 24/02/26
- * Description: Software Engineer
  */
 @Composable
 fun RegisterScreen(
