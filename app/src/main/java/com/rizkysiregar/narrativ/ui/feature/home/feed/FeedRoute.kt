@@ -26,7 +26,9 @@ fun FeedRoute(
 	onUserClick: (userId: String, username: String) -> Unit,
 	onNotificationsClick: () -> Unit,
 	unreadNotifications: Int,
-	navController: NavController
+	navController: NavController,
+	unreadMessages: Int = 0,
+	onMessagesClick: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
@@ -83,6 +85,8 @@ fun FeedRoute(
 		onAuthorClick = onUserClick,
 		unreadNotifications = unreadNotifications,
 		onNotificationsClick = onNotificationsClick,
+		unreadMessages = unreadMessages,
+		onMessagesClick = onMessagesClick,
 		onPostClick = { post -> postOpener.thread(post, viewModel::toggleLike) },
 		onCommentClick = { post -> postOpener.thread(post, viewModel::toggleLike, openComments = true) },
 		onMediaClick = { post, page -> postOpener.media(post, viewModel::toggleLike, page) }

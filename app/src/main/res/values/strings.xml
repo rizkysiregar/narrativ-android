@@ -315,4 +315,46 @@
     <string name="notif_replied">%1$s replied to your comment</string>
     <string name="notif_followed">%1$s started following you</string>
     <string name="notif_pinned">%1$s pinned your comment</string>
+
+    <!-- Chat (Marpokat) -->
+    <string name="chat_title">Messages</string>
+    <string name="chat_empty_title">No conversations yet</string>
+    <string name="chat_empty">Open someone\'s profile and tap Message to start one.</string>
+    <string name="chat_unavailable_title">Chat is not available</string>
+    <string name="chat_unavailable">Messages are switched off or cannot be reached right now.</string>
+    <string name="chat_offline">Waiting for connection…</string>
+    <string name="chat_no_messages">No messages yet</string>
+    <string name="chat_message_hint">Message</string>
+    <string name="chat_send">Send</string>
+    <string name="chat_attach">Attach a file</string>
+    <string name="chat_deleted">This message was deleted</string>
+    <string name="chat_edited">edited</string>
+    <string name="chat_replying_to">Replying to %1$s</string>
+    <string name="chat_editing">Editing message</string>
+    <string name="chat_sending">Sending…</string>
+    <string name="chat_send_failed">Could not be sent</string>
+    <string name="chat_discard">Discard</string>
+    <string name="chat_load_earlier">Load earlier messages</string>
+    <string name="chat_typing">%1$s typing…</string>
+    <string name="chat_frozen">You can no longer send messages in this conversation.</string>
+    <string name="chat_photo">Photo</string>
+    <string name="chat_video">Video</string>
+    <string name="chat_file">File</string>
+    <string name="chat_processing">Processing…</string>
+    <string name="chat_attachment_failed">This file could not be processed</string>
+    <string name="chat_reply">Reply</string>
+    <string name="chat_edit">Edit</string>
+    <string name="chat_delete_title">Delete this message?</string>
+    <string name="chat_delete_body">It disappears for everyone in the conversation.</string>
+    <string name="chat_problem_open">Could not open this conversation.</string>
+    <string name="chat_problem_upload">The file could not be uploaded.</string>
+    <string name="chat_problem_file">This file cannot be read.</string>
+    <string name="chat_problem_action">That did not work. Try again.</string>
+    <string name="chat_message_button">Message</string>
+    <string name="cd_messages">Messages</string>
+    <string name="chat_push_channel">Messages</string>
+    <string name="chat_open_failed">Could not open the conversation. Try again later.</string>
+    <string name="chat_open_not_found">You cannot message this person.</string>
+    <string name="chat_remove_upload">Remove attachment</string>
+    <string name="chat_online">Online</string>
 </resources>

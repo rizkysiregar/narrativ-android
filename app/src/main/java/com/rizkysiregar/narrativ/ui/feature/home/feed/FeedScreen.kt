@@ -78,6 +78,8 @@ fun FeedScreen(
 	onSearchClick: () -> Unit = {},
 	unreadNotifications: Int = 0,
 	onNotificationsClick: () -> Unit = {},
+	unreadMessages: Int = 0,
+	onMessagesClick: () -> Unit = {},
 	onAuthorClick: ((userId: String, username: String) -> Unit)? = null,
 	player: ExoPlayer? = null,
 	onPostClick: (FeedContentItem) -> Unit = {},
@@ -194,7 +196,9 @@ fun FeedScreen(
 		isRefreshing = uiState.isRefreshing,
 		onSearchClick = onSearchClick,
 		unreadNotifications = unreadNotifications,
-		onNotificationsClick = onNotificationsClick
+		onNotificationsClick = onNotificationsClick,
+		unreadMessages = unreadMessages,
+		onMessagesClick = onMessagesClick
 	)
 	Box(
 		modifier = Modifier

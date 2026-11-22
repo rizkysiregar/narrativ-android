@@ -27,7 +27,9 @@ fun UserDetailRoute(
 	onBackClick: () -> Unit,
 	onFollowersClick: (String) -> Unit = {},
 	onFollowingClick: (String) -> Unit = {},
+	onOpenChat: (channelId: String) -> Unit = {},
 	postOpener: PostOpener,
+	openChatViewModel: com.rizkysiregar.narrativ.ui.feature.home.chat.OpenChatViewModel = hiltViewModel(),
 	detailViewModel: UserDetailViewModel = hiltViewModel(),
 	feedViewModel: UserDetailFeedViewModel = hiltViewModel()
 ) {
@@ -37,6 +39,20 @@ fun UserDetailRoute(
 	val followStatus by detailViewModel.followStatus.collectAsState()
 	val isFollowActionLoading by detailViewModel.isFollowActionLoading.collectAsState()
 	val currentUserId by detailViewModel.userId.collectAsState()
+	val openChat by openChatViewModel.state.collectAsState()
+	val context = androidx.compose.ui.platform.LocalContext.current
+	val failedMessage = androidx.compose.ui.res.stringResource(com.rizkysiregar.narrativ.R.string.chat_open_failed)
+	val notFoundMessage = androidx.compose.ui.res.stringResource(com.rizkysiregar.narrativ.R.string.chat_open_not_found)
+	LaunchedEffect(openChat) {
+		when (val result = openChat) {
+			is com.rizkysiregar.narrativ.ui.feature.home.chat.OpenChatState.Opened -> { openChatViewModel.consumed(); onOpenChat(result.channelId) }
+			is com.rizkysiregar.narrativ.ui.feature.home.chat.OpenChatState.Failed -> {
+				android.widget.Toast.makeText(context, if (result.notFound) notFoundMessage else failedMessage, android.widget.Toast.LENGTH_LONG).show()
+				openChatViewModel.consumed()
+			}
+			else -> Unit
+		}
+	}
 	val pagerState = rememberPagerState(initialPage = PostViewMode.GRID.ordinal) { PostViewMode.entries.size }
 
 	LaunchedEffect(userId) {
@@ -76,6 +92,8 @@ fun UserDetailRoute(
 			onLoadMoreList = feedViewModel::loadNextPage,
 			onLikeClick = feedViewModel::toggleLike,
 			followStatus = followStatus,
+			onMessageClick = { openChatViewModel.open(userId) },
+			isOpeningChat = openChat is com.rizkysiregar.narrativ.ui.feature.home.chat.OpenChatState.Opening,
 			isFollowActionLoading = isFollowActionLoading,
 			isOwnProfile = currentUserId.isNotBlank() && currentUserId == userId,
 			onFollowClick = { detailViewModel.toggleFollow(userId) },

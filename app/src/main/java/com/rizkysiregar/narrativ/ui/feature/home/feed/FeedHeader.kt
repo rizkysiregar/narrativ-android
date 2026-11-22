@@ -26,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Badge
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -92,7 +93,9 @@ fun FeedHeader(
 	onSearchClick: () -> Unit,
 	modifier: Modifier = Modifier,
 	unreadNotifications: Int = 0,
-	onNotificationsClick: () -> Unit = {}
+	onNotificationsClick: () -> Unit = {},
+	unreadMessages: Int = 0,
+	onMessagesClick: () -> Unit = {}
 ) {
 	Box(
 		modifier = modifier
@@ -106,6 +109,17 @@ fun FeedHeader(
 			modifier = Modifier.align(Alignment.Center)
 		)
 		Row(modifier = Modifier.align(Alignment.CenterEnd)) {
+			IconButton(onClick = onMessagesClick) {
+				BadgedBox(
+					badge = {
+						if (unreadMessages > 0) {
+							Badge { Text(if (unreadMessages > 99) "99+" else unreadMessages.toString()) }
+						}
+					}
+				) {
+					Icon(imageVector = Icons.Outlined.ChatBubbleOutline, contentDescription = stringResource(R.string.cd_messages))
+				}
+			}
 			IconButton(onClick = onNotificationsClick) {
 				BadgedBox(
 					badge = {

@@ -19,13 +19,16 @@ import javax.inject.Singleton
 class ApiRemoteSessionCleaner @Inject constructor(
 	private val dataStore: DataStoreManager,
 	private val pushTokens: PushTokenProvider,
-	retrofit: Retrofit
+	retrofit: Retrofit,
+	private val chat: com.rizkysiregar.narrativ.chat.ChatSession
 ) : RemoteSessionCleaner {
 	private val authApi: AuthApi by lazy { retrofit.create(AuthApi::class.java) }
 	private val deviceApi: DeviceApi by lazy { retrofit.create(DeviceApi::class.java) }
 
 	override suspend fun signOut() {
 		withTimeoutOrNull(TIMEOUT_MS) {
+			// chat first: it removes its own push registration and local conversations, and needs the chat token
+			attempt("sign out of chat") { chat.signOut() }
 			// the device first: it needs the access token, which the logout call does not
 			attempt("deactivate device") {
 				val pushToken = pushTokens.token()

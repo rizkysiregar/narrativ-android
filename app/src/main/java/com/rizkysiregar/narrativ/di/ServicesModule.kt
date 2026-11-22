@@ -60,6 +60,18 @@ abstract class ServicesModule {
 
 	@Binds
 	@Singleton
+	abstract fun bindChatSession(impl: com.rizkysiregar.narrativ.chat.MarpokatChatSession): com.rizkysiregar.narrativ.chat.ChatSession
+
+	@Binds
+	@Singleton
+	abstract fun bindChatAttachmentReader(impl: com.rizkysiregar.narrativ.chat.ContentResolverAttachmentReader): com.rizkysiregar.narrativ.chat.ChatAttachmentReader
+
+	@Binds
+	@Singleton
+	abstract fun bindChatClientFactory(impl: com.rizkysiregar.narrativ.chat.AndroidChatClientFactory): com.rizkysiregar.narrativ.chat.ChatClientFactory
+
+	@Binds
+	@Singleton
 	abstract fun bindDeviceRegistrar(impl: ApiDeviceRegistrar): DeviceRegistrar
 
 	@Binds

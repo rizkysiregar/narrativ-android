@@ -2,6 +2,8 @@ package com.rizkysiregar.narrativ.notification
 
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.rizkysiregar.marpokat.android.MarpokatPush
+import com.rizkysiregar.narrativ.chat.ChatSession
 import com.rizkysiregar.narrativ.data.remote.DeviceSyncScheduler
 import com.rizkysiregar.narrativ.domain.notification.UnreadNotifications
 import dagger.hilt.android.AndroidEntryPoint
@@ -17,13 +19,24 @@ class NarrativMessagingService : FirebaseMessagingService() {
 	@Inject
 	lateinit var unreadNotifications: UnreadNotifications
 
+	@Inject
+	lateinit var chatSession: ChatSession
+
 	override fun onNewToken(token: String) {
 		deviceSyncScheduler.schedule()
+		chatSession.onPushToken(token)
 	}
 
 	// Only called for a notification message while the app is in the foreground; in the background FCM
 	// shows it by itself.
 	override fun onMessageReceived(message: RemoteMessage) {
+		// a chat message (Marpokat sends data messages, so this runs in the background too)
+		if (MarpokatPush.isMarpokat(message.data)) {
+			val push = MarpokatPush.parse(message.data) ?: return
+			// the conversation is on screen: the message is right there, a notification would only be noise
+			if (chatSession.visibleChannelId != push.channelId) PushNotifications.showChat(this, push, message.data)
+			return
+		}
 		// a like, comment or follow just landed in the inbox: the bell shows it while the app is open
 		unreadNotifications.refresh()
 		val notification = message.notification ?: return

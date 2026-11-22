@@ -32,6 +32,16 @@ sealed class HomePathRoute(val route: String) {
 	object Profile : MainPathRoute("profile")
 	object Settings : HomePathRoute("settings")
 	object Notifications : HomePathRoute("notifications")
+
+	/** The list of conversations. */
+	object Chats : HomePathRoute("chats")
+
+	/** One conversation. */
+	object ChatThread : HomePathRoute("chat/{channelId}") {
+		const val ARG_CHANNEL_ID = "channelId"
+
+		fun create(channelId: String): String = "chat/$channelId"
+	}
 	object BlockedUsers : HomePathRoute("blocked_users")
 	object ChangeEmail : HomePathRoute("change_email")
 

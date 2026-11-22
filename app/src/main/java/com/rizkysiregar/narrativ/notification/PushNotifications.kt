@@ -37,10 +37,15 @@ object PushNotifications {
 	// A channel's sound and importance are fixed once it exists, so changing either needs a new id; the old
 	// ones are deleted. v3 is IMPORTANCE_HIGH, which is what lets a push pop up on screen (heads-up).
 	const val CHANNEL_GENERAL = "general_v3"
+
+	/** Chat messages (Marpokat), its own channel so the user can silence chat without silencing likes and comments. */
+	const val CHANNEL_CHAT = "chat_v1"
 	private val CHANNELS_LEGACY = listOf("general", "general_v2")
 
 	private val VIBRATION_PATTERN = longArrayOf(0, 250, 150, 250)
 
+	private const val KEY_MARPOKAT = "marpokat"
+	private const val KEY_CHAT_CHANNEL_ID = "channel_id"
 	private const val KEY_TYPE = "type"
 	private const val KEY_POST_ID = "postId"
 	private const val KEY_COMMENT_ID = "commentId"
@@ -67,6 +72,9 @@ object PushNotifications {
 
 		/** The person behind a push that carries no post id (pushes sent before it was added). */
 		data class Profile(val userId: String, val username: String) : PushTarget
+
+		/** A conversation: a chat message push (Marpokat). */
+		data class Chat(val channelId: String) : PushTarget
 	}
 
 	private val pending = MutableStateFlow<PushTarget?>(null)
@@ -81,6 +89,12 @@ object PushNotifications {
 		val context = AppStrings.localized(appContext)
 		val manager = context.getSystemService(NotificationManager::class.java) ?: return
 		CHANNELS_LEGACY.forEach(manager::deleteNotificationChannel)
+		manager.createNotificationChannel(
+			NotificationChannel(CHANNEL_CHAT, context.getString(R.string.chat_push_channel), NotificationManager.IMPORTANCE_HIGH).apply {
+				enableVibration(true)
+				vibrationPattern = VIBRATION_PATTERN
+			}
+		)
 		manager.createNotificationChannel(
 			NotificationChannel(
 				CHANNEL_GENERAL,
@@ -135,6 +149,45 @@ object PushNotifications {
 		NotificationManagerCompat.from(context).notify(id, notification)
 	}
 
+	/**
+	 * Posts a chat message push. One notification per conversation: a new message replaces the last one of that
+	 * conversation instead of stacking. Does nothing without the notification permission.
+	 */
+	fun showChat(context: Context, push: com.rizkysiregar.marpokat.android.PushMessage, data: Map<String, String>) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+			ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+		) return
+		val localized = AppStrings.localized(context)
+		val body = push.text.ifBlank {
+			localized.getString(
+				when (push.attachmentKind) {
+					"image" -> R.string.chat_photo
+					"video" -> R.string.chat_video
+					else -> R.string.chat_file
+				}
+			)
+		}
+		val id = abs(push.channelId.hashCode())
+		val tapIntent = Intent(context, MainActivity::class.java).apply {
+			flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+			data.forEach { (key, value) -> putExtra(key, value) }
+		}
+		val contentIntent = PendingIntent.getActivity(context, id, tapIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+		val notification = NotificationCompat.Builder(context, CHANNEL_CHAT)
+			.setSmallIcon(R.drawable.ic_stat_narrativ)
+			.setColor(ContextCompat.getColor(context, R.color.notif_accent))
+			.setContentTitle(push.title)
+			.setContentText(body)
+			.setStyle(NotificationCompat.BigTextStyle().bigText(body))
+			.setNumber(push.unreadCount)
+			.setCategory(NotificationCompat.CATEGORY_MESSAGE)
+			.setPriority(NotificationCompat.PRIORITY_HIGH)
+			.setAutoCancel(true)
+			.setContentIntent(contentIntent)
+			.build()
+		NotificationManagerCompat.from(context).notify(id, notification)
+	}
+
 	/** Reads the push data out of the intent that opened the app, and remembers where it points. */
 	fun consumeTap(extras: Bundle?) {
 		extras ?: return
@@ -147,6 +200,10 @@ object PushNotifications {
 	 * reply pushes open it with the comments shown. Without a post id it falls back to the person's profile.
 	 */
 	fun targetFor(data: Map<String, String?>): PushTarget? {
+		// a chat message: Marpokat marks its pushes, and they carry the channel to open
+		if (data[KEY_MARPOKAT] != null) {
+			return data[KEY_CHAT_CHANNEL_ID]?.takeIf { it.isNotBlank() }?.let { PushTarget.Chat(it) }
+		}
 		val type = data[KEY_TYPE]
 		val (idKey, usernameKey) = when {
 			type == TYPE_NEW_POST -> KEY_AUTHOR_ID to KEY_AUTHOR_USERNAME

@@ -314,4 +314,46 @@
     <string name="notif_replied">%1$s membalas komentarmu</string>
     <string name="notif_followed">%1$s mulai mengikutimu</string>
     <string name="notif_pinned">%1$s menyematkan komentarmu</string>
+
+    <!-- Chat (Marpokat) -->
+    <string name="chat_title">Pesan</string>
+    <string name="chat_empty_title">Belum ada percakapan</string>
+    <string name="chat_empty">Buka profil seseorang lalu ketuk Pesan untuk memulai.</string>
+    <string name="chat_unavailable_title">Chat tidak tersedia</string>
+    <string name="chat_unavailable">Pesan sedang dimatikan atau tidak dapat dijangkau.</string>
+    <string name="chat_offline">Menunggu koneksi…</string>
+    <string name="chat_no_messages">Belum ada pesan</string>
+    <string name="chat_message_hint">Pesan</string>
+    <string name="chat_send">Kirim</string>
+    <string name="chat_attach">Lampirkan berkas</string>
+    <string name="chat_deleted">Pesan ini telah dihapus</string>
+    <string name="chat_edited">diedit</string>
+    <string name="chat_replying_to">Membalas %1$s</string>
+    <string name="chat_editing">Mengedit pesan</string>
+    <string name="chat_sending">Mengirim…</string>
+    <string name="chat_send_failed">Tidak dapat dikirim</string>
+    <string name="chat_discard">Buang</string>
+    <string name="chat_load_earlier">Muat pesan sebelumnya</string>
+    <string name="chat_typing">%1$s sedang mengetik…</string>
+    <string name="chat_frozen">Anda tidak dapat lagi mengirim pesan di percakapan ini.</string>
+    <string name="chat_photo">Foto</string>
+    <string name="chat_video">Video</string>
+    <string name="chat_file">Berkas</string>
+    <string name="chat_processing">Memproses…</string>
+    <string name="chat_attachment_failed">Berkas ini tidak dapat diproses</string>
+    <string name="chat_reply">Balas</string>
+    <string name="chat_edit">Edit</string>
+    <string name="chat_delete_title">Hapus pesan ini?</string>
+    <string name="chat_delete_body">Pesan akan hilang bagi semua orang dalam percakapan.</string>
+    <string name="chat_problem_open">Percakapan tidak dapat dibuka.</string>
+    <string name="chat_problem_upload">Berkas tidak dapat diunggah.</string>
+    <string name="chat_problem_file">Berkas ini tidak dapat dibaca.</string>
+    <string name="chat_problem_action">Tidak berhasil. Coba lagi.</string>
+    <string name="chat_message_button">Pesan</string>
+    <string name="cd_messages">Pesan</string>
+    <string name="chat_push_channel">Pesan</string>
+    <string name="chat_open_failed">Percakapan tidak dapat dibuka. Coba lagi nanti.</string>
+    <string name="chat_open_not_found">Anda tidak dapat mengirim pesan ke orang ini.</string>
+    <string name="chat_remove_upload">Hapus lampiran</string>
+    <string name="chat_online">Daring</string>
 </resources>

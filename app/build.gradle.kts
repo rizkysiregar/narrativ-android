@@ -60,6 +60,8 @@ kover {
 					// through their interfaces (PushTokenProvider, GoogleIdTokenProvider, MediaInspector, ...)
 					"com.rizkysiregar.narrativ.data.session.CredentialManagerGoogleIdTokenProvider",
 					"com.rizkysiregar.narrativ.data.session.FirebasePushTokenProvider",
+					"com.rizkysiregar.narrativ.chat.AndroidChatClientFactory",
+					"com.rizkysiregar.narrativ.chat.ContentResolverAttachmentReader",
 					"com.rizkysiregar.narrativ.domain.post.AndroidMediaInspector",
 					"com.rizkysiregar.narrativ.telemetry.Firebase*",
 					"com.rizkysiregar.narrativ.config.FirebaseRemoteConfigManager*"
@@ -308,6 +310,10 @@ dependencies {
 	implementation(libs.androidx.work.runtime.ktx)
 
 	// --- Networking (Retrofit + OkHttp) ---
+	// Chat (Marpokat): the client, and its Room cache, lifecycle connector and push helper
+	implementation(libs.marpokat.core)
+	implementation(libs.marpokat.android)
+
 	implementation(libs.retrofit)
 	implementation(libs.retrofit.gson)
 	implementation(libs.okhttp)
