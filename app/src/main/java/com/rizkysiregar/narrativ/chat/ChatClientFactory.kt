@@ -1,6 +1,8 @@
 package com.rizkysiregar.narrativ.chat
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import com.rizkysiregar.marpokat.MarpokatClient
 import com.rizkysiregar.marpokat.MarpokatOptions
 import com.rizkysiregar.marpokat.TokenProvider
@@ -33,6 +35,11 @@ class AndroidChatClientFactory @Inject constructor(
 				cache = RoomChatCache(context, credentials.userId)
 			)
 		)
-		return ChatConnection(client, AppLifecycleConnector.attach(client))
+		// the process lifecycle can only be observed from the main thread, and this runs on a background one; the
+		// posts keep their order, so a stop right after the start still finds what the start attached
+		val main = Handler(Looper.getMainLooper())
+		var detach: (() -> Unit)? = null
+		main.post { detach = AppLifecycleConnector.attach(client) }
+		return ChatConnection(client) { main.post { detach?.invoke() } }
 	}
 }
