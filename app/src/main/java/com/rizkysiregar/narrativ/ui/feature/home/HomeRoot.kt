@@ -79,9 +79,12 @@ fun HomeRoot(
 	val currentUserId by currentUserViewModel.userId.collectAsState()
 	val badgeViewModel: NotificationBadgeViewModel = hiltViewModel()
 	val unreadNotifications by badgeViewModel.unreadCount.collectAsState()
+	val chatBadgeViewModel: com.rizkysiregar.narrativ.ui.feature.home.chat.ChatBadgeViewModel = hiltViewModel()
+	val unreadMessages by chatBadgeViewModel.unread.collectAsState()
 	// back from the background, pushes may have arrived that FCM showed by itself
 	LifecycleResumeEffect(Unit) {
 		badgeViewModel.refresh()
+		chatBadgeViewModel.refresh()
 		onPauseOrDispose { }
 	}
 	val openUser: (String, String) -> Unit = { userId, username ->
@@ -135,6 +138,8 @@ fun HomeRoot(
 					homeNavController.navigate(HomePathRoute.PostDetail.create(target.postId, target.openComments, target.commentId))
 				is PushNotifications.PushTarget.Profile ->
 					openUser(target.userId, target.username)
+				is PushNotifications.PushTarget.Chat ->
+					homeNavController.navigate(HomePathRoute.ChatThread.create(target.channelId))
 			}
 		}
 	}
@@ -147,7 +152,7 @@ fun HomeRoot(
 	Box(modifier = Modifier.fillMaxSize()) {
 	Scaffold(
 		bottomBar = {
-			if (currentRoute != HomePathRoute.UserDetail.route && currentRoute != HomePathRoute.FollowList.route && currentRoute != HomePathRoute.Settings.route && currentRoute != HomePathRoute.Notifications.route && currentRoute != HomePathRoute.BlockedUsers.route && currentRoute != HomePathRoute.ChangeEmail.route && currentRoute != BottomNavScreen.PostFeed.route && !isDetailRoute) {
+			if (currentRoute != HomePathRoute.UserDetail.route && currentRoute != HomePathRoute.FollowList.route && currentRoute != HomePathRoute.Settings.route && currentRoute != HomePathRoute.Notifications.route && currentRoute != HomePathRoute.Chats.route && currentRoute != HomePathRoute.ChatThread.route && currentRoute != HomePathRoute.BlockedUsers.route && currentRoute != HomePathRoute.ChangeEmail.route && currentRoute != BottomNavScreen.PostFeed.route && !isDetailRoute) {
 				BottomBar(homeNavController)
 			}
 		}
@@ -175,6 +180,8 @@ fun HomeRoot(
 					onUserClick = openUser,
 					onNotificationsClick = { homeNavController.navigate(HomePathRoute.Notifications.route) },
 					unreadNotifications = unreadNotifications,
+					unreadMessages = unreadMessages,
+					onMessagesClick = { homeNavController.navigate(HomePathRoute.Chats.route) },
 					navController = homeNavController
 				)
 			}
@@ -222,6 +229,18 @@ fun HomeRoot(
 						},
 						onOpenUser = openUser
 					)
+				}
+				composable(HomePathRoute.Chats.route) {
+					com.rizkysiregar.narrativ.ui.feature.home.chat.ChatListRoute(
+						onBackClick = { homeNavController.popBackStack() },
+						onOpenChat = { channelId -> homeNavController.navigate(HomePathRoute.ChatThread.create(channelId)) }
+					)
+				}
+				composable(
+					route = HomePathRoute.ChatThread.route,
+					arguments = listOf(navArgument(HomePathRoute.ChatThread.ARG_CHANNEL_ID) { type = NavType.StringType })
+				) {
+					com.rizkysiregar.narrativ.ui.feature.home.chat.ChatThreadRoute(onBackClick = { homeNavController.popBackStack() })
 				}
 				composable(HomePathRoute.Settings.route) {
 					SettingsRoute(
@@ -284,6 +303,7 @@ fun HomeRoot(
 			onFollowingClick = { id ->
 				homeNavController.navigate(HomePathRoute.FollowList.create(id, "following"))
 			},
+			onOpenChat = { channelId -> homeNavController.navigate(HomePathRoute.ChatThread.create(channelId)) },
 			postOpener = postOpener
 		)
 		}

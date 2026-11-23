@@ -34,6 +34,7 @@ class ApiRemoteSessionCleanerTest {
 	val folder = TemporaryFolder()
 
 	private val pushTokens = FakePushTokenProvider()
+	private val chat = com.rizkysiregar.narrativ.testing.fakes.FakeChatSession()
 	private val seen = CopyOnWriteArrayList<String>()
 	private val bodies = CopyOnWriteArrayList<String>()
 	private var answer: (RecordedRequest) -> MockResponse = { MockResponse.Builder().code(200).body("""{"code":"200","message":"ok","data":null}""").build() }
@@ -68,13 +69,13 @@ class ApiRemoteSessionCleanerTest {
 	private suspend fun realTimeCleaner(refreshToken: String? = "refresh-1"): ApiRemoteSessionCleaner {
 		val dataStore = testDataStoreManager(ioScope, folder.preferencesFile())
 		if (refreshToken != null) dataStore.put(PrefKeys.refreshToken, refreshToken)
-		return ApiRemoteSessionCleaner(dataStore, pushTokens, retrofit)
+		return ApiRemoteSessionCleaner(dataStore, pushTokens, retrofit, chat)
 	}
 
 	private suspend fun TestScope.cleaner(refreshToken: String? = "refresh-1"): ApiRemoteSessionCleaner {
 		val dataStore = testDataStoreManager(backgroundScope, folder.preferencesFile())
 		if (refreshToken != null) dataStore.put(PrefKeys.refreshToken, refreshToken)
-		return ApiRemoteSessionCleaner(dataStore, pushTokens, retrofit)
+		return ApiRemoteSessionCleaner(dataStore, pushTokens, retrofit, chat)
 	}
 
 	@Test
@@ -133,5 +134,23 @@ class ApiRemoteSessionCleanerTest {
 
 		assertThat(pushTokens.deleteCalls).isEqualTo(1)
 		assertThat(seen).isEmpty()
+	}
+
+	@Test
+	fun signingOutAlsoSignsOutOfChat() = runBlocking<Unit> {
+		realTimeCleaner().signOut()
+
+		assertThat(chat.signOuts).isEqualTo(1)
+	}
+
+	@Test
+	fun aFailingChatSignOutNeverStopsTheRest() = runBlocking<Unit> {
+		chat.signOutFailure = IllegalStateException("chat is down")
+
+		realTimeCleaner().signOut()
+
+		assertThat(chat.signOuts).isEqualTo(1)
+		assertThat(seen).containsExactly("/api/v1/devices/deactivate", "/api/v1/auth/logout").inOrder()
+		assertThat(pushTokens.deleteCalls).isEqualTo(1)
 	}
 }

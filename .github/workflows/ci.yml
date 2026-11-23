@@ -5,6 +5,11 @@ on:
   push:
     branches: [master]
 
+# The chat SDK is read from GitHub Packages: PACKAGES_TOKEN is a personal access token with read:packages.
+env:
+  MARPOKAT_PACKAGES_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
+  GITHUB_ACTOR: rizkysiregar
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true

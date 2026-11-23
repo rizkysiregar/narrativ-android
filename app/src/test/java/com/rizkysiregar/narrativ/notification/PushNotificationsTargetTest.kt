@@ -65,4 +65,17 @@ class PushNotificationsTargetTest {
 
 		assertEquals(PushTarget.Post("p1", openComments = true, commentId = "c1"), result)
 	}
+
+	@Test
+	fun aChatMessageOpensItsConversation() {
+		val result = target("marpokat" to "1", "type" to "message.new", "channel_id" to "ch-9", "sender_name" to "Budi")
+
+		assertEquals(PushTarget.Chat("ch-9"), result)
+	}
+
+	@Test
+	fun aChatPushWithoutAChannelOpensNothingAndIsNotMistakenForAPostPush() {
+		assertEquals(null, target("marpokat" to "1", "type" to "message.new"))
+		assertEquals(null, target("marpokat" to "1", "type" to "POST_LIKED", "postId" to "p1", "channel_id" to " "))
+	}
 }
