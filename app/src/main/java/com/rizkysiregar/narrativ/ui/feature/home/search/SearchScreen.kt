@@ -62,7 +62,7 @@ import androidx.compose.ui.res.stringResource
  */
 
 /**
- * Results of a user search, shown in place of the explore feed while a query is active.
+ * Results of a user search (the people tab of the search on home).
  * Loads the next page near the end of the list and hides the keyboard as soon as it scrolls.
  */
 @Composable
@@ -204,7 +204,7 @@ fun SearchUserBar(
 }
 
 @Composable
-private fun SearchUserItem(
+internal fun SearchUserItem(
 	user: UserSearchItemResponse,
 	onClick: () -> Unit
 ) {

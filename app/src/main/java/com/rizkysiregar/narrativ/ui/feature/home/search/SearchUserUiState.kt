@@ -17,4 +17,10 @@ data class SearchUserUiState(
 	val hasMore: Boolean = false,
 	val errorMessage: String? = null,
 	val isError: Boolean = false
-)
+) {
+	/** The backend searches 2 characters at least; shorter terms show a hint instead. */
+	val isQueryTooShort: Boolean
+		get() = query.trim().length < MIN_SEARCH_LENGTH
+}
+
+const val MIN_SEARCH_LENGTH = 2

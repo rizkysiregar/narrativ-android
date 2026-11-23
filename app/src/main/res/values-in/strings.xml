@@ -157,7 +157,7 @@
     <string name="no_media_yet">Belum ada foto atau video</string>
     <string name="no_posts_yet">Belum ada postingan</string>
     <string name="no_results_for">Tidak ada hasil untuk \"%1$s\"</string>
-    <string name="no_users_found">Pengguna tidak ditemukan</string>
+    <string name="no_users_found">Akun tidak ditemukan</string>
     <string name="notif_channel_progress">Progres unggahan</string>
     <string name="notif_channel_progress_desc">Menampilkan progres postingan yang sedang diunggah</string>
     <string name="notif_channel_result">Hasil unggahan</string>
@@ -221,7 +221,14 @@
     <string name="reset_password">Atur ulang kata sandi</string>
     <string name="retry">Coba lagi</string>
     <string name="search">Cari</string>
-    <string name="search_users">Cari pengguna</string>
+    <string name="search_tab_top">Teratas</string>
+    <string name="search_tab_people">Akun</string>
+    <string name="search_tab_posts">Postingan</string>
+    <string name="search_see_all_people">Lihat semua akun</string>
+    <string name="search_hint_title">Temukan akun dan postingan</string>
+    <string name="search_hint_body">Ketik minimal 2 karakter untuk menemukan akun lewat username atau nama, dan postingan lewat kata di caption-nya.</string>
+    <string name="search_no_posts">Tidak ada postingan yang menyebut \"%1$s\"</string>
+    <string name="search_users">Cari akun atau postingan</string>
     <string name="send">Kirim</string>
     <string name="send_code">Kirim kode</string>
     <string name="send_code_again">Kirim ulang kode</string>
@@ -247,7 +254,6 @@
     <string name="subject_account">akun</string>
     <string name="subject_comment">komentar</string>
     <string name="subject_post">postingan</string>
-    <string name="tab_explore">Jelajah</string>
     <string name="tab_feed">Beranda</string>
     <string name="tab_post">Posting</string>
     <string name="tab_profile">Profil</string>

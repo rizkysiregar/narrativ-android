@@ -6,6 +6,7 @@ import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetCommentReques
 import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetRepliesRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetAllFeedRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetFeedByUsernameRequest
+import com.rizkysiregar.narrativ.data.remote.model.request.feed.SearchPostsRequest
 import com.rizkysiregar.narrativ.data.remote.model.response.PaginationResponseWrapper
 import com.rizkysiregar.narrativ.data.remote.model.response.feed.CommentItem
 import com.rizkysiregar.narrativ.data.remote.model.response.feed.FeedContentItem
@@ -19,7 +20,7 @@ import java.util.UUID
  */
 interface FeedRepository {
 	fun getAllFeed(request: GetAllFeedRequest): Flow<ResultState<FeedsPostPaginationResponse>>
-	fun getExplorePosts(request: GetAllFeedRequest): Flow<ResultState<FeedsPostPaginationResponse>>
+	fun searchPosts(request: SearchPostsRequest): Flow<ResultState<FeedsPostPaginationResponse>>
 	fun getFeedByUsername(request: GetFeedByUsernameRequest): Flow<ResultState<FeedsPostPaginationResponse>>
 	fun getPost(postId: UUID): Flow<ResultState<FeedContentItem>>
 	fun likePost(postId: UUID): Flow<ResultState<String>>

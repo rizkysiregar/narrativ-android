@@ -13,6 +13,7 @@ import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetAllFeedReques
 import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetCommentRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetFeedByUsernameRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetRepliesRequest
+import com.rizkysiregar.narrativ.data.remote.model.request.feed.SearchPostsRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.user.DeleteAccountRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.user.SearchUserRequest
 import com.rizkysiregar.narrativ.domain.moderation.ReportReason
@@ -86,15 +87,26 @@ class RepositoryImplTest {
 	}
 
 	@Test
-	fun exploreAndTheProfileGridCanAskForMediaOnly() = runTest {
+	fun theProfileGridCanAskForMediaOnly() = runTest {
 		body = fixture("feed_page.json")
 		val repo = FeedRepositoryImpl(retrofit)
 
-		repo.getExplorePosts(GetAllFeedRequest(page = 0, size = 20, mediaOnly = true)).last()
 		repo.getFeedByUsername(GetFeedByUsernameRequest(page = 1, size = 9, username = "rizky", mediaOnly = true)).last()
 
-		assertThat(sent().line()).isEqualTo("GET /posts/explore?page=0&size=20&mediaOnly=true")
 		assertThat(sent().line()).isEqualTo("GET /posts/users/rizky/posts?page=1&size=9&mediaOnly=true")
+	}
+
+	@Test
+	fun postSearchSendsTheTermAndGoesOnWithTheCursor() = runTest {
+		body = fixture("feed_page.json")
+		val repo = FeedRepositoryImpl(retrofit)
+
+		val result = repo.searchPosts(SearchPostsRequest(query = "kopi susu", size = 10)).last()
+		repo.searchPosts(SearchPostsRequest(query = "kopi susu", size = 10, cursor = "abc")).last()
+
+		assertThat(sent().line()).isEqualTo("GET /posts/search?q=kopi susu&size=10")
+		assertThat(sent().line()).isEqualTo("GET /posts/search?q=kopi susu&size=10&cursor=abc")
+		assertThat((result as ResultState.Success).data.content).hasSize(2)
 	}
 
 	@Test
@@ -248,20 +260,16 @@ class RepositoryImplTest {
 	}
 
 	@Test
-	fun searchingAsksByUsernameAndNoMatchIsAnEmptyPageNotAnError() = runTest {
+	fun peopleSearchSendsTheTermAndNoMatchIsAnEmptyPage() = runTest {
 		val repo = UserRepositoryImpl(retrofit)
 		body = emptyPage()
-		repo.searchUsers(SearchUserRequest(username = "riz", page = 0, size = 20)).last()
-		assertThat(sent().line()).isEqualTo("GET /users?username=riz&page=0&size=20")
 
-		code = 404
-		body = """{"code":"404","message":"none","data":null}"""
-		val result = repo.searchUsers(SearchUserRequest(username = "zzz", page = 3, size = 20)).last()
+		val result = repo.searchUsers(SearchUserRequest(query = "riz", page = 0, size = 20)).last()
 
+		assertThat(sent().line()).isEqualTo("GET /users/search?q=riz&page=0&size=20")
 		val page = (result as ResultState.Success).data
 		assertThat(page.content).isEmpty()
 		assertThat(page.last).isTrue()
-		assertThat(page.pageNumber).isEqualTo(3)
 	}
 
 	// --- moderation ---

@@ -32,11 +32,11 @@ interface FeedApi {
 		@Query("cursor") cursor: String? = null
 	): BaseResponse<FeedsPostPaginationResponse>
 
-	@GET("posts/explore")
-	suspend fun getExplorePosts(
-		@Query("page") page: Int,
+	// posts whose caption holds every word of q (2 to 50 characters), newest first, paged by cursor only
+	@GET("posts/search")
+	suspend fun searchPosts(
+		@Query("q") query: String,
 		@Query("size") size: Int,
-		@Query("mediaOnly") mediaOnly: Boolean = false,
 		@Query("cursor") cursor: String? = null
 	): BaseResponse<FeedsPostPaginationResponse>
 

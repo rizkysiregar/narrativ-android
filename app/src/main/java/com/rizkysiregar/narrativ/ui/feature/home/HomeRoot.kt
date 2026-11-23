@@ -183,14 +183,7 @@ fun HomeRoot(
 					onNotificationsClick = { homeNavController.navigate(HomePathRoute.Notifications.route) },
 					unreadNotifications = unreadNotifications,
 					unreadMessages = unreadMessages,
-					onMessagesClick = if (chatEnabled) ({ homeNavController.navigate(HomePathRoute.Chats.route) }) else null,
-					navController = homeNavController
-				)
-			}
-				composable(BottomNavScreen.Explore.route) {
-				com.rizkysiregar.narrativ.ui.feature.home.explore.ExploreRoute(
-					postOpener = postOpener,
-					onUserClick = openUser
+					onMessagesClick = if (chatEnabled) ({ homeNavController.navigate(HomePathRoute.Chats.route) }) else null
 				)
 			}
 			composable(BottomNavScreen.PostFeed.route) {

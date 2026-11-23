@@ -14,6 +14,7 @@ import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetCommentReques
 import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetFeedByUsernameRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetRepliesRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.user.DeleteAccountRequest
+import com.rizkysiregar.narrativ.data.remote.model.request.feed.SearchPostsRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.user.SearchUserRequest
 import com.rizkysiregar.narrativ.data.remote.model.response.PaginationResponseWrapper
 import com.rizkysiregar.narrativ.data.remote.model.response.auth.ForgotPasswordResponse
@@ -91,7 +92,7 @@ class FakeFeedRepository : FeedRepository {
 	val replyRequests = mutableListOf<GetRepliesRequest>()
 
 	override fun getAllFeed(request: GetAllFeedRequest): Flow<ResultState<FeedsPostPaginationResponse>> = unscripted("getAllFeed")
-	override fun getExplorePosts(request: GetAllFeedRequest): Flow<ResultState<FeedsPostPaginationResponse>> = unscripted("getExplorePosts")
+	override fun searchPosts(request: SearchPostsRequest): Flow<ResultState<FeedsPostPaginationResponse>> = unscripted("searchPosts")
 	override fun getFeedByUsername(request: GetFeedByUsernameRequest): Flow<ResultState<FeedsPostPaginationResponse>> = unscripted("getFeedByUsername")
 	override fun getPost(postId: UUID) = onGetPost(postId)
 	override fun likePost(postId: UUID) = onLike(postId).also { likes += postId }

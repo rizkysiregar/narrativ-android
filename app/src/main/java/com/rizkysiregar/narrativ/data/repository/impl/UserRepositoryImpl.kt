@@ -18,7 +18,6 @@ import com.rizkysiregar.narrativ.data.remote.model.response.user.UserSearchItemR
 import com.rizkysiregar.narrativ.data.repository.UserRepository
 import com.rizkysiregar.narrativ.util.flowFromApi
 import com.rizkysiregar.narrativ.util.flowFromMessageApi
-import com.rizkysiregar.narrativ.util.flowFromApiOrEmptyOn404
 import kotlinx.coroutines.flow.Flow
 import retrofit2.Retrofit
 import javax.inject.Inject
@@ -86,18 +85,9 @@ class UserRepositoryImpl @Inject constructor(
 	override fun searchUsers(
 		request: SearchUserRequest
 	): Flow<ResultState<PaginationResponseWrapper<UserSearchItemResponse>>> =
-		flowFromApiOrEmptyOn404(
-			emptyValue = PaginationResponseWrapper(
-				content = emptyList(),
-				pageNumber = request.page,
-				pageSize = request.size,
-				totalElements = 0,
-				totalPages = 0,
-				last = true
-			)
-		) {
+		flowFromApi {
 			userApi.searchUsers(
-				username = request.username,
+				query = request.query,
 				page = request.page,
 				size = request.size
 			)
