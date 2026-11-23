@@ -92,9 +92,10 @@ interface UserApi {
 		@Query("size") size: Int
 	): BaseResponse<PaginationResponseWrapper<FollowUserResponse>>
 
-	@GET("users")
+	// people whose username or name contains q (2 to 50 characters), best match first; no match is an empty page
+	@GET("users/search")
 	suspend fun searchUsers(
-		@Query("username") username: String?,
+		@Query("q") query: String,
 		@Query("page") page: Int,
 		@Query("size") size: Int
 	): BaseResponse<PaginationResponseWrapper<UserSearchItemResponse>>

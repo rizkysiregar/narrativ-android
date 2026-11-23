@@ -110,7 +110,7 @@ fun VideoFeedPlayer(
 
 	Box(
 		// Only attach clickable when a handler exists: a disabled clickable still
-		// consumes the tap and would block a parent's clickable (e.g. Explore grid).
+		// consumes the tap and would block a parent's clickable (e.g. a profile grid).
 		modifier = if (onVideoClick != null) {
 			boxModifier.clickable { onVideoClick() }
 		} else {

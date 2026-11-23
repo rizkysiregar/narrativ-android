@@ -1,15 +1,21 @@
 package com.rizkysiregar.narrativ.ui.feature.home.feed
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.navigation.NavController
-import com.rizkysiregar.narrativ.ui.main.navigation.BottomNavScreen
+import com.rizkysiregar.narrativ.ui.feature.home.search.HomeSearchContent
+import com.rizkysiregar.narrativ.ui.feature.home.search.SearchPostsViewModel
+import com.rizkysiregar.narrativ.ui.feature.home.search.SearchTab
+import com.rizkysiregar.narrativ.ui.feature.home.search.SearchViewModel
 import kotlinx.coroutines.flow.collectLatest
 
 /**
@@ -21,17 +27,63 @@ import kotlinx.coroutines.flow.collectLatest
 fun FeedRoute(
     refreshVersion: Int = 0,
     viewModel: FeedViewModel = hiltViewModel(),
+	searchViewModel: SearchViewModel = hiltViewModel(),
+	searchPostsViewModel: SearchPostsViewModel = hiltViewModel(),
 	onCreateFeed: () -> Unit,
 	postOpener: PostOpener,
 	onUserClick: (userId: String, username: String) -> Unit,
 	onNotificationsClick: () -> Unit,
 	unreadNotifications: Int,
-	navController: NavController,
 	unreadMessages: Int = 0,
 	onMessagesClick: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
+
+    // the search lives in home: the search button opens it in place of the feed, back closes it
+    var isSearchOpen by rememberSaveable { mutableStateOf(false) }
+    var searchTab by rememberSaveable { mutableStateOf(SearchTab.TOP) }
+    val focusManager = LocalFocusManager.current
+    val onQueryChange = { query: String ->
+        searchViewModel.onQueryChange(query)
+        searchPostsViewModel.onQueryChange(query)
+    }
+    val closeSearch = {
+        onQueryChange("")
+        focusManager.clearFocus()
+        searchTab = SearchTab.TOP
+        isSearchOpen = false
+    }
+    BackHandler(enabled = isSearchOpen, onBack = closeSearch)
+    if (isSearchOpen) {
+        val people by searchViewModel.uiState.collectAsState()
+        val posts by searchPostsViewModel.uiState.collectAsState()
+        HomeSearchContent(
+            people = people,
+            posts = posts,
+            tab = searchTab,
+            onTabChange = { searchTab = it },
+            onQueryChange = onQueryChange,
+            onClose = closeSearch,
+            onRetryPeople = searchViewModel::retry,
+            onLoadMorePeople = searchViewModel::loadNextPage,
+            onRetryPosts = {
+                if (posts.hasLoadedInitialPage) searchPostsViewModel.loadNextPage() else searchPostsViewModel.refresh()
+            },
+            onLoadMorePosts = searchPostsViewModel::loadNextPage,
+            onUserClick = onUserClick,
+            onLikeClick = searchPostsViewModel::toggleLike,
+            onPostClick = { post -> postOpener.thread(post, searchPostsViewModel::toggleLike) },
+            onCommentClick = { post -> postOpener.thread(post, searchPostsViewModel::toggleLike, openComments = true) },
+            onMediaClick = { post, page -> postOpener.media(post, searchPostsViewModel::toggleLike, page) },
+            onAuthorBlocked = {
+                searchPostsViewModel.refresh()
+                searchViewModel.retry()
+                viewModel.refresh()
+            }
+        )
+        return
+    }
 
     // This value changes only after a post is successfully uploaded.
     LaunchedEffect(refreshVersion) {
@@ -73,13 +125,7 @@ fun FeedRoute(
         listState = listState,
 		onLikeClick = viewModel::toggleLike,
 		onCreateFeed = onCreateFeed,
-		onSearchClick = {
-			navController.navigate(BottomNavScreen.Explore.route) {
-				launchSingleTop = true
-				restoreState = true
-				popUpTo(navController.graph.startDestinationId) { saveState = true }
-			}
-		},
+		onSearchClick = { isSearchOpen = true },
 		player = viewModel.player,
 		onAuthorBlocked = viewModel::refresh,
 		onAuthorClick = onUserClick,

@@ -106,14 +106,15 @@ class ApiContractTest {
 	}
 
 	@Test
-	fun exploreAsksForMediaOnlyWhenTheGridDoes() = runTest {
+	fun postSearchSendsTheTermAndLeavesOutAMissingCursor() = runTest {
 		respond("feed_page.json")
 
-		retrofit.create(FeedApi::class.java).getExplorePosts(page = 1, size = 20, mediaOnly = true)
+		val page = retrofit.create(FeedApi::class.java).searchPosts(query = "#coffee", size = 10).data!!
 
 		val request = server.takeRequest()
-		assertThat(request.url.encodedPath).isEqualTo("/api/v1/posts/explore")
-		assertThat(request.url.query).isEqualTo("page=1&size=20&mediaOnly=true")
+		assertThat(request.url.encodedPath).isEqualTo("/api/v1/posts/search")
+		assertThat(request.url.query).isEqualTo("q=#coffee&size=10")
+		assertThat(page.content).isNotEmpty()
 	}
 
 	@Test

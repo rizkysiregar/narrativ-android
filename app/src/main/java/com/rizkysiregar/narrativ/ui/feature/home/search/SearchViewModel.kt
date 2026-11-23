@@ -42,17 +42,17 @@ class SearchViewModel @Inject constructor(
 		debounceJob?.cancel()
 		debounceJob = viewModelScope.launch {
 			delay(DEBOUNCE_MILLIS)
-			if (query.isBlank()) reset() else search()
+			if (_uiState.value.isQueryTooShort) reset() else search()
 		}
 	}
 
 	fun retry() {
-		if (_uiState.value.query.isBlank()) reset() else search()
+		if (_uiState.value.isQueryTooShort) reset() else search()
 	}
 
 	fun loadNextPage() {
 		val state = _uiState.value
-		if (state.query.isBlank() || !state.hasLoadedInitialPage || !state.hasMore ||
+		if (state.isQueryTooShort || !state.hasLoadedInitialPage || !state.hasMore ||
 			state.isLoadingMore || state.isLoading || state.isError
 		) return
 
@@ -88,10 +88,11 @@ class SearchViewModel @Inject constructor(
 		}
 	}
 
+	// too short to search: nothing found, but the text stays in the field
 	private fun reset() {
 		loadGeneration++
 		searchJob?.cancel()
-		_uiState.value = SearchUserUiState()
+		_uiState.value = SearchUserUiState(query = _uiState.value.query)
 	}
 
 	private suspend fun loadPage(page: Int, generation: Int) {
@@ -99,7 +100,7 @@ class SearchViewModel @Inject constructor(
 
 		searchUsersUseCase(
 			SearchUserRequest(
-				username = state.query.trim(),
+				query = state.query.trim(),
 				page = page,
 				size = state.pageSize
 			)

@@ -2,7 +2,6 @@ package com.rizkysiregar.narrativ.ui.main.navigation
 
 import androidx.annotation.DrawableRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -20,7 +19,6 @@ sealed class BottomNavScreen(
 	val icon: IconSource
 ) {
 	object Feed : BottomNavScreen("feed", R.string.tab_feed, IconSource.Vector(Icons.Default.Home))
-	object Explore : BottomNavScreen("explore", R.string.tab_explore, IconSource.Vector(Icons.Default.Explore))
 	object PostFeed : BottomNavScreen(
 		"post_feed",
 		R.string.tab_post,

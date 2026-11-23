@@ -8,6 +8,7 @@ import com.rizkysiregar.narrativ.data.remote.model.request.feed.PinCommentReques
 import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetRepliesRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetAllFeedRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.feed.GetFeedByUsernameRequest
+import com.rizkysiregar.narrativ.data.remote.model.request.feed.SearchPostsRequest
 import com.rizkysiregar.narrativ.data.remote.model.request.feed.LikeFeedRequest
 import com.rizkysiregar.narrativ.data.remote.model.response.PaginationResponseWrapper
 import com.rizkysiregar.narrativ.data.remote.model.response.feed.CommentItem
@@ -37,9 +38,9 @@ class FeedRepositoryImpl @Inject constructor(
 			feedApi.getFeed(request.page, request.size, request.cursor)
 		}
 
-	override fun getExplorePosts(request: GetAllFeedRequest): Flow<ResultState<FeedsPostPaginationResponse>> =
+	override fun searchPosts(request: SearchPostsRequest): Flow<ResultState<FeedsPostPaginationResponse>> =
 		flowFromApi {
-			feedApi.getExplorePosts(request.page, request.size, request.mediaOnly, request.cursor)
+			feedApi.searchPosts(request.query, request.size, request.cursor)
 		}
 
 	override fun getFeedByUsername(request: GetFeedByUsernameRequest): Flow<ResultState<FeedsPostPaginationResponse>> =

@@ -6,7 +6,7 @@ package com.rizkysiregar.narrativ.data.remote.model.request.user
  */
 
 data class SearchUserRequest(
-	val username: String?,
+	val query: String,
 	val page: Int,
 	val size: Int
 )

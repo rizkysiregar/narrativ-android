@@ -158,7 +158,7 @@
     <string name="no_media_yet">No photos or videos yet</string>
     <string name="no_posts_yet">No posts yet</string>
     <string name="no_results_for">No results for \"%1$s\"</string>
-    <string name="no_users_found">No users found</string>
+    <string name="no_users_found">No people found</string>
     <string name="notif_channel_progress">Upload progress</string>
     <string name="notif_channel_progress_desc">Shows the progress of a post being uploaded</string>
     <string name="notif_channel_result">Upload result</string>
@@ -222,7 +222,14 @@
     <string name="reset_password">Reset Password</string>
     <string name="retry">Retry</string>
     <string name="search">Search</string>
-    <string name="search_users">Search users</string>
+    <string name="search_tab_top">Top</string>
+    <string name="search_tab_people">People</string>
+    <string name="search_tab_posts">Posts</string>
+    <string name="search_see_all_people">See all people</string>
+    <string name="search_hint_title">Find people and posts</string>
+    <string name="search_hint_body">Type at least 2 characters to find people by username or name, and posts by the words in their caption.</string>
+    <string name="search_no_posts">No posts mention \"%1$s\"</string>
+    <string name="search_users">Search people or posts</string>
     <string name="send">Send</string>
     <string name="send_code">Send Code</string>
     <string name="send_code_again">Send code again</string>
@@ -248,7 +255,6 @@
     <string name="subject_account">account</string>
     <string name="subject_comment">comment</string>
     <string name="subject_post">post</string>
-    <string name="tab_explore">Explore</string>
     <string name="tab_feed">Feed</string>
     <string name="tab_post">Post</string>
     <string name="tab_profile">Profile</string>
