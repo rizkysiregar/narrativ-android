@@ -79,7 +79,7 @@ fun FeedScreen(
 	unreadNotifications: Int = 0,
 	onNotificationsClick: () -> Unit = {},
 	unreadMessages: Int = 0,
-	onMessagesClick: () -> Unit = {},
+	onMessagesClick: (() -> Unit)? = null,
 	onAuthorClick: ((userId: String, username: String) -> Unit)? = null,
 	player: ExoPlayer? = null,
 	onPostClick: (FeedContentItem) -> Unit = {},

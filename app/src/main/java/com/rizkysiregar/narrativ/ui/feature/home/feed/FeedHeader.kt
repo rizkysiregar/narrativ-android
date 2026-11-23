@@ -95,7 +95,7 @@ fun FeedHeader(
 	unreadNotifications: Int = 0,
 	onNotificationsClick: () -> Unit = {},
 	unreadMessages: Int = 0,
-	onMessagesClick: () -> Unit = {}
+	onMessagesClick: (() -> Unit)? = null
 ) {
 	Box(
 		modifier = modifier
@@ -109,15 +109,18 @@ fun FeedHeader(
 			modifier = Modifier.align(Alignment.Center)
 		)
 		Row(modifier = Modifier.align(Alignment.CenterEnd)) {
-			IconButton(onClick = onMessagesClick) {
-				BadgedBox(
-					badge = {
-						if (unreadMessages > 0) {
-							Badge { Text(if (unreadMessages > 99) "99+" else unreadMessages.toString()) }
+			// null while an admin has chat switched off: no messages icon at all
+			if (onMessagesClick != null) {
+				IconButton(onClick = onMessagesClick) {
+					BadgedBox(
+						badge = {
+							if (unreadMessages > 0) {
+								Badge { Text(if (unreadMessages > 99) "99+" else unreadMessages.toString()) }
+							}
 						}
+					) {
+						Icon(imageVector = Icons.Outlined.ChatBubbleOutline, contentDescription = stringResource(R.string.cd_messages))
 					}
-				) {
-					Icon(imageVector = Icons.Outlined.ChatBubbleOutline, contentDescription = stringResource(R.string.cd_messages))
 				}
 			}
 			IconButton(onClick = onNotificationsClick) {

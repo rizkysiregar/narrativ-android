@@ -4,6 +4,7 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.rizkysiregar.marpokat.android.MarpokatPush
 import com.rizkysiregar.narrativ.chat.ChatSession
+import com.rizkysiregar.narrativ.config.FeatureFlags
 import com.rizkysiregar.narrativ.data.remote.DeviceSyncScheduler
 import com.rizkysiregar.narrativ.domain.notification.UnreadNotifications
 import dagger.hilt.android.AndroidEntryPoint
@@ -22,6 +23,9 @@ class NarrativMessagingService : FirebaseMessagingService() {
 	@Inject
 	lateinit var chatSession: ChatSession
 
+	@Inject
+	lateinit var featureFlags: FeatureFlags
+
 	override fun onNewToken(token: String) {
 		deviceSyncScheduler.schedule()
 		chatSession.onPushToken(token)
@@ -32,6 +36,8 @@ class NarrativMessagingService : FirebaseMessagingService() {
 	override fun onMessageReceived(message: RemoteMessage) {
 		// a chat message (Marpokat sends data messages, so this runs in the background too)
 		if (MarpokatPush.isMarpokat(message.data)) {
+			// an admin switched chat off: the push token is removed then, this catches what is still on its way
+			if (!featureFlags.chatEnabled.value) return
 			val push = MarpokatPush.parse(message.data) ?: return
 			// the conversation is on screen: the message is right there, a notification would only be noise
 			if (chatSession.visibleChannelId != push.channelId) PushNotifications.showChat(this, push, message.data)

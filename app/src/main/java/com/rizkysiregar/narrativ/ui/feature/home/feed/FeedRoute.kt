@@ -28,7 +28,7 @@ fun FeedRoute(
 	unreadNotifications: Int,
 	navController: NavController,
 	unreadMessages: Int = 0,
-	onMessagesClick: () -> Unit = {}
+	onMessagesClick: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
