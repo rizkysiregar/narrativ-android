@@ -12,6 +12,8 @@ import com.rizkysiregar.narrativ.data.repository.impl.NotificationRepositoryImpl
 import com.rizkysiregar.narrativ.data.repository.impl.ModerationRepositoryImpl
 import com.rizkysiregar.narrativ.data.repository.impl.PostRepositoryImpl
 import com.rizkysiregar.narrativ.data.repository.impl.UserRepositoryImpl
+import com.rizkysiregar.narrativ.config.ApiFeatureFlags
+import com.rizkysiregar.narrativ.config.FeatureFlags
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -45,5 +47,9 @@ abstract class AppModule {
 	@Binds
 	@Singleton
 	abstract fun bindNotificationRepository(impl: NotificationRepositoryImpl): NotificationRepository
+
+	@Binds
+	@Singleton
+	abstract fun bindFeatureFlags(impl: ApiFeatureFlags): FeatureFlags
 
 }

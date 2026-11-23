@@ -81,6 +81,7 @@ fun HomeRoot(
 	val unreadNotifications by badgeViewModel.unreadCount.collectAsState()
 	val chatBadgeViewModel: com.rizkysiregar.narrativ.ui.feature.home.chat.ChatBadgeViewModel = hiltViewModel()
 	val unreadMessages by chatBadgeViewModel.unread.collectAsState()
+	val chatEnabled by chatBadgeViewModel.chatEnabled.collectAsState()
 	// back from the background, pushes may have arrived that FCM showed by itself
 	LifecycleResumeEffect(Unit) {
 		badgeViewModel.refresh()
@@ -139,7 +140,8 @@ fun HomeRoot(
 				is PushNotifications.PushTarget.Profile ->
 					openUser(target.userId, target.username)
 				is PushNotifications.PushTarget.Chat ->
-					homeNavController.navigate(HomePathRoute.ChatThread.create(target.channelId))
+					// a notification tapped after an admin switched chat off opens the app, not the thread
+					if (chatEnabled) homeNavController.navigate(HomePathRoute.ChatThread.create(target.channelId))
 			}
 		}
 	}
@@ -181,7 +183,7 @@ fun HomeRoot(
 					onNotificationsClick = { homeNavController.navigate(HomePathRoute.Notifications.route) },
 					unreadNotifications = unreadNotifications,
 					unreadMessages = unreadMessages,
-					onMessagesClick = { homeNavController.navigate(HomePathRoute.Chats.route) },
+					onMessagesClick = if (chatEnabled) ({ homeNavController.navigate(HomePathRoute.Chats.route) }) else null,
 					navController = homeNavController
 				)
 			}
@@ -231,6 +233,8 @@ fun HomeRoot(
 					)
 				}
 				composable(HomePathRoute.Chats.route) {
+					// an admin switched chat off while it was open: back to where the user came from
+					LaunchedEffect(chatEnabled) { if (!chatEnabled) homeNavController.popBackStack() }
 					com.rizkysiregar.narrativ.ui.feature.home.chat.ChatListRoute(
 						onBackClick = { homeNavController.popBackStack() },
 						onOpenChat = { channelId -> homeNavController.navigate(HomePathRoute.ChatThread.create(channelId)) }
@@ -240,6 +244,7 @@ fun HomeRoot(
 					route = HomePathRoute.ChatThread.route,
 					arguments = listOf(navArgument(HomePathRoute.ChatThread.ARG_CHANNEL_ID) { type = NavType.StringType })
 				) {
+					LaunchedEffect(chatEnabled) { if (!chatEnabled) homeNavController.popBackStack() }
 					com.rizkysiregar.narrativ.ui.feature.home.chat.ChatThreadRoute(onBackClick = { homeNavController.popBackStack() })
 				}
 				composable(HomePathRoute.Settings.route) {
@@ -304,6 +309,7 @@ fun HomeRoot(
 				homeNavController.navigate(HomePathRoute.FollowList.create(id, "following"))
 			},
 			onOpenChat = { channelId -> homeNavController.navigate(HomePathRoute.ChatThread.create(channelId)) },
+			chatEnabled = chatEnabled,
 			postOpener = postOpener
 		)
 		}

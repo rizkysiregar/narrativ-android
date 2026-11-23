@@ -12,6 +12,7 @@ import com.rizkysiregar.narrativ.testing.fakes.CHAT_CHANNEL
 import com.rizkysiregar.narrativ.testing.fakes.FakeChatAttachmentReader
 import com.rizkysiregar.narrativ.testing.fakes.FakeChatBackend
 import com.rizkysiregar.narrativ.testing.fakes.FakeChatSession
+import com.rizkysiregar.narrativ.testing.fakes.FakeFeatureFlags
 import com.rizkysiregar.narrativ.testing.fakes.chatChannel
 import com.rizkysiregar.narrativ.testing.fakes.chatMessage
 import com.rizkysiregar.narrativ.testing.fakes.ME
@@ -90,14 +91,56 @@ class ChatViewModelsTest {
 
 	@Test fun theBadgeStartsChatAndCountsUnreadMessages(): Unit = chatTest {
 		backend.channels = listOf(chatChannel(unread = 3))
-		val vm = ChatBadgeViewModel(chat)
+		val flags = FakeFeatureFlags(chat = true)
+		val vm = ChatBadgeViewModel(chat, flags)
 		backgroundScope.launch { vm.unread.collect { } }
+		runCurrent()
 		assertThat(chat.starts).isEqualTo(1)
+		assertThat(flags.refreshes).isEqualTo(1)
 		assertThat(vm.unread.value).isEqualTo(0)
 		ready()
 		assertThat(vm.unread.value).isEqualTo(3)
-		vm.refresh()
+		vm.refresh(); runCurrent()
 		assertThat(chat.starts).isEqualTo(2)
+		assertThat(flags.refreshes).isEqualTo(2)
+	}
+
+	@Test fun chatSwitchedOffNeverStartsAndShowsNoBadge(): Unit = chatTest {
+		backend.channels = listOf(chatChannel(unread = 3))
+		val flags = FakeFeatureFlags(chat = false)
+		val vm = ChatBadgeViewModel(chat, flags)
+		backgroundScope.launch { vm.unread.collect { } }
+		runCurrent()
+		vm.refresh(); runCurrent()
+		assertThat(chat.starts).isEqualTo(0)
+		assertThat(vm.chatEnabled.value).isFalse()
+		ready()
+		assertThat(vm.unread.value).isEqualTo(0)
+	}
+
+	@Test fun chatSwitchedOffByTheAdminStopsTheChat(): Unit = chatTest {
+		backend.channels = listOf(chatChannel(unread = 3))
+		val flags = FakeFeatureFlags(chat = true)
+		val vm = ChatBadgeViewModel(chat, flags)
+		backgroundScope.launch { vm.unread.collect { } }
+		runCurrent()
+		ready()
+		assertThat(vm.unread.value).isEqualTo(3)
+
+		// back in the foreground, the backend now says off
+		flags.answer = false
+		vm.refresh(); runCurrent()
+
+		assertThat(chat.signOuts).isEqualTo(1)
+		assertThat(vm.chatEnabled.value).isFalse()
+		assertThat(vm.unread.value).isEqualTo(0)
+	}
+
+	@Test fun chatSwitchedOnByTheAdminStartsTheChat(): Unit = chatTest {
+		val flags = FakeFeatureFlags(chat = false).also { it.answer = true }
+		ChatBadgeViewModel(chat, flags)
+		runCurrent()
+		assertThat(chat.starts).isEqualTo(1)
 	}
 
 	// ---- open chat

@@ -74,7 +74,7 @@ fun UserDetailScreen(
 	// your own account: nothing to follow, so no Follow button
 	isOwnProfile: Boolean = false,
 	onFollowClick: () -> Unit = {},
-	onMessageClick: () -> Unit = {},
+	onMessageClick: (() -> Unit)? = null,
 	isOpeningChat: Boolean = false,
 	onFollowersClick: () -> Unit = {},
 	onFollowingClick: () -> Unit = {},
@@ -208,7 +208,7 @@ private fun FollowStatusSection(
 	isFollowActionLoading: Boolean,
 	showFollowButton: Boolean,
 	onFollowClick: () -> Unit,
-	onMessageClick: () -> Unit,
+	onMessageClick: (() -> Unit)?,
 	isOpeningChat: Boolean,
 	onFollowersClick: () -> Unit,
 	onFollowingClick: () -> Unit
@@ -238,11 +238,14 @@ private fun FollowStatusSection(
 					Text(if (status.isFollowing) stringResource(R.string.unfollow) else stringResource(R.string.follow))
 				}
 			}
-			androidx.compose.material3.OutlinedButton(
-				onClick = onMessageClick,
-				enabled = !isOpeningChat,
-				modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-			) { Text(stringResource(R.string.chat_message_button)) }
+			// null while an admin has chat switched off
+			if (onMessageClick != null) {
+				androidx.compose.material3.OutlinedButton(
+					onClick = onMessageClick,
+					enabled = !isOpeningChat,
+					modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+				) { Text(stringResource(R.string.chat_message_button)) }
+			}
 		}
 	}
 }
