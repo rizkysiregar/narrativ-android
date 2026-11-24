@@ -1,6 +1,7 @@
 package com.rizkysiregar.narrativ.notification
 
 import com.rizkysiregar.narrativ.notification.PushNotifications.PushTarget
+import com.google.common.truth.Truth.assertThat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -77,5 +78,14 @@ class PushNotificationsTargetTest {
 	fun aChatPushWithoutAChannelOpensNothingAndIsNotMistakenForAPostPush() {
 		assertEquals(null, target("marpokat" to "1", "type" to "message.new"))
 		assertEquals(null, target("marpokat" to "1", "type" to "POST_LIKED", "postId" to "p1", "channel_id" to " "))
+	}
+
+	@Test
+	fun aChatPushIsHiddenOnlyForTheConversationOnScreenWhileTheAppIsOpen() {
+		assertThat(PushNotifications.shouldShowChat("ch-1", visibleChannelId = "ch-1", appInForeground = true)).isFalse()
+		assertThat(PushNotifications.shouldShowChat("ch-1", visibleChannelId = "ch-2", appInForeground = true)).isTrue()
+		assertThat(PushNotifications.shouldShowChat("ch-1", visibleChannelId = null, appInForeground = true)).isTrue()
+		// left in the background from that very thread: shown
+		assertThat(PushNotifications.shouldShowChat("ch-1", visibleChannelId = "ch-1", appInForeground = false)).isTrue()
 	}
 }

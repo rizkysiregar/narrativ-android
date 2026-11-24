@@ -157,6 +157,14 @@ object PushNotifications {
 	}
 
 	/**
+	 * Whether a chat push is shown. Not when its conversation is on screen: the message is right there. A thread left
+	 * open when the app went to the background is not on screen, although it stays the visible channel until the user
+	 * leaves it, so in the background every chat push is shown.
+	 */
+	fun shouldShowChat(channelId: String, visibleChannelId: String?, appInForeground: Boolean): Boolean =
+		!appInForeground || visibleChannelId != channelId
+
+	/**
 	 * Posts a chat message push. One notification per conversation: a new message replaces the last one of that
 	 * conversation instead of stacking. Does nothing without the notification permission.
 	 */
