@@ -22,6 +22,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
@@ -82,6 +83,9 @@ fun HomeRoot(
 	val chatBadgeViewModel: com.rizkysiregar.narrativ.ui.feature.home.chat.ChatBadgeViewModel = hiltViewModel()
 	val unreadMessages by chatBadgeViewModel.unread.collectAsState()
 	val chatEnabled by chatBadgeViewModel.chatEnabled.collectAsState()
+	// a message arriving in another conversation while the app is open (no push then): a banner at the top
+	val chatBannerViewModel: com.rizkysiregar.narrativ.ui.feature.home.chat.ChatBannerViewModel = hiltViewModel()
+	val chatBanner by chatBannerViewModel.banner.collectAsState()
 	// back from the background, pushes may have arrived that FCM showed by itself
 	LifecycleResumeEffect(Unit) {
 		badgeViewModel.refresh()
@@ -366,5 +370,15 @@ fun HomeRoot(
 	planeOrigin?.let { origin ->
 		PaperPlaneFlight(origin = origin, onFinished = { planeOrigin = null })
 	}
+	// not on the conversation list: the new message is right there
+	com.rizkysiregar.narrativ.ui.feature.home.chat.ChatMessageBanner(
+		banner = chatBanner.takeIf { chatEnabled && currentRoute != HomePathRoute.Chats.route },
+		onOpen = { b ->
+			chatBannerViewModel.dismiss()
+			homeNavController.navigate(HomePathRoute.ChatThread.create(b.channelId))
+		},
+		onDismiss = chatBannerViewModel::dismiss,
+		modifier = Modifier.align(Alignment.TopCenter),
+	)
 	}
 }
