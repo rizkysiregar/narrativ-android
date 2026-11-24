@@ -1,5 +1,7 @@
 package com.rizkysiregar.narrativ.notification
 
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ProcessLifecycleOwner
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.rizkysiregar.marpokat.android.MarpokatPush
@@ -39,8 +41,10 @@ class NarrativMessagingService : FirebaseMessagingService() {
 			// an admin switched chat off: the push token is removed then, this catches what is still on its way
 			if (!featureFlags.chatEnabled.value) return
 			val push = MarpokatPush.parse(message.data) ?: return
-			// the conversation is on screen: the message is right there, a notification would only be noise
-			if (chatSession.visibleChannelId != push.channelId) PushNotifications.showChat(this, push, message.data)
+			val inForeground = ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
+			if (PushNotifications.shouldShowChat(push.channelId, chatSession.visibleChannelId, inForeground)) {
+				PushNotifications.showChat(this, push, message.data)
+			}
 			return
 		}
 		// a like, comment or follow just landed in the inbox: the bell shows it while the app is open
