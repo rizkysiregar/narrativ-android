@@ -38,9 +38,21 @@ object PushNotifications {
 	// ones are deleted. v3 is IMPORTANCE_HIGH, which is what lets a push pop up on screen (heads-up).
 	const val CHANNEL_GENERAL = "general_v3"
 
-	/** Chat messages (Marpokat), its own channel so the user can silence chat without silencing likes and comments. */
-	const val CHANNEL_CHAT = "chat_v1"
-	private val CHANNELS_LEGACY = listOf("general", "general_v2")
+	/**
+	 * Chat messages (Marpokat), its own channel so the user can silence chat without silencing likes and comments.
+	 * v2 has Narrativ's sound (v1 had the system's).
+	 */
+	const val CHANNEL_CHAT = "chat_v2"
+	private val CHANNELS_LEGACY = listOf("general", "general_v2", "chat_v1")
+
+	/** Narrativ's notification sound (res/raw), for both channels and the in-app chat banner. */
+	fun soundUri(context: Context): Uri = Uri.parse("android.resource://${context.packageName}/${R.raw.narrativ_notification}")
+
+	// a function, not a field: building it when the object loads would break the plain JVM tests of the targets
+	private fun soundAttributes() = AudioAttributes.Builder()
+		.setUsage(AudioAttributes.USAGE_NOTIFICATION)
+		.setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+		.build()
 
 	private val VIBRATION_PATTERN = longArrayOf(0, 250, 150, 250)
 
@@ -93,6 +105,7 @@ object PushNotifications {
 			NotificationChannel(CHANNEL_CHAT, context.getString(R.string.chat_push_channel), NotificationManager.IMPORTANCE_HIGH).apply {
 				enableVibration(true)
 				vibrationPattern = VIBRATION_PATTERN
+				setSound(soundUri(context), soundAttributes())
 			}
 		)
 		manager.createNotificationChannel(
@@ -104,13 +117,7 @@ object PushNotifications {
 				description = context.getString(R.string.notif_channel_general_desc)
 				enableVibration(true)
 				vibrationPattern = VIBRATION_PATTERN
-				setSound(
-					Uri.parse("android.resource://${context.packageName}/${R.raw.narrativ_notification}"),
-					AudioAttributes.Builder()
-						.setUsage(AudioAttributes.USAGE_NOTIFICATION)
-						.setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-						.build()
-				)
+				setSound(soundUri(context), soundAttributes())
 			}
 		)
 	}

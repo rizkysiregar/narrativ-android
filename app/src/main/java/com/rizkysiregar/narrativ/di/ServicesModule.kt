@@ -60,6 +60,14 @@ abstract class ServicesModule {
 
 	@Binds
 	@Singleton
+	abstract fun bindChatAvatars(impl: com.rizkysiregar.narrativ.chat.NarrativChatAvatars): com.rizkysiregar.narrativ.chat.ChatAvatars
+
+	@Binds
+	@Singleton
+	abstract fun bindChatSound(impl: com.rizkysiregar.narrativ.notification.ChannelChatSound): com.rizkysiregar.narrativ.notification.ChatSound
+
+	@Binds
+	@Singleton
 	abstract fun bindChatSession(impl: com.rizkysiregar.narrativ.chat.MarpokatChatSession): com.rizkysiregar.narrativ.chat.ChatSession
 
 	@Binds
