@@ -344,6 +344,8 @@
     <string name="chat_typing">%1$s typing…</string>
     <string name="chat_frozen">You can no longer send messages in this conversation.</string>
     <string name="chat_photo">Photo</string>
+    <string name="chat_banner_in_group">%1$s · %2$s</string>
+    <string name="chat_banner_open">Open the conversation</string>
     <string name="chat_video">Video</string>
     <string name="chat_file">File</string>
     <string name="chat_processing">Processing…</string>

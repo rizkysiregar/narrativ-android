@@ -343,6 +343,8 @@
     <string name="chat_typing">%1$s sedang mengetik…</string>
     <string name="chat_frozen">Anda tidak dapat lagi mengirim pesan di percakapan ini.</string>
     <string name="chat_photo">Foto</string>
+    <string name="chat_banner_in_group">%1$s · %2$s</string>
+    <string name="chat_banner_open">Buka percakapan</string>
     <string name="chat_video">Video</string>
     <string name="chat_file">Berkas</string>
     <string name="chat_processing">Memproses…</string>
