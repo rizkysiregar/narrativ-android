@@ -41,12 +41,16 @@
                 android:value="true" />
         </service>
 
+        <!-- adjustResize: the screens move their inputs above the keyboard themselves (imePadding, edge to edge).
+             Without it the system may pan the whole window as well, and the input ends up a keyboard's height
+             above the keyboard with the content pushed off screen. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:launchMode="singleTop"
-            android:theme="@style/Theme.App.Starting">
+            android:theme="@style/Theme.App.Starting"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
