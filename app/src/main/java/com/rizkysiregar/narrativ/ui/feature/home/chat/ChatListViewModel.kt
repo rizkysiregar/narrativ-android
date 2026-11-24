@@ -4,15 +4,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rizkysiregar.marpokat.ChannelState
 import com.rizkysiregar.marpokat.ConnectionStatus
+import com.rizkysiregar.narrativ.chat.ChatAvatars
 import com.rizkysiregar.narrativ.chat.ChatSession
 import com.rizkysiregar.narrativ.chat.ChatSessionState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
@@ -41,13 +42,16 @@ sealed interface ChatListUiState {
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class ChatListViewModel @Inject constructor(
-	private val chat: ChatSession
+	private val chat: ChatSession,
+	private val avatars: ChatAvatars
 ) : ViewModel() {
 
 	val uiState: StateFlow<ChatListUiState> = chat.state.flatMapLatest { session ->
 		when (session) {
-			is ChatSessionState.Ready -> session.client.state.map { state ->
-				val rows = state.channels.map { rowOf(it, state.online) }
+			is ChatSessionState.Ready -> combine(session.client.state, avatars.urls) { state, pictures ->
+				// the pictures uploaded to Narrativ come from the Narrativ profiles (see ChatAvatars)
+				avatars.want(state.channels.mapNotNull { it.channel.dmPeer?.takeIf { p -> p.avatarUrl.isNullOrBlank() }?.externalId })
+				val rows = state.channels.map { rowOf(it, state.online, pictures) }
 				// nothing cached and no connection yet: still loading, not empty
 				if (rows.isEmpty() && state.status != ConnectionStatus.Connected) ChatListUiState.Loading
 				else ChatListUiState.Ready(rows, offline = state.status != ConnectionStatus.Connected)
@@ -60,13 +64,14 @@ class ChatListViewModel @Inject constructor(
 	/** Tries again after chat was unavailable. */
 	fun retry() = chat.start()
 
-	private fun rowOf(state: ChannelState, online: Map<String, Boolean>): ChatRow {
+	private fun rowOf(state: ChannelState, online: Map<String, Boolean>, pictures: Map<String, String>): ChatRow {
 		val channel = state.channel
 		val last = channel.lastMessage
 		return ChatRow(
 			channelId = channel.id,
 			title = channel.title,
-			avatarUrl = channel.dmPeer?.avatarUrl ?: channel.avatarUrl,
+			avatarUrl = channel.dmPeer?.let { peer -> peer.avatarUrl?.takeIf { it.isNotBlank() } ?: pictures[peer.externalId] }
+				?: channel.avatarUrl,
 			peerId = channel.dmPeer?.externalId.orEmpty(),
 			lastText = last?.text?.takeIf { it.isNotBlank() },
 			lastAttachmentKind = last?.takeIf { it.text.isNullOrBlank() }?.attachments?.firstOrNull()?.kind,

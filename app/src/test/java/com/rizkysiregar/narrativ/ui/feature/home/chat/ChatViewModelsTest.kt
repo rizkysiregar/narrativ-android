@@ -10,6 +10,8 @@ import com.rizkysiregar.narrativ.chat.PickedFile
 import com.rizkysiregar.narrativ.testing.MainDispatcherRule
 import com.rizkysiregar.narrativ.testing.fakes.CHAT_CHANNEL
 import com.rizkysiregar.narrativ.testing.fakes.FakeChatAttachmentReader
+import com.rizkysiregar.narrativ.testing.fakes.FakeChatAvatars
+import com.rizkysiregar.narrativ.testing.fakes.FakeChatSound
 import com.rizkysiregar.narrativ.testing.fakes.FakeChatBackend
 import com.rizkysiregar.narrativ.testing.fakes.FakeChatSession
 import com.rizkysiregar.narrativ.testing.fakes.FakeFeatureFlags
@@ -39,6 +41,8 @@ class ChatViewModelsTest {
 	private val backend = FakeChatBackend()
 	private val chat = FakeChatSession()
 	private val reader = FakeChatAttachmentReader()
+	private val avatars = FakeChatAvatars()
+	private val sound = FakeChatSound()
 	private var client: MarpokatClient? = null
 
 	// runTest ends by running all virtual time to the end; the client's ping loop never ends, so it is closed first
@@ -63,7 +67,7 @@ class ChatViewModelsTest {
 
 	@Test fun theListIsLoadingUntilThereIsSomethingToShowThenListsTheConversations(): Unit = chatTest {
 		backend.channels = listOf(chatChannel(unread = 2))
-		val vm = ChatListViewModel(chat)
+		val vm = ChatListViewModel(chat, avatars)
 		backgroundScope.launch { vm.uiState.collect { } }
 		runCurrent()
 		assertThat(vm.uiState.value).isEqualTo(ChatListUiState.Loading)
@@ -79,12 +83,54 @@ class ChatViewModelsTest {
 
 	@Test fun theListSaysSoWhenChatIsUnavailableAndRetryStartsTheSessionAgain(): Unit = chatTest {
 		chat.set(ChatSessionState.Unavailable)
-		val vm = ChatListViewModel(chat)
+		val vm = ChatListViewModel(chat, avatars)
 		backgroundScope.launch { vm.uiState.collect { } }
 		runCurrent()
 		assertThat(vm.uiState.value).isEqualTo(ChatListUiState.Unavailable)
 		vm.retry()
 		assertThat(chat.starts).isEqualTo(1)
+	}
+
+	@Test fun theListShowsThePictureFromTheNarrativProfileWhenMarpokatHasNone(): Unit = chatTest {
+		avatars.pictures = mapOf("u-budi" to "https://pics.test/budi.jpg")
+		val vm = ChatListViewModel(chat, avatars)
+		backgroundScope.launch { vm.uiState.collect { } }
+		ready()
+		runCurrent()
+		assertThat(avatars.wanted).contains("u-budi")
+		assertThat((vm.uiState.value as ChatListUiState.Ready).rows.single().avatarUrl).isEqualTo("https://pics.test/budi.jpg")
+	}
+
+	@Test fun withoutAPictureAnywhereTheListKeepsTheGeneratedAvatar(): Unit = chatTest {
+		val vm = ChatListViewModel(chat, avatars)
+		backgroundScope.launch { vm.uiState.collect { } }
+		ready()
+		runCurrent()
+		assertThat((vm.uiState.value as ChatListUiState.Ready).rows.single().avatarUrl).isNull()
+	}
+
+	// ---- banner
+
+	@Test fun aMessageInAnotherConversationShowsABannerWithSoundAndTheProfilePicture(): Unit = chatTest {
+		avatars.pictures = mapOf("u-budi" to "https://pics.test/budi.jpg")
+		val vm = ChatBannerViewModel(chat, FakeFeatureFlags(chat = true), avatars, sound)
+		ready()
+		backend.socket!!.push("message.new", """{"message":${chatMessage(3, "halo")}}""")
+		runCurrent()
+		val b = vm.banner.value!!
+		assertThat(b.text).isEqualTo("halo")
+		assertThat(b.avatarUrl).isEqualTo("https://pics.test/budi.jpg")
+		assertThat(sound.plays).isEqualTo(1)
+	}
+
+	@Test fun noBannerAndNoSoundForTheConversationOnScreen(): Unit = chatTest {
+		val vm = ChatBannerViewModel(chat, FakeFeatureFlags(chat = true), avatars, sound)
+		ready()
+		chat.visibleChannelId = CHAT_CHANNEL
+		backend.socket!!.push("message.new", """{"message":${chatMessage(3)}}""")
+		runCurrent()
+		assertThat(vm.banner.value).isNull()
+		assertThat(sound.plays).isEqualTo(0)
 	}
 
 	// ---- badge
